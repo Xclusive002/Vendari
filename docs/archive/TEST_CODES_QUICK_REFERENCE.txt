@@ -1,0 +1,245 @@
+================================================================================
+                    PROFITPILOT - TEST ACCESS CODES
+================================================================================
+
+READY-TO-USE TEST CODES (Copy & Paste):
+
+  1. PROF0001
+  2. PILOT0002
+  3. BETA0003
+  4. DEMO0004
+  5. TEST0005
+  6. TRIAL0006
+  7. DEVEL0007
+  8. SAMPLE0008
+  9. SETUP0009
+  10. CHECK0010
+
+================================================================================
+HOW TO USE THESE CODES:
+================================================================================
+
+STEP 1: Insert codes into your Supabase database
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ Go to: https://app.supabase.com → Your Project → SQL Editor → New Query     │
+│                                                                               │
+│ Paste this SQL and click RUN:                                               │
+│                                                                               │
+│ INSERT INTO access_codes (code, is_active, created_at)                      │
+│ VALUES                                                                        │
+│   ('PROF0001', true, NOW()),                                                │
+│   ('PILOT0002', true, NOW()),                                               │
+│   ('BETA0003', true, NOW()),                                                │
+│   ('DEMO0004', true, NOW()),                                                │
+│   ('TEST0005', true, NOW()),                                                │
+│   ('TRIAL0006', true, NOW()),                                               │
+│   ('DEVEL0007', true, NOW()),                                               │
+│   ('SAMPLE0008', true, NOW()),                                              │
+│   ('SETUP0009', true, NOW()),                                               │
+│   ('CHECK0010', true, NOW());                                               │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+STEP 2: Start your application
+   $ npm run dev
+
+STEP 3: Login
+   1. Go to http://localhost:3000/login
+   2. Paste any code from above
+   3. Click "Login"
+
+STEP 4: Setup Business
+   1. Enter Business Name (e.g., "My Test Business")
+   2. Select Business Type
+   3. Click "Create Business"
+   4. You're in the dashboard!
+
+================================================================================
+TEST SCENARIOS:
+================================================================================
+
+Scenario 1 - Full Testing (15 minutes)
+  ├─ Login with PROF0001
+  ├─ Setup business
+  ├─ Add 5 sales records
+  ├─ Add 3 inventory items
+  ├─ Add 2 expenses
+  ├─ View dashboard
+  └─ Check all reports
+
+Scenario 2 - Sales Testing (5 minutes)
+  ├─ Login with PILOT0002
+  ├─ Add multiple sales
+  ├─ Search sales
+  ├─ Delete a record
+  └─ Verify totals
+
+Scenario 3 - Inventory Testing (5 minutes)
+  ├─ Login with BETA0003
+  ├─ Add inventory items
+  ├─ Update quantities
+  ├─ Check low stock warnings
+  └─ Delete items
+
+Scenario 4 - Reports Testing (5 minutes)
+  ├─ Login with DEMO0004
+  ├─ Add sales & expenses
+  ├─ View P&L statement
+  ├─ Check revenue trends
+  └─ Check expense breakdown
+
+================================================================================
+SAMPLE DATA TO ENTER:
+================================================================================
+
+Business Setup:
+  Name: "Test Business Ltd"
+  Type: "Retail"
+  Industry: "Electronics"
+  Location: "Lagos, Nigeria"
+  Email: "test@testbusiness.com"
+  Phone: "+234 800 000 0000"
+
+Sample Sale:
+  Customer: "John Doe"
+  Item: "Laptop"
+  Quantity: 1
+  Price: 500000
+
+Sample Inventory:
+  Product: "iPhone 13"
+  Category: "Electronics"
+  Unit Price: 350000
+  Stock: 20
+  Reorder Level: 5
+
+Sample Expense:
+  Description: "Office Supplies"
+  Category: "Materials"
+  Amount: 25000
+  Date: Today
+
+================================================================================
+TESTING CHECKLIST:
+================================================================================
+
+Landing Page (/)
+  ☐ Page loads correctly
+  ☐ "Manage Business" button works
+  ☐ Professional design visible
+  ☐ Features section displays
+  ☐ Pricing section visible
+
+Login Page (/login)
+  ☐ Input field visible
+  ☐ Access code format correct
+  ☐ Login button works
+  ☐ Error messages appear
+  ☐ "Don't have code?" link works
+
+Dashboard (/dashboard)
+  ☐ KPI cards display
+  ☐ Charts load properly
+  ☐ Navigation menu visible
+  ☐ All sections accessible
+
+Sales Page (/dashboard/sales)
+  ☐ Add sale button works
+  ☐ Form validation works
+  ☐ Records appear in table
+  ☐ Delete button works
+  ☐ Search/filter works
+
+Inventory Page (/dashboard/inventory)
+  ☐ Add item button works
+  ☐ Stock updates work
+  ☐ Low stock badges show
+  ☐ Delete button works
+  ☐ Search works
+
+Reports Page (/dashboard/reports)
+  ☐ P&L statement displays
+  ☐ Calculations are correct
+  ☐ Charts load properly
+  ☐ All sections visible
+
+Help Page (/dashboard/help)
+  ☐ Tutorials visible
+  ☐ FAQ loads
+  ☐ Getting started guide appears
+
+Settings Page (/dashboard/settings)
+  ☐ Business info displays
+  ☐ Edit form works
+  ☐ Changes save
+  ☐ Logout works
+
+================================================================================
+TROUBLESHOOTING:
+================================================================================
+
+Problem: "Invalid access code" error
+Solution: 
+  1. Check if code was inserted into database (Supabase → access_codes table)
+  2. Verify code is exactly 8 characters
+  3. Try a different code
+  4. Clear browser cache and try again
+
+Problem: Can't access dashboard
+Solution:
+  1. Check Supabase connection (check env variables)
+  2. Verify business was created successfully
+  3. Check browser console for errors (F12)
+  4. Clear cookies and try again
+
+Problem: Data not saving
+Solution:
+  1. Open console (F12) and check for errors
+  2. Check Network tab for failed requests
+  3. Verify Supabase is connected
+  4. Check RLS policies are configured
+
+Problem: Charts not displaying
+Solution:
+  1. Add sales/expense records first
+  2. Refresh the page
+  3. Clear browser cache
+  4. Check console for JavaScript errors
+
+================================================================================
+NEXT STEPS AFTER TESTING:
+================================================================================
+
+1. Read IMMEDIATE_TESTING.md for detailed testing guide
+2. Read TESTING_GUIDE.md for comprehensive test procedures
+3. Review FEATURES_CHECKLIST.md for all available features
+4. Read APPLICATION_FLOW.md for user flow diagrams
+5. Follow DEPLOYMENT_CHECKLIST.md to deploy
+6. Set up production Paystack keys
+7. Go live!
+
+================================================================================
+DOCUMENTATION FILES:
+================================================================================
+
+START_HERE.md               - Begin here (5 min)
+IMMEDIATE_TESTING.md        - Quick testing guide (5 min)
+TEST_CODES.md              - Test code details (10 min)
+TESTING_GUIDE.md           - Complete test procedures (20 min)
+QUICK_START.md             - Quick setup (10 min)
+GETTING_STARTED.md         - Feature overview (15 min)
+PROJECT_SUMMARY.md         - Architecture details (15 min)
+APPLICATION_FLOW.md        - User flows diagram (10 min)
+FEATURES_CHECKLIST.md      - All 180+ features (10 min)
+DEPLOYMENT_CHECKLIST.md    - Launch preparation (20 min)
+README.md                  - Project overview (5 min)
+
+================================================================================
+                    READY TO TEST? LET'S GO! 🚀
+================================================================================
+
+Choose a test code above and start testing ProfitPilot!
+For detailed information, read IMMEDIATE_TESTING.md
+
+Questions? Check the troubleshooting section above or review the docs.
+
+================================================================================

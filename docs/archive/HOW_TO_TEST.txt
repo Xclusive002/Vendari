@@ -1,0 +1,522 @@
+╔════════════════════════════════════════════════════════════════════════════╗
+║                     PROFITPILOT - HOW TO TEST                              ║
+║                      Complete Testing Instructions                          ║
+╚════════════════════════════════════════════════════════════════════════════╝
+
+QUICK START (5 MINUTES):
+═══════════════════════════════════════════════════════════════════════════
+
+1. TEST CODES (Copy any one):
+   ├─ PROF0001
+   ├─ PILOT0002
+   ├─ BETA0003
+   ├─ DEMO0004
+   ├─ TEST0005
+   ├─ TRIAL0006
+   ├─ DEVEL0007
+   ├─ SAMPLE0008
+   ├─ SETUP0009
+   └─ CHECK0010
+
+2. ADD CODES TO DATABASE:
+   • Go to: https://app.supabase.com
+   • Select your project
+   • Click "SQL Editor"
+   • Create new query
+   • Paste the SQL from TEST_CODES_QUICK_REFERENCE.txt
+   • Click "Run"
+
+3. START APPLICATION:
+   $ npm run dev
+
+4. GO TO LOGIN:
+   • Navigate to: http://localhost:3000/login
+   • Paste any test code
+   • Click "Login"
+
+5. SETUP BUSINESS:
+   • Enter Business Name
+   • Select Business Type
+   • Click "Create Business"
+   • You're in! 🎉
+
+═══════════════════════════════════════════════════════════════════════════
+DETAILED INSTRUCTIONS:
+═══════════════════════════════════════════════════════════════════════════
+
+STEP 1: Get Your Test Codes Ready
+──────────────────────────────────────────────────────────────────────────
+The following codes are ready to use immediately:
+
+  PROF0001    - General testing
+  PILOT0002   - Feature testing
+  BETA0003    - Beta testing
+  DEMO0004    - Demo account
+  TEST0005    - Quick test
+  TRIAL0006   - Trial period
+  DEVEL0007   - Development
+  SAMPLE0008  - Sample data
+  SETUP0009   - Initial setup
+  CHECK0010   - Final check
+
+Before using, you need to insert these into your Supabase database.
+
+STEP 2: Insert Test Codes into Supabase
+──────────────────────────────────────────────────────────────────────────
+This should take about 2 minutes:
+
+a) Go to Supabase Dashboard:
+   → https://app.supabase.com
+   → Click on your ProfitPilot project
+
+b) Open SQL Editor:
+   → Left sidebar → SQL Editor
+   → Click "New Query"
+
+c) Copy & Paste SQL:
+   
+   INSERT INTO access_codes (code, is_active, created_at) 
+   VALUES 
+     ('PROF0001', true, NOW()),
+     ('PILOT0002', true, NOW()),
+     ('BETA0003', true, NOW()),
+     ('DEMO0004', true, NOW()),
+     ('TEST0005', true, NOW()),
+     ('TRIAL0006', true, NOW()),
+     ('DEVEL0007', true, NOW()),
+     ('SAMPLE0008', true, NOW()),
+     ('SETUP0009', true, NOW()),
+     ('CHECK0010', true, NOW());
+
+d) Click "Run" button
+
+e) You should see: "10 rows inserted" ✓
+
+STEP 3: Start the Application
+──────────────────────────────────────────────────────────────────────────
+In your terminal:
+
+  $ cd /path/to/profitpilot
+  $ npm install      (if not already done)
+  $ npm run dev      (start the server)
+
+You should see:
+  ▲ Next.js 16.1.6
+  - Local:        http://localhost:3000
+
+STEP 4: Login with Test Code
+──────────────────────────────────────────────────────────────────────────
+a) Open browser: http://localhost:3000
+
+b) You'll see the landing page
+   Click "Manage Business" button
+
+c) You'll be on the login page
+   Paste a test code: PROF0001
+   Click "Login"
+
+If successful:
+  ✓ You'll see the Setup page
+
+If failed:
+  ✗ Check the troubleshooting section below
+
+STEP 5: Complete Business Setup
+──────────────────────────────────────────────────────────────────────────
+Fill in the form:
+
+  Business Name:    "My Test Business"
+  Business Type:    "Retail" (or any option)
+  Industry:         "Electronics" (or any option)
+  Location:         "Lagos, Nigeria"
+  Email:            "test@mybusiness.com"
+  Phone:            "+234 800 000 0000"
+
+Click "Create Business"
+
+You'll be redirected to the dashboard!
+
+STEP 6: Start Testing
+──────────────────────────────────────────────────────────────────────────
+Now explore the features:
+
+Dashboard:
+  • View KPI cards (Sales, Expenses, Profit)
+  • Check charts and graphs
+  • See recent transactions
+
+Sales Management:
+  • Go to "Sales" in menu
+  • Click "Add Sale Record"
+  • Enter details:
+    - Customer Name: "John Doe"
+    - Item Sold: "Laptop"
+    - Quantity: 1
+    - Price: 50000
+  • Click "Add Sale"
+  • Verify it appears in the list
+
+Inventory:
+  • Go to "Inventory" in menu
+  • Click "Add Item"
+  • Enter details:
+    - Product: "Samsung Galaxy S21"
+    - Category: "Electronics"
+    - Unit Price: 35000
+    - Quantity: 15
+    - Reorder Level: 5
+  • Click "Add Item"
+  • See it in the inventory list
+
+Expenses:
+  • Go back to "Dashboard"
+  • Click "Add Expense Record"
+  • Enter details:
+    - Description: "Office Supplies"
+    - Amount: 5000
+  • Watch the totals update!
+
+Reports:
+  • Go to "Reports" in menu
+  • View P&L statement
+  • See expense breakdown
+  • Check revenue trends
+  • All calculations automatic!
+
+═══════════════════════════════════════════════════════════════════════════
+WHAT TO TEST:
+═══════════════════════════════════════════════════════════════════════════
+
+User Interface:
+  ☐ Landing page loads
+  ☐ Login page displays correctly
+  ☐ Dashboard looks professional
+  ☐ Navigation menu works
+  ☐ All buttons are clickable
+  ☐ Forms validate input
+  ☐ Error messages appear
+  ☐ Layout is responsive
+
+Features:
+  ☐ Can add sales records
+  ☐ Can add inventory items
+  ☐ Can add expenses
+  ☐ Can view dashboard
+  ☐ Can view reports
+  ☐ Can search/filter data
+  ☐ Can delete records
+  ☐ Can edit business info
+
+Data:
+  ☐ Totals calculate correctly
+  ☐ Charts update with data
+  ☐ Profit = Revenue - Expenses
+  ☐ Low stock alerts show
+  ☐ Data persists after refresh
+  ☐ No data loss on logout/login
+
+Performance:
+  ☐ Pages load quickly (< 2 seconds)
+  ☐ No console errors (F12)
+  ☐ Smooth animations
+  ☐ No lag when typing
+  ☐ Charts render properly
+
+═══════════════════════════════════════════════════════════════════════════
+TROUBLESHOOTING:
+═══════════════════════════════════════════════════════════════════════════
+
+Problem 1: "Invalid access code" error
+───────────────────────────────────────
+Cause: Code doesn't exist in database
+Solution:
+  1. Check Supabase → access_codes table
+  2. Verify code is exactly 8 characters
+  3. Make sure is_active = true
+  4. Try a different code
+  5. Clear browser cache (Ctrl+Shift+Delete)
+
+Problem 2: Login button not working
+───────────────────────────────────
+Cause: Environment variables not set
+Solution:
+  1. Check NEXT_PUBLIC_SUPABASE_URL env var
+  2. Check NEXT_PUBLIC_SUPABASE_ANON_KEY env var
+  3. Restart the server: npm run dev
+  4. Check browser console (F12) for errors
+
+Problem 3: Can't reach http://localhost:3000
+──────────────────────────────────────────────
+Cause: Server not running
+Solution:
+  1. Run: npm run dev
+  2. Wait for "ready - started server on 0.0.0.0:3000"
+  3. Try http://localhost:3000 again
+
+Problem 4: Dashboard shows no data
+──────────────────────────────────
+Cause: No sales/expense records yet
+Solution:
+  1. Add some sales records first
+  2. Add some expenses
+  3. Refresh the page
+  4. Charts should now show data
+
+Problem 5: "Cannot find module" error
+─────────────────────────────────────
+Cause: Dependencies not installed
+Solution:
+  1. Run: npm install
+  2. Wait for it to complete
+  3. Run: npm run dev
+
+Problem 6: Database connection error
+───────────────────────────────────
+Cause: Supabase not connected
+Solution:
+  1. Check Supabase status: https://status.supabase.com
+  2. Verify env variables are set
+  3. Check internet connection
+  4. Try logging in again
+
+═══════════════════════════════════════════════════════════════════════════
+TESTING CHECKLIST (Detailed):
+═══════════════════════════════════════════════════════════════════════════
+
+Landing Page (http://localhost:3000)
+  ☐ Page loads with hero section
+  ☐ Title is "ProfitPilot"
+  ☐ Features section visible (Sales, Inventory, P&L)
+  ☐ Pricing section shows ₦20,000
+  ☐ "Manage Business" button works
+  ☐ "Sign In" button works
+  ☐ Mobile responsive
+  ☐ Professional design
+
+Login Page (http://localhost:3000/login)
+  ☐ Input field visible and focused
+  ☐ Placeholder shows "Enter access code"
+  ☐ Login button visible
+  ☐ "Don't have code?" link present
+  ☐ Code validation works
+  ☐ Error message shows for invalid code
+  ☐ Valid code logs in
+
+Setup Page (http://localhost:3000/dashboard/setup)
+  ☐ After valid login
+  ☐ Business name field required
+  ☐ Business type dropdown works
+  ☐ All fields are required
+  ☐ Form validation on submit
+  ☐ Submit creates business
+  ☐ Redirects to dashboard
+
+Dashboard (http://localhost:3000/dashboard)
+  ☐ Shows welcome message
+  ☐ KPI cards visible:
+    - Total Sales card
+    - Total Expenses card
+    - Net Profit card
+  ☐ Revenue trend chart visible
+  ☐ Expense pie chart visible
+  ☐ Recent transactions shown
+  ☐ Navigation menu on left
+  ☐ All sections clickable
+
+Sales Page (http://localhost:3000/dashboard/sales)
+  ☐ Page loads
+  ☐ "Add Sale Record" button visible
+  ☐ Modal form opens
+  ☐ All fields required
+  ☐ Quantity must be > 0
+  ☐ Price must be > 0
+  ☐ Form submits successfully
+  ☐ New record appears in table
+  ☐ Can see all sales in table
+  ☐ Delete button works
+  ☐ Date filter works
+  ☐ Search works
+  ☐ Totals update correctly
+
+Inventory Page (http://localhost:3000/dashboard/inventory)
+  ☐ Page loads
+  ☐ "Add Item" button visible
+  ☐ Modal form opens
+  ☐ All fields required
+  ☐ Unit price must be > 0
+  ☐ Quantity must be ≥ 0
+  ☐ Form submits successfully
+  ☐ New item appears in table
+  ☐ Can view all items
+  ☐ Can update stock quantity
+  ☐ Can delete items
+  ☐ Low stock warnings show (< 5)
+  ☐ Search by product name works
+  ☐ Filter by category works
+
+Expenses (on Dashboard)
+  ☐ "Add Expense" button visible
+  ☐ Form opens with fields
+  ☐ All fields required
+  ☐ Amount must be > 0
+  ☐ Form submits successfully
+  ☐ Totals update immediately
+  ☐ Expense appears in recent
+
+Reports Page (http://localhost:3000/dashboard/reports)
+  ☐ P&L statement visible
+  ☐ Revenue section shows:
+    - Total sales
+    - Total revenue
+  ☐ Expense section shows:
+    - Total expenses
+    - Breakdown by category
+  ☐ Profit calculation correct
+  ☐ Period selector works
+  ☐ Charts load and display
+  ☐ Trend chart shows history
+  ☐ All calculations accurate
+
+Help Page (http://localhost:3000/dashboard/help)
+  ☐ Getting started guide visible
+  ☐ Tutorial section present
+  ☐ FAQ section expandable
+  ☐ All questions readable
+  ☐ Answers are helpful
+  ☐ Contact form visible (optional)
+
+Settings Page (http://localhost:3000/dashboard/settings)
+  ☐ Business details display
+  ☐ Edit button visible
+  ☐ Form opens with current data
+  ☐ Can update business name
+  ☐ Can update business type
+  ☐ Can update other fields
+  ☐ Changes save successfully
+  ☐ Logout button works
+  ☐ After logout, redirected to home
+
+═══════════════════════════════════════════════════════════════════════════
+PERFORMANCE TESTING:
+═══════════════════════════════════════════════════════════════════════════
+
+Load Times:
+  ☐ Landing page loads in < 2 seconds
+  ☐ Login page loads in < 1 second
+  ☐ Dashboard loads in < 2 seconds
+  ☐ Sales page loads in < 2 seconds
+  ☐ Reports page loads in < 3 seconds
+
+Responsiveness:
+  ☐ No lag when typing in forms
+  ☐ Buttons respond immediately
+  ☐ Charts animate smoothly
+  ☐ Navigation is snappy
+  ☐ No freezing or stuttering
+
+Browser Compatibility:
+  ☐ Works on Chrome
+  ☐ Works on Firefox
+  ☐ Works on Safari
+  ☐ Works on Edge
+  ☐ Mobile responsive (< 768px)
+  ☐ Tablet responsive (768px - 1024px)
+
+═══════════════════════════════════════════════════════════════════════════
+SAMPLE TEST DATA:
+═══════════════════════════════════════════════════════════════════════════
+
+Business Setup:
+  Name: TestCorp Ltd
+  Type: Retail
+  Industry: Electronics
+  Location: Lagos, Nigeria
+  Email: test@testcorp.com
+  Phone: +234 8012345678
+
+Sales Records (add 5):
+  1. Product: Laptop, Qty: 1, Price: 500000
+  2. Product: Monitor, Qty: 2, Price: 150000 each
+  3. Product: Keyboard, Qty: 3, Price: 50000 each
+  4. Product: Mouse, Qty: 4, Price: 25000 each
+  5. Product: Headphones, Qty: 2, Price: 75000 each
+  
+  Total Expected: ~1,300,000
+
+Inventory Items (add 5):
+  1. Product: iPhone 13, Stock: 20, Price: 350000
+  2. Product: Samsung S21, Stock: 15, Price: 300000
+  3. Product: Macbook Pro, Stock: 5, Price: 700000
+  4. Product: iPad, Stock: 3, Price: 250000
+  5. Product: AirPods Pro, Stock: 30, Price: 75000
+
+Expenses (add 3):
+  1. Description: Rent, Amount: 200000
+  2. Description: Utilities, Amount: 50000
+  3. Description: Supplies, Amount: 30000
+  
+  Total Expected: 280,000
+
+═══════════════════════════════════════════════════════════════════════════
+EXPECTED RESULTS:
+═══════════════════════════════════════════════════════════════════════════
+
+After adding sample data:
+
+Dashboard KPIs:
+  Total Sales:     ~1,300,000
+  Total Expenses:  ~280,000
+  Net Profit:      ~1,020,000
+
+Charts:
+  Revenue chart should show sales trend
+  Expense pie chart should show:
+    - Rent: 200,000
+    - Utilities: 50,000
+    - Supplies: 30,000
+
+Reports:
+  P&L Statement:
+    Revenue:       1,300,000
+    Expenses:      -280,000
+    Profit:        1,020,000
+    Profit %:      78.46%
+
+═══════════════════════════════════════════════════════════════════════════
+AFTER SUCCESSFUL TESTING:
+═══════════════════════════════════════════════════════════════════════════
+
+Next Steps:
+  1. ✓ Read all documentation files
+  2. ✓ Review features list
+  3. ✓ Test all functionality
+  4. ✓ Customize for your brand
+  5. ✓ Configure production keys
+  6. ✓ Deploy to Vercel
+  7. ✓ Set up production Paystack
+  8. ✓ Go live!
+
+Documentation to Read:
+  • START_HERE.md (5 min)
+  • IMMEDIATE_TESTING.md (5 min)
+  • QUICK_START.md (10 min)
+  • TESTING_GUIDE.md (20 min)
+  • FEATURES_CHECKLIST.md (10 min)
+  • APPLICATION_FLOW.md (10 min)
+  • DEPLOYMENT_CHECKLIST.md (20 min)
+
+═══════════════════════════════════════════════════════════════════════════
+NEED HELP?
+═══════════════════════════════════════════════════════════════════════════
+
+1. Check browser console for errors: Press F12
+2. Check Network tab for failed requests
+3. Verify Supabase connection
+4. Read troubleshooting section above
+5. Review documentation files
+
+═══════════════════════════════════════════════════════════════════════════
+
+You're all set! Pick a test code and start testing ProfitPilot! 🚀
+
+═══════════════════════════════════════════════════════════════════════════
