@@ -41,32 +41,34 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="dashboard-page md:pl-8">
+      <div className="mx-auto max-w-4xl">
       <div className="grid grid-cols-1 gap-8">
-        <Link href="/dashboard/settings/billing" className="text-blue-400 hover:text-blue-300">Manage Billing</Link>
+        <div><h1 className="font-display text-3xl font-semibold text-ink">Settings</h1><p className="mt-2 text-text-secondary">Keep your business details and account access up to date.</p></div>
+        <Link href="/dashboard/settings/billing" className="w-fit rounded-md text-sm font-semibold text-blue hover:text-violet focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue">Manage billing</Link>
         {/* Business Settings */}
-        <Card className="bg-slate-800 border-slate-700">
+        <Card className="dashboard-panel">
           <CardHeader>
-            <CardTitle className="text-white">Business Settings</CardTitle>
-            <CardDescription>Manage your business information</CardDescription>
+            <CardTitle className="font-display text-ink">Business settings</CardTitle>
+            <CardDescription>Manage the business information your team sees.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             <div>
-              <Label htmlFor="businessName" className="text-slate-300">
-                Business Name
+              <Label htmlFor="businessName" className="text-text-secondary">
+                Business name
               </Label>
               <Input
                 id="businessName"
                 value={businessName}
                 onChange={(e) => setBusinessName(e.target.value)}
                 placeholder="Enter business name"
-                className="mt-2 bg-slate-700 border-slate-600 text-white placeholder:text-slate-500"
+                className="dashboard-input mt-2"
               />
             </div>
 
             <div>
-              <Label htmlFor="businessEmail" className="text-slate-300">
-                Business Email
+              <Label htmlFor="businessEmail" className="text-text-secondary">
+                Business email
               </Label>
               <Input
                 id="businessEmail"
@@ -74,46 +76,46 @@ export default function SettingsPage() {
                 value={businessEmail}
                 onChange={(e) => setBusinessEmail(e.target.value)}
                 placeholder="Enter business email"
-                className="mt-2 bg-slate-700 border-slate-600 text-white placeholder:text-slate-500"
+                className="dashboard-input mt-2"
               />
             </div>
 
             <div>
-              <Label htmlFor="businessPhone" className="text-slate-300">
-                Business Phone
+              <Label htmlFor="businessPhone" className="text-text-secondary">
+                Business phone
               </Label>
               <Input
                 id="businessPhone"
                 value={businessPhone}
                 onChange={(e) => setBusinessPhone(e.target.value)}
                 placeholder="Enter business phone"
-                className="mt-2 bg-slate-700 border-slate-600 text-white placeholder:text-slate-500"
+                className="dashboard-input mt-2"
               />
             </div>
 
             <Button
               onClick={handleSave}
               disabled={loading}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+              className="dashboard-primary w-full"
             >
               <Save className="w-4 h-4 mr-2" />
-              {loading ? 'Saving...' : 'Save Settings'}
+              {loading ? 'Saving...' : 'Save business settings'}
             </Button>
           </CardContent>
         </Card>
 
         {/* Account Security */}
-        <Card className="bg-slate-800 border-slate-700">
+        <Card className="dashboard-panel">
           <CardHeader>
-            <CardTitle className="text-white">Account Security</CardTitle>
-            <CardDescription>Manage your account access</CardDescription>
+            <CardTitle className="font-display text-ink">Account security</CardTitle>
+            <CardDescription>Manage your account access.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            <div className="flex items-start gap-4 p-4 rounded-lg bg-blue-500/10 border border-blue-500/30">
-              <AlertCircle className="w-5 h-5 text-blue-400 mt-0.5 flex-shrink-0" />
+            <div className="flex items-start gap-4 rounded-lg border border-blue/20 bg-blue/5 p-4">
+              <AlertCircle className="w-5 h-5 text-blue mt-0.5 flex-shrink-0" />
               <div>
-                <p className="text-sm text-slate-300">
-                  Your access code is securely stored. Never share it with anyone. If you suspect unauthorized access, contact support immediately.
+                <p className="text-sm text-text-secondary">
+                  Your account is protected by secure credentials. If you suspect unauthorized access, contact support immediately.
                 </p>
               </div>
             </div>
@@ -121,22 +123,23 @@ export default function SettingsPage() {
         </Card>
 
         {/* Danger Zone */}
-        <Card className="bg-slate-800 border-slate-700">
+        <Card className="dashboard-panel">
           <CardHeader>
-            <CardTitle className="text-white">Danger Zone</CardTitle>
-            <CardDescription>Actions that cannot be undone</CardDescription>
+            <CardTitle className="font-display text-ink">Danger zone</CardTitle>
+            <CardDescription>Actions that cannot be undone.</CardDescription>
           </CardHeader>
           <CardContent>
             <Button
-              onClick={handleLogout}
+              onClick={() => { if (window.confirm('Log out of Vendari?')) handleLogout() }}
               variant="destructive"
-              className="w-full bg-red-600 hover:bg-red-700 text-white"
+              className="w-full bg-negative text-white hover:bg-negative/90"
             >
               <LogOut className="w-4 h-4 mr-2" />
-              Logout
+              Log out
             </Button>
           </CardContent>
         </Card>
+      </div>
       </div>
     </div>
   )

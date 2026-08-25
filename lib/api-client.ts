@@ -7,7 +7,7 @@ type ApiOptions = RequestInit & { skipRefresh?: boolean }
 function apiUrl(path: string) {
   const baseUrl = process.env.NEXT_PUBLIC_API_URL
   if (!baseUrl) throw new Error('NEXT_PUBLIC_API_URL is not configured')
-  return `${baseUrl.replace(/\/$/, '')}${path}`
+  return `${baseUrl.replace(/\/api\/?$/, '').replace(/\/$/, '')}${path}`
 }
 
 export async function appOrigin() {

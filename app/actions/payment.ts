@@ -16,7 +16,10 @@ export async function initializePayment(business_id: string, plan_id: string) {
 
 export async function verifyPayment(reference: string) {
   try {
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/payment/verify/`, {
+    const baseUrl = process.env.NEXT_PUBLIC_API_URL
+    if (!baseUrl) throw new Error('NEXT_PUBLIC_API_URL is not configured')
+    const apiOrigin = baseUrl.replace(/\/api\/?$/, '').replace(/\/$/, '')
+    const response = await fetch(`${apiOrigin}/api/payment/verify/`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ reference }),

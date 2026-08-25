@@ -16,12 +16,21 @@ class RegisterSerializer(serializers.Serializer):
     business_name = serializers.CharField(max_length=255)
 
     def validate_email(self, value):
-        if User.objects.filter(email__iexact=value).exists():
+        existing_user = User.objects.filter(email__iexact=value).first()
+        if existing_user and existing_user.is_verified:
             raise serializers.ValidationError('A user with this email already exists.')
         return value.lower()
 
     @transaction.atomic
     def create(self, validated_data):
+        existing_user = User.objects.filter(email__iexact=validated_data['email']).first()
+        if existing_user:
+            verification = EmailVerificationToken.objects.filter(user=existing_user).first()
+            if verification:
+                verification.delete()
+            verification = EmailVerificationToken.objects.create(user=existing_user)
+            return existing_user, verification, True
+
         user = User.objects.create_user(
             email=validated_data['email'],
             password=validated_data['password'],
@@ -33,7 +42,7 @@ class RegisterSerializer(serializers.Serializer):
         )
         Membership.objects.create(user=user, business=business, role=Membership.ROLE_OWNER)
         verification = EmailVerificationToken.objects.create(user=user)
-        return user, verification
+        return user, verification, False
 
 
 class VerifyEmailSerializer(serializers.Serializer):

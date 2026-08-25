@@ -3,13 +3,12 @@
 import React from "react"
 
 import { useEffect, useState } from 'react'
-import { DashboardNav } from '@/components/dashboard/DashboardNav'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { getBusiness, getInventory, addInventoryItem, updateInventoryItem, deleteInventoryItem } from '@/app/actions/business'
-import { Plus, Edit2, AlertTriangle } from 'lucide-react'
+import { Plus, Edit2, AlertTriangle, Package } from 'lucide-react'
 import { toast } from 'sonner'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 
@@ -120,8 +119,8 @@ export default function InventoryPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
-        <div className="text-white">Loading...</div>
+      <div className="dashboard-page flex items-center justify-center">
+        <div className="text-text-secondary">Loading your inventory...</div>
       </div>
     )
   }
@@ -129,28 +128,26 @@ export default function InventoryPage() {
   const lowStockItems = inventory.filter((item) => item.quantity_in_stock <= (item.reorder_level || 10))
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
-      <DashboardNav />
-
-      <main className="md:ml-64 p-4 md:p-8">
+    <div className="dashboard-page md:pl-8">
+      <main className="mx-auto max-w-7xl">
         <div className="mb-8 flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-white">Inventory Management</h1>
-            <p className="text-slate-400 mt-2">{inventory.length} products tracked</p>
+            <h1 className="font-display text-3xl font-semibold text-ink">Inventory</h1>
+            <p className="mt-2 text-text-secondary">Know what is on the shelf before a customer asks for it.</p>
           </div>
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <DialogTrigger asChild>
               <Button
                 onClick={() => handleOpenDialog()}
-                className="bg-blue-600 hover:bg-blue-700"
+                className="dashboard-primary"
               >
                 <Plus className="w-4 h-4 mr-2" />
                 Add Item
               </Button>
             </DialogTrigger>
-            <DialogContent className="bg-slate-800 border-slate-700 max-w-2xl">
+            <DialogContent className="dashboard-panel max-w-2xl">
               <DialogHeader>
-                <DialogTitle className="text-white">
+                  <DialogTitle className="font-display text-ink">
                   {editingId ? 'Edit Item' : 'Add New Item'}
                 </DialogTitle>
               </DialogHeader>
@@ -162,7 +159,7 @@ export default function InventoryPage() {
                     onChange={(e) =>
                       setFormData({ ...formData, product_name: e.target.value })
                     }
-                    className="bg-slate-700 border-slate-600 text-white mt-1"
+                    className="dashboard-input mt-1"
                     placeholder="Product name"
                     required
                   />
@@ -176,7 +173,7 @@ export default function InventoryPage() {
                       onChange={(e) =>
                         setFormData({ ...formData, product_code: e.target.value })
                       }
-                      className="bg-slate-700 border-slate-600 text-white mt-1"
+                      className="dashboard-input mt-1"
                       placeholder="SKU or code"
                     />
                   </div>
@@ -187,7 +184,7 @@ export default function InventoryPage() {
                       onChange={(e) =>
                         setFormData({ ...formData, category: e.target.value })
                       }
-                      className="bg-slate-700 border-slate-600 text-white mt-1"
+                      className="dashboard-input mt-1"
                       placeholder="e.g., Electronics"
                     />
                   </div>
@@ -202,7 +199,7 @@ export default function InventoryPage() {
                       onChange={(e) =>
                         setFormData({ ...formData, quantity_in_stock: parseInt(e.target.value) })
                       }
-                      className="bg-slate-700 border-slate-600 text-white mt-1"
+                      className="dashboard-input mt-1"
                       placeholder="0"
                     />
                   </div>
@@ -214,7 +211,7 @@ export default function InventoryPage() {
                       onChange={(e) =>
                         setFormData({ ...formData, reorder_level: parseInt(e.target.value) })
                       }
-                      className="bg-slate-700 border-slate-600 text-white mt-1"
+                      className="dashboard-input mt-1"
                       placeholder="10"
                     />
                   </div>
@@ -230,7 +227,7 @@ export default function InventoryPage() {
                       onChange={(e) =>
                         setFormData({ ...formData, unit_cost: parseFloat(e.target.value) })
                       }
-                      className="bg-slate-700 border-slate-600 text-white mt-1"
+                      className="dashboard-input mt-1"
                       placeholder="0.00"
                     />
                   </div>
@@ -243,7 +240,7 @@ export default function InventoryPage() {
                       onChange={(e) =>
                         setFormData({ ...formData, selling_price: parseFloat(e.target.value) })
                       }
-                      className="bg-slate-700 border-slate-600 text-white mt-1"
+                      className="dashboard-input mt-1"
                       placeholder="0.00"
                     />
                   </div>
@@ -256,7 +253,7 @@ export default function InventoryPage() {
                     onChange={(e) =>
                       setFormData({ ...formData, supplier_name: e.target.value })
                     }
-                    className="bg-slate-700 border-slate-600 text-white mt-1"
+                    className="dashboard-input mt-1"
                     placeholder="Supplier name"
                   />
                 </div>
@@ -268,12 +265,12 @@ export default function InventoryPage() {
                     onChange={(e) =>
                       setFormData({ ...formData, supplier_contact: e.target.value })
                     }
-                    className="bg-slate-700 border-slate-600 text-white mt-1"
+                    className="dashboard-input mt-1"
                     placeholder="Phone or email"
                   />
                 </div>
 
-                <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700">
+                <Button type="submit" className="dashboard-primary w-full">
                   {editingId ? 'Update Item' : 'Add Item'}
                 </Button>
               </form>
@@ -284,25 +281,25 @@ export default function InventoryPage() {
         {/* Low Stock Alert */}
         {lowStockItems.length > 0 && (
           <Card className="bg-red-500/10 border-red-500/30 mb-8">
-            <CardContent className="p-6 flex items-start gap-4">
-              <AlertTriangle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
+            <CardContent className="border border-warning/25 bg-warning/5 p-6 flex items-start gap-4">
+              <AlertTriangle className="w-5 h-5 text-warning flex-shrink-0 mt-0.5" />
               <div>
-                <p className="text-red-300 font-semibold">{lowStockItems.length} items low in stock</p>
-                <p className="text-red-200/70 text-sm">Consider reordering these items soon</p>
+                <p className="text-warning font-semibold">{lowStockItems.length} items low in stock</p>
+                <p className="text-text-secondary text-sm">Review these items before the next customer asks for them.</p>
               </div>
             </CardContent>
           </Card>
         )}
 
         {/* Inventory Table */}
-        <Card className="bg-slate-800/50 border-slate-700 backdrop-blur">
+        <Card className="dashboard-panel">
           <CardHeader>
-            <CardTitle className="text-white">Product Inventory</CardTitle>
+            <CardTitle className="font-display text-ink">Product inventory</CardTitle>
           </CardHeader>
           <CardContent>
             {inventory.length > 0 ? (
               <div className="overflow-x-auto">
-                <table className="w-full text-sm text-slate-300">
+                <table className="dashboard-table w-full text-sm text-text-secondary">
                   <thead>
                     <tr className="border-b border-slate-700">
                       <th className="text-left py-3 px-4 font-semibold">Product</th>
@@ -321,11 +318,11 @@ export default function InventoryPage() {
                       return (
                         <tr
                           key={item.id}
-                          className={`border-b border-slate-700 hover:bg-slate-700/30 ${
+                          className={`${
                             isLowStock ? 'bg-red-500/5' : ''
                           }`}
                         >
-                          <td className="py-3 px-4 font-medium text-white">{item.product_name}</td>
+                          <td className="py-3 px-4 font-medium text-ink">{item.product_name}</td>
                           <td className="py-3 px-4">{item.product_code || '-'}</td>
                           <td className="py-3 px-4">{item.category || '-'}</td>
                           <td className="py-3 px-4">
@@ -354,6 +351,7 @@ export default function InventoryPage() {
                               </Button>
                               <Button
                                 onClick={async () => {
+                                  if (!window.confirm(`Delete ${item.product_name}? This cannot be undone.`)) return
                                   const result = await deleteInventoryItem(business.id, item.id)
                                   if (result.success) {
                                     toast.success('Item deleted successfully!')
@@ -364,7 +362,7 @@ export default function InventoryPage() {
                                 }}
                                 size="sm"
                                 variant="ghost"
-                                className="text-red-400 hover:bg-red-500/10"
+                                className="text-negative hover:bg-negative/10"
                               >
                                 ×
                               </Button>
@@ -377,7 +375,7 @@ export default function InventoryPage() {
                 </table>
               </div>
             ) : (
-              <p className="text-slate-400 text-center py-12">No inventory items yet. Start by adding products.</p>
+              <div className="dashboard-empty"><Package className="h-8 w-8 text-blue" /><p>No products yet. Add your first item to start tracking stock.</p><Button onClick={() => handleOpenDialog()} className="dashboard-primary">Add your first item</Button></div>
             )}
           </CardContent>
         </Card>

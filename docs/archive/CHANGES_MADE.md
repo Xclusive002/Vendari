@@ -11,16 +11,12 @@ ProfitPilot has been completely refactored to offer **free access with no paymen
 
 ## New Files Created
 
-1. `/app/get-access-code/page.tsx` - New page for email-based access code generation
-   - Users enter email
-   - System generates unique 8-character alphanumeric code
-   - Code displayed and copyable
-   - Beautiful success screen with next steps
+1. `/app/register/page.tsx` - Registration page for email and password authentication
 
 ## Modified Files
 
 ### 1. `/app/page.tsx` (Landing Page)
-- Changed CTA from `/login` to `/get-access-code`
+- Changed CTA from `/login` to `/register`
 - Updated "Manage Business" button to point to access code page
 - Changed pricing section from "₦20,000" to "FREE"
 - Updated feature list to reflect free access
@@ -29,7 +25,7 @@ ProfitPilot has been completely refactored to offer **free access with no paymen
 ### 2. `/app/login/page.tsx` (Login Page)
 - Removed "Purchase Access Code" button
 - Added "Get Free Access Code" button
-- Points to `/get-access-code` instead of `/payment`
+- Points to `/register` instead of `/payment`
 - Same login interface remains
 
 ### 3. `/app/actions/auth.ts` (Authentication)

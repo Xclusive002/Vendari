@@ -3,13 +3,12 @@
 import React from "react"
 
 import { useEffect, useState } from 'react'
-import { DashboardNav } from '@/components/dashboard/DashboardNav'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { getBusiness, getSales, addSale } from '@/app/actions/business'
-import { Plus, Search, Download } from 'lucide-react'
+import { ClipboardList, Plus, Search, Download } from 'lucide-react'
 import { toast } from 'sonner'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
@@ -128,42 +127,40 @@ export default function SalesPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
-        <div className="text-white">Loading...</div>
+      <div className="dashboard-page flex items-center justify-center">
+        <div className="text-text-secondary">Loading your sales...</div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
-      <DashboardNav />
-
-      <main className="md:ml-64 p-4 md:p-8">
+    <div className="dashboard-page md:pl-8">
+      <main className="mx-auto max-w-7xl">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-white">Sales Record</h1>
-          <p className="text-slate-400 mt-2">Track and analyze all your sales transactions</p>
+          <h1 className="font-display text-3xl font-semibold text-ink">Sales record</h1>
+          <p className="mt-2 text-text-secondary">Keep every order visible so you know what is actually selling.</p>
         </div>
 
         {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <Card className="bg-slate-800/50 border-slate-700">
+          <Card className="dashboard-panel">
             <CardContent className="p-6">
-              <p className="text-slate-400 text-sm mb-2">Total Sales</p>
-              <p className="text-2xl font-bold text-white">₦{totalSales.toLocaleString()}</p>
-              <p className="text-xs text-slate-500 mt-2">{sales.length} transactions</p>
+              <p className="text-text-secondary text-sm mb-2">Total sales</p>
+              <p className="dashboard-number text-2xl font-medium text-ink">N{totalSales.toLocaleString()}</p>
+              <p className="text-xs text-text-muted mt-2">{sales.length} transactions recorded</p>
             </CardContent>
           </Card>
-          <Card className="bg-slate-800/50 border-slate-700">
+          <Card className="dashboard-panel">
             <CardContent className="p-6">
-              <p className="text-slate-400 text-sm mb-2">Average Sale</p>
-              <p className="text-2xl font-bold text-white">₦{averageSale.toLocaleString()}</p>
-              <p className="text-xs text-slate-500 mt-2">Per transaction</p>
+              <p className="text-text-secondary text-sm mb-2">Average sale</p>
+              <p className="dashboard-number text-2xl font-medium text-ink">N{averageSale.toLocaleString()}</p>
+              <p className="text-xs text-text-muted mt-2">Per transaction</p>
             </CardContent>
           </Card>
-          <Card className="bg-slate-800/50 border-slate-700">
+          <Card className="dashboard-panel">
             <CardContent className="p-6">
-              <p className="text-slate-400 text-sm mb-2">This Month</p>
-              <p className="text-2xl font-bold text-white">
+              <p className="text-text-secondary text-sm mb-2">This month</p>
+              <p className="dashboard-number text-2xl font-medium text-ink">
                 {sales.filter((s) => {
                   const saleDate = new Date(s.sale_date)
                   const now = new Date()
@@ -173,15 +170,15 @@ export default function SalesPage() {
                   )
                 }).length}
               </p>
-              <p className="text-xs text-slate-500 mt-2">Sales recorded</p>
+              <p className="text-xs text-text-muted mt-2">Sales recorded</p>
             </CardContent>
           </Card>
         </div>
 
         {/* Chart */}
-        <Card className="bg-slate-800/50 border-slate-700 backdrop-blur mb-8">
+        <Card className="dashboard-panel mb-8">
           <CardHeader>
-            <CardTitle className="text-white">Sales Trend (Last 14 Days)</CardTitle>
+            <CardTitle className="font-display text-ink">Sales trend (last 14 days)</CardTitle>
           </CardHeader>
           <CardContent>
             {salesByDay.length > 0 ? (
@@ -198,8 +195,9 @@ export default function SalesPage() {
                 </BarChart>
               </ResponsiveContainer>
             ) : (
-              <div className="h-300 flex items-center justify-center text-slate-400">
-                No sales data yet
+                <div className="dashboard-empty">
+                <ClipboardList className="h-8 w-8 text-blue" />
+                <p>No sales yet. Record your first sale to see your trend here.</p>
               </div>
             )}
           </CardContent>
@@ -213,19 +211,19 @@ export default function SalesPage() {
               placeholder="Search by product name or transaction ID..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 bg-slate-800 border-slate-700 text-white placeholder:text-slate-500"
+              className="dashboard-input pl-10"
             />
           </div>
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <DialogTrigger asChild>
-              <Button className="bg-blue-600 hover:bg-blue-700 whitespace-nowrap">
+              <Button className="dashboard-primary whitespace-nowrap">
                 <Plus className="w-4 h-4 mr-2" />
                 Record Sale
               </Button>
             </DialogTrigger>
-            <DialogContent className="bg-slate-800 border-slate-700">
+            <DialogContent className="dashboard-panel">
               <DialogHeader>
-                <DialogTitle className="text-white">Record a New Sale</DialogTitle>
+                <DialogTitle className="font-display text-ink">Record a new sale</DialogTitle>
               </DialogHeader>
               <form onSubmit={handleAddSale} className="space-y-4">
                 <div>
@@ -236,7 +234,7 @@ export default function SalesPage() {
                     onChange={(e) =>
                       setFormData({ ...formData, sale_date: e.target.value })
                     }
-                    className="bg-slate-700 border-slate-600 text-white mt-1"
+                    className="dashboard-input mt-1"
                   />
                 </div>
                 <div>
@@ -246,7 +244,7 @@ export default function SalesPage() {
                     onChange={(e) =>
                       setFormData({ ...formData, product_name: e.target.value })
                     }
-                    className="bg-slate-700 border-slate-600 text-white mt-1"
+                    className="dashboard-input mt-1"
                     placeholder="Product name"
                     required
                   />
@@ -260,7 +258,7 @@ export default function SalesPage() {
                       onChange={(e) =>
                         setFormData({ ...formData, quantity: parseInt(e.target.value) })
                       }
-                      className="bg-slate-700 border-slate-600 text-white mt-1"
+                      className="dashboard-input mt-1"
                       placeholder="0"
                       required
                     />
@@ -274,7 +272,7 @@ export default function SalesPage() {
                       onChange={(e) =>
                         setFormData({ ...formData, unit_price: parseFloat(e.target.value) })
                       }
-                      className="bg-slate-700 border-slate-600 text-white mt-1"
+                      className="dashboard-input mt-1"
                       placeholder="0.00"
                       required
                     />
@@ -287,7 +285,7 @@ export default function SalesPage() {
                     onChange={(e) =>
                       setFormData({ ...formData, payment_method: e.target.value })
                     }
-                    className="w-full bg-slate-700 border border-slate-600 text-white rounded mt-1 px-3 py-2"
+                    className="dashboard-input mt-1 w-full px-3 py-2"
                   >
                     <option value="cash">Cash</option>
                     <option value="card">Card</option>
@@ -302,11 +300,11 @@ export default function SalesPage() {
                     onChange={(e) =>
                       setFormData({ ...formData, notes: e.target.value })
                     }
-                    className="bg-slate-700 border-slate-600 text-white mt-1"
+                    className="dashboard-input mt-1"
                     placeholder="Optional notes"
                   />
                 </div>
-                <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700">
+                <Button type="submit" className="dashboard-primary w-full">
                   Record Sale
                 </Button>
               </form>
@@ -315,16 +313,16 @@ export default function SalesPage() {
         </div>
 
         {/* Sales Table */}
-        <Card className="bg-slate-800/50 border-slate-700 backdrop-blur">
+        <Card className="dashboard-panel">
           <CardHeader>
-            <CardTitle className="text-white">All Sales</CardTitle>
+            <CardTitle className="font-display text-ink">All sales</CardTitle>
           </CardHeader>
           <CardContent>
             {filteredSales.length > 0 ? (
               <div className="overflow-x-auto">
-                <table className="w-full text-sm text-slate-300">
+                <table className="dashboard-table w-full text-sm text-text-secondary">
                   <thead>
-                    <tr className="border-b border-slate-700">
+                    <tr className="border-b border-border">
                       <th className="text-left py-3 px-4 font-semibold">Date</th>
                       <th className="text-left py-3 px-4 font-semibold">Product</th>
                       <th className="text-center py-3 px-4 font-semibold">Qty</th>
@@ -335,18 +333,18 @@ export default function SalesPage() {
                   </thead>
                   <tbody>
                     {filteredSales.map((sale) => (
-                      <tr key={sale.id} className="border-b border-slate-700 hover:bg-slate-700/30">
+                      <tr key={sale.id}>
                         <td className="py-3 px-4">
                           {new Date(sale.sale_date).toLocaleDateString()}
                         </td>
-                        <td className="py-3 px-4 font-medium text-white">{sale.product_name}</td>
-                        <td className="py-3 px-4 text-center">{sale.quantity}</td>
-                        <td className="py-3 px-4 text-right">₦{sale.unit_price.toLocaleString()}</td>
-                        <td className="py-3 px-4 text-right font-semibold text-green-400">
-                          ₦{sale.total_amount.toLocaleString()}
+                        <td className="py-3 px-4 font-medium text-ink">{sale.product_name}</td>
+                        <td className="dashboard-number py-3 px-4 text-center">{sale.quantity}</td>
+                        <td className="dashboard-number py-3 px-4 text-right">N{sale.unit_price.toLocaleString()}</td>
+                        <td className="dashboard-number py-3 px-4 text-right font-semibold text-positive">
+                          N{sale.total_amount.toLocaleString()}
                         </td>
                         <td className="py-3 px-4 text-xs">
-                          <span className="bg-blue-500/20 text-blue-300 px-2 py-1 rounded">
+                            <span className="rounded bg-blue/10 px-2 py-1 text-blue">
                             {sale.payment_method}
                           </span>
                         </td>
@@ -356,9 +354,7 @@ export default function SalesPage() {
                 </table>
               </div>
             ) : (
-              <p className="text-slate-400 text-center py-12">
-                {searchQuery ? 'No sales found matching your search' : 'No sales recorded yet'}
-              </p>
+              <div className="dashboard-empty"><ClipboardList className="h-8 w-8 text-blue" /><p>{searchQuery ? 'No sales match that search. Try a product name or transaction ID.' : 'No sales yet. Record your first sale to start seeing your business history.'}</p>{!searchQuery && <Button onClick={() => setDialogOpen(true)} className="dashboard-primary">Record your first sale</Button>}</div>
             )}
           </CardContent>
         </Card>

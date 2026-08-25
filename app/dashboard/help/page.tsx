@@ -154,7 +154,7 @@ const faqs = [
   {
     question: 'Is my data secure?',
     answer:
-      'Yes, all your business data is encrypted and securely stored. Access is protected by your unique access code, and your data is never shared with third parties.',
+      'Yes, all your business data is encrypted and securely stored. Access is protected by your account credentials, and your data is never shared with third parties.',
   },
   {
     question: 'Can I export my reports?',

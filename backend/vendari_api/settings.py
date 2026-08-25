@@ -104,8 +104,8 @@ REST_FRAMEWORK = {
     ),
 }
 
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-DEFAULT_FROM_EMAIL = 'noreply@vendari.local'
+RESEND_API_KEY = env('RESEND_API_KEY', default='')
+DEFAULT_FROM_EMAIL = env('DEFAULT_FROM_EMAIL', default='noreply@yourdomain.com')
 
 SIMPLE_JWT = {
     'ALGORITHM': 'HS256',

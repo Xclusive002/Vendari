@@ -25,25 +25,29 @@ export default function BillingPage() {
   }
 
   return (
-    <div className="max-w-3xl mx-auto px-4 py-8">
-      <Card className="bg-slate-800 border-slate-700">
+    <div className="dashboard-page md:pl-8">
+      <div className="mx-auto max-w-3xl">
+      <Card className="dashboard-panel">
         <CardHeader>
-          <CardTitle className="text-white">Billing</CardTitle>
+          <CardTitle className="font-display text-ink">Billing</CardTitle>
           <CardDescription>Choose a plan and continue securely with Paystack.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <input className="w-full rounded-md bg-slate-700 border border-slate-600 p-2 text-white" placeholder="Business ID" value={businessId} onChange={(event) => setBusinessId(event.target.value)} />
-          <select className="w-full rounded-md bg-slate-700 border border-slate-600 p-2 text-white" value={planId} onChange={(event) => setPlanId(event.target.value)}>
+          <label htmlFor="business-id" className="block text-sm font-medium text-text-secondary">Business ID</label>
+          <input id="business-id" className="dashboard-input w-full p-2" value={businessId} onChange={(event) => setBusinessId(event.target.value)} />
+          <label htmlFor="billing-plan" className="block text-sm font-medium text-text-secondary">Plan</label>
+          <select id="billing-plan" className="dashboard-input w-full p-2" value={planId} onChange={(event) => setPlanId(event.target.value)}>
             <option value="1">Plan 1</option>
             <option value="2">Plan 2</option>
             <option value="3">Plan 3</option>
           </select>
-          {error && <p className="text-sm text-red-300">{error}</p>}
-          <Button onClick={startPayment} disabled={!businessId || loading} className="bg-blue-600 hover:bg-blue-700">
+          {error && <p className="text-sm text-negative">{error}</p>}
+          <Button onClick={startPayment} disabled={!businessId || loading} className="dashboard-primary">
             {loading ? 'Starting payment...' : 'Continue to Paystack'}
           </Button>
         </CardContent>
       </Card>
+      </div>
     </div>
   )
 }

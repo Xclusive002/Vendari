@@ -7,3 +7,4 @@ celery==5.6.3
 redis==8.1.0
 django-environ==0.14.0
 drf-nested-routers==0.95.0
+resend==2.23.0

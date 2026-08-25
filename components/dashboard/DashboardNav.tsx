@@ -1,94 +1,34 @@
 'use client'
 
-import { useState } from 'react'
 import Link from 'next/link'
-import { TrendingUp, BarChart3, Package, FileText, HelpCircle, LogOut, Menu, X, Settings, MessageCircle } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { usePathname } from 'next/navigation'
+import { useState } from 'react'
+import { BarChart3, ClipboardList, LayoutDashboard, LogOut, Menu, Package, Receipt, Settings, ShoppingCart, Users, X } from 'lucide-react'
 import { logout } from '@/app/actions/auth'
-import { toast } from 'sonner'
 
 export function DashboardNav() {
+  const pathname = usePathname()
   const [isOpen, setIsOpen] = useState(false)
-  const [loggingOut, setLoggingOut] = useState(false)
-
   const navItems = [
-    { href: '/dashboard', label: 'Dashboard', icon: BarChart3 },
-    { href: '/dashboard/sales', label: 'Sales', icon: TrendingUp },
+    { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { href: '/dashboard/sales', label: 'Sales', icon: ShoppingCart },
     { href: '/dashboard/inventory', label: 'Inventory', icon: Package },
-    { href: '/dashboard/reports', label: 'Reports', icon: FileText },
+    { href: '/dashboard/customers', label: 'Customers', icon: Users },
+    { href: '/dashboard/reports', label: 'Reports', icon: BarChart3 },
+    { href: '/dashboard/purchases', label: 'Purchases', icon: ClipboardList },
+    { href: '/dashboard/expenses', label: 'Expenses', icon: Receipt },
     { href: '/dashboard/settings', label: 'Settings', icon: Settings },
-    { href: '/dashboard/ask', label: 'Ask Vendari', icon: MessageCircle },
-    { href: '/dashboard/help', label: 'Help & Tutorial', icon: HelpCircle },
   ]
 
-  const handleLogout = async () => {
-    setLoggingOut(true)
-    try {
-      await logout()
-      toast.success('Logged out successfully')
-    } catch (error) {
-      toast.error('Failed to logout')
-      setLoggingOut(false)
-    }
-  }
-
-  return (
-    <>
-      {/* Mobile Toggle */}
-      <button className="fixed top-4 right-4 z-50 md:hidden bg-slate-800 p-2 rounded-lg border border-slate-700" onClick={() => setIsOpen(!isOpen)}>
-        {isOpen ? <X className="w-6 h-6 text-white" /> : <Menu className="w-6 h-6 text-white" />}
-      </button>
-
-      {/* Sidebar */}
-      <aside
-        className={`fixed left-0 top-0 h-screen w-64 bg-slate-900 border-r border-slate-800 p-6 transform transition-transform duration-300 z-40 ${
-          isOpen ? 'translate-x-0' : '-translate-x-full'
-        } md:translate-x-0`}
-      >
-        <div className="flex items-center gap-3 mb-8">
-          <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
-            <TrendingUp className="w-6 h-6 text-white" />
-          </div>
-          <h1 className="text-xl font-bold text-white">Vendari</h1>
-        </div>
-
-        <nav className="space-y-2 flex-1">
-          {navItems.map((item) => {
-            const Icon = item.icon
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className="flex items-center gap-3 px-4 py-3 rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white transition group"
-                onClick={() => setIsOpen(false)}
-              >
-                <Icon className="w-5 h-5 group-hover:text-blue-400 transition" />
-                <span>{item.label}</span>
-              </Link>
-            )
-          })}
-        </nav>
-
-        <div className="pt-4 border-t border-slate-800">
-          <Button 
-            onClick={handleLogout}
-            disabled={loggingOut}
-            variant="outline" 
-            className="w-full border-slate-700 hover:bg-red-900/20 hover:border-red-700 text-slate-300 hover:text-red-300 justify-start gap-3 bg-transparent"
-          >
-            <LogOut className="w-4 h-4" />
-            {loggingOut ? 'Logging out...' : 'Logout'}
-          </Button>
-        </div>
-      </aside>
-
-      {/* Close sidebar when clicking outside on mobile */}
-      {isOpen && (
-        <div
-          className="fixed inset-0 bg-black/50 md:hidden z-30"
-          onClick={() => setIsOpen(false)}
-        />
-      )}
-    </>
-  )
+  return <>
+    <button type="button" aria-label={isOpen ? 'Close navigation' : 'Open navigation'} onClick={() => setIsOpen(!isOpen)} className="fixed right-4 top-4 z-50 rounded-lg bg-ink p-2 text-white shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue md:hidden">{isOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}</button>
+    <aside className={`fixed inset-y-0 left-0 z-40 flex w-64 flex-col bg-ink px-4 py-6 text-white transition-transform duration-300 md:translate-x-0 ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+      <Link href="/dashboard" className="mb-10 flex items-center gap-3 rounded-md px-3 font-display text-lg font-bold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue"><span className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-gradient text-sm">V</span> Vendari</Link>
+      <nav className="flex-1 space-y-1" aria-label="Dashboard navigation">{navItems.map(({ href, label, icon: Icon }) => { const active = pathname === href || (href !== '/dashboard' && pathname.startsWith(`${href}/`)); return <Link key={href} href={href} onClick={() => setIsOpen(false)} className={`group flex items-center gap-3 rounded-r-lg border-l-2 px-3 py-3 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue ${active ? 'border-blue bg-brand-gradient/20 text-white' : 'border-transparent text-white/55 hover:bg-white/5 hover:text-white'}`}><Icon className={`h-4 w-4 ${active ? 'text-blue' : 'text-white/45 group-hover:text-blue'}`} />{label}</Link> })}</nav>
+      <button type="button" onClick={() => logout()} className="flex items-center gap-3 rounded-md px-3 py-3 text-sm font-medium text-white/55 hover:bg-negative/10 hover:text-negative focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue"><LogOut className="h-4 w-4" /> Log out</button>
+    </aside>
+    {isOpen && <button type="button" aria-label="Close navigation overlay" className="fixed inset-0 z-30 bg-ink/60 md:hidden" onClick={() => setIsOpen(false)} />}
+  </>
 }
+
+export default DashboardNav

@@ -19,7 +19,7 @@
 
 ### New Access Code Generation Page
 
-**Location**: `/get-access-code`
+**Location**: `/register`
 
 Features:
 - Beautiful email input form
@@ -32,18 +32,18 @@ Features:
 ### Updated Pages
 
 **Landing Page** (`/`)
-- Points to `/get-access-code` for "Manage Business"
+- Points to `/register` for "Manage Business"
 - Changed pricing to "FREE"
 - Removed payment information
 
 **Login Page** (`/login`)
 - "Get Free Access Code" button
-- Points to `/get-access-code`
+- Points to `/register`
 
 ## Technical Changes
 
 ### New Code
-- `/app/get-access-code/page.tsx` - Access code generation page
+- `/app/register/page.tsx` - Registration page
 
 ### Updated Code
 - `/app/page.tsx` - Landing page

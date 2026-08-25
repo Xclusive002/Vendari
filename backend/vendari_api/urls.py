@@ -15,6 +15,7 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
+from django.http import JsonResponse
 from django.urls import include, path
 from rest_framework_nested import routers
 
@@ -35,7 +36,12 @@ sales_router.register('sales', SaleViewSet, basename='business-sales')
 expenses_router = routers.NestedSimpleRouter(business_router, 'businesses', lookup='business')
 expenses_router.register('expenses', ExpenseViewSet, basename='business-expenses')
 
+
+def health_check(request):
+    return JsonResponse({'status': 'ok', 'service': 'vendari-api'})
+
 urlpatterns = [
+    path('', health_check, name='health-check'),
     path('admin/', admin.site.urls),
     path('api/auth/', include('accounts.urls')),
     path('api/billing/paystack/initialize/', PaystackInitializeView.as_view()),

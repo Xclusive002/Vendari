@@ -10,7 +10,7 @@ ProfitPilot is now completely **FREE** to use. Here's how the new flow works:
 
 ### Step 2: Get Access Code
 - User clicks "Manage Business"
-- Taken to `/get-access-code` page
+- Taken to `/register` page
 - User enters their email address
 - Clicks "Generate Access Code"
 - System creates user in database and generates random 8-character code
