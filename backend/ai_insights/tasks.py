@@ -89,19 +89,20 @@ def compute_business_insights(business_id):
                 'estimated_days_until_stockout': round(days_until_stockout, 2),
             }))
 
-    for period_days, start, prior_start in ((7, current_7_start, prior_7_start), (30, current_30_start, prior_30_start)):
-        previous_end = start
-        sales = _number(Sale.objects.filter(business=business, sold_at__gte=start).aggregate(total=Sum('total'))['total'])
-        prior_sales = _number(Sale.objects.filter(business=business, sold_at__gte=prior_start, sold_at__lt=previous_end).aggregate(total=Sum('total'))['total'])
-        expenses = _number(Expense.objects.filter(business=business, date__gte=start.date()).aggregate(total=Sum('amount'))['total'])
-        prior_expenses = _number(Expense.objects.filter(business=business, date__gte=prior_start.date(), date__lt=previous_end.date()).aggregate(total=Sum('amount'))['total'])
-        insights.append(_create_insight(business, f'financial_summary_{period_days}d', {
-            'period_days': period_days,
-            'total_sales': sales,
-            'total_expenses': expenses,
-            'sales_percentage_change_vs_prior_period': _percentage_change(sales, prior_sales),
-            'expenses_percentage_change_vs_prior_period': _percentage_change(expenses, prior_expenses),
-        }))
+    if Sale.objects.filter(business=business).exists() or Expense.objects.filter(business=business).exists() or items.exists():
+        for period_days, start, prior_start in ((7, current_7_start, prior_7_start), (30, current_30_start, prior_30_start)):
+            previous_end = start
+            sales = _number(Sale.objects.filter(business=business, sold_at__gte=start).aggregate(total=Sum('total'))['total'])
+            prior_sales = _number(Sale.objects.filter(business=business, sold_at__gte=prior_start, sold_at__lt=previous_end).aggregate(total=Sum('total'))['total'])
+            expenses = _number(Expense.objects.filter(business=business, date__gte=start.date()).aggregate(total=Sum('amount'))['total'])
+            prior_expenses = _number(Expense.objects.filter(business=business, date__gte=prior_start.date(), date__lt=previous_end.date()).aggregate(total=Sum('amount'))['total'])
+            insights.append(_create_insight(business, f'financial_summary_{period_days}d', {
+                'period_days': period_days,
+                'total_sales': sales,
+                'total_expenses': expenses,
+                'sales_percentage_change_vs_prior_period': _percentage_change(sales, prior_sales),
+                'expenses_percentage_change_vs_prior_period': _percentage_change(expenses, prior_expenses),
+            }))
 
     expenses_30 = Expense.objects.filter(business=business, date__gte=current_30_start.date())
     average = expenses_30.aggregate(value=Avg('amount'))['value']

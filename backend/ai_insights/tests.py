@@ -56,6 +56,15 @@ class InsightsTests(APITestCase):
 		self.assertTrue(AIInsight.objects.filter(business=self.business, insight_type='expense_anomaly').exists())
 		self.assertEqual(AIInsight.objects.first().summary_text, 'Test summary')
 
+	def test_task_creates_no_insights_for_empty_business(self):
+		empty_business = Business.objects.create(owner=self.user, name='Empty Business')
+		Membership.objects.create(user=self.user, business=empty_business, role='owner')
+
+		created = compute_business_insights(empty_business.pk)
+
+		self.assertEqual(created, 0)
+		self.assertFalse(AIInsight.objects.filter(business=empty_business).exists())
+
 	def test_insights_endpoint_feature_gate(self):
 		self.client.force_authenticate(self.user)
 		from billing.models import Plan

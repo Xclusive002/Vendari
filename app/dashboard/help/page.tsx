@@ -1,6 +1,5 @@
 'use client'
 
-import { DashboardNav } from '@/components/dashboard/DashboardNav'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
 import { HelpCircle, Play, BookOpen, Award, Lightbulb, Settings } from 'lucide-react'
@@ -171,9 +170,7 @@ const faqs = [
 export default function HelpPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
-      <DashboardNav />
-
-      <main className="md:ml-64 p-4 md:p-8">
+      <main className="p-4 md:p-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-white flex items-center gap-3">
             <HelpCircle className="w-8 h-8 text-blue-400" />

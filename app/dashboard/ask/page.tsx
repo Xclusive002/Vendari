@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react'
 import { askBusiness } from '@/app/actions/query'
 import { getBusiness } from '@/app/actions/business'
-import { DashboardNav } from '@/components/dashboard/DashboardNav'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -28,8 +27,7 @@ export default function AskPage() {
 
   return (
     <div className="min-h-screen bg-slate-900">
-      <DashboardNav />
-      <main className="md:ml-64 p-4 md:p-8 max-w-4xl">
+      <main className="p-4 md:p-8 max-w-4xl">
         <Card className="bg-slate-800/50 border-slate-700">
           <CardHeader><CardTitle className="text-white">Ask Vendari</CardTitle></CardHeader>
           <CardContent>

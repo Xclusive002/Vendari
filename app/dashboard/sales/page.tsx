@@ -113,7 +113,7 @@ export default function SalesPage() {
         month: 'short',
         day: 'numeric',
       })
-      const existing = acc.find((item) => item.date === date)
+      const existing = acc.find((item: { date: string; amount: number; count: number }) => item.date === date)
       if (existing) {
         existing.amount += sale.total_amount
         existing.count += 1

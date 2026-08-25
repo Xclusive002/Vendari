@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useState } from 'react'
-import { BarChart3, ClipboardList, LayoutDashboard, LogOut, Menu, Package, Receipt, Settings, ShoppingCart, Users, X } from 'lucide-react'
+import { BarChart3, HelpCircle, LayoutDashboard, LogOut, Menu, MessageCircleQuestion, Package, Receipt, Settings, Settings2, ShoppingCart, Users, X } from 'lucide-react'
 import { logout } from '@/app/actions/auth'
 
 export function DashboardNav() {
@@ -15,8 +15,10 @@ export function DashboardNav() {
     { href: '/dashboard/inventory', label: 'Inventory', icon: Package },
     { href: '/dashboard/customers', label: 'Customers', icon: Users },
     { href: '/dashboard/reports', label: 'Reports', icon: BarChart3 },
-    { href: '/dashboard/purchases', label: 'Purchases', icon: ClipboardList },
     { href: '/dashboard/expenses', label: 'Expenses', icon: Receipt },
+    { href: '/dashboard/help', label: 'Help', icon: HelpCircle },
+    { href: '/dashboard/setup', label: 'Setup', icon: Settings2 },
+    { href: '/dashboard/ask', label: 'Ask', icon: MessageCircleQuestion },
     { href: '/dashboard/settings', label: 'Settings', icon: Settings },
   ]
 

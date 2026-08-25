@@ -23,6 +23,7 @@ from businesses.views import BusinessViewSet
 from inventory.views import InventoryItemViewSet
 from sales.views import SaleViewSet
 from expenses.views import ExpenseViewSet
+from customers.views import CustomerViewSet
 from billing.views import PaystackInitializeView, PaystackWebhookView
 from ai_insights.views import BusinessAskView, BusinessInsightsView
 
@@ -35,6 +36,8 @@ sales_router = routers.NestedSimpleRouter(business_router, 'businesses', lookup=
 sales_router.register('sales', SaleViewSet, basename='business-sales')
 expenses_router = routers.NestedSimpleRouter(business_router, 'businesses', lookup='business')
 expenses_router.register('expenses', ExpenseViewSet, basename='business-expenses')
+customers_router = routers.NestedSimpleRouter(business_router, 'businesses', lookup='business')
+customers_router.register('customers', CustomerViewSet, basename='business-customers')
 
 
 def health_check(request):
@@ -48,8 +51,10 @@ urlpatterns = [
     path('api/billing/paystack/webhook/', PaystackWebhookView.as_view()),
     path('api/businesses/<int:business_id>/ai-insights/', BusinessInsightsView.as_view()),
     path('api/businesses/<int:business_id>/ask/', BusinessAskView.as_view()),
+    path('api/notifications/', include('notifications.urls')),
     path('api/', include(business_router.urls)),
     path('api/', include(inventory_router.urls)),
     path('api/', include(sales_router.urls)),
     path('api/', include(expenses_router.urls)),
+    path('api/', include(customers_router.urls)),
 ]

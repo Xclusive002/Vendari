@@ -34,6 +34,10 @@ type ApiItem = {
   is_low_stock?: boolean
 }
 
+type RequestResult<T> =
+  | { success: true; data: T }
+  | { success: false; error: string }
+
 function itemFromApi(item: ApiItem) {
   return {
     ...item,
@@ -57,7 +61,7 @@ function itemToApi(item: Partial<ItemData>) {
   }
 }
 
-async function request<T>(path: string, options?: RequestInit) {
+async function request<T>(path: string, options?: RequestInit): Promise<RequestResult<T>> {
   try {
     return { success: true, data: await apiJson<T>(path, options) }
   } catch (error) {
@@ -90,7 +94,8 @@ export async function getBusiness() {
 
 export async function addInventoryItem(businessId: string, itemData: ItemData) {
   const result = await request<ApiItem>(`/api/businesses/${businessId}/inventory/`, { method: 'POST', body: JSON.stringify(itemToApi(itemData)) })
-  return result.success ? { success: true, data: itemFromApi(result.data) } : result
+  if (!result.success) return result
+  return { success: true as const, data: itemFromApi(result.data) }
 }
 
 export async function getInventory(businessId: string) {
@@ -100,7 +105,8 @@ export async function getInventory(businessId: string) {
 
 export async function updateInventoryItem(businessId: string, itemId: string, updates: Partial<ItemData>) {
   const result = await request<ApiItem>(`/api/businesses/${businessId}/inventory/${itemId}/`, { method: 'PATCH', body: JSON.stringify(itemToApi(updates)) })
-  return result.success ? { success: true, data: itemFromApi(result.data) } : result
+  if (!result.success) return result
+  return { success: true as const, data: itemFromApi(result.data) }
 }
 
 export async function deleteInventoryItem(businessId: string, itemId: string) {
@@ -123,6 +129,14 @@ export async function addExpense(businessId: string, expenseData: any) {
   return request(`/api/businesses/${businessId}/expenses/`, { method: 'POST', body: JSON.stringify({ ...expenseData, date: expenseData.expense_date }) })
 }
 
+export async function updateExpense(businessId: string, expenseId: string, expenseData: any) {
+  return request(`/api/businesses/${businessId}/expenses/${expenseId}/`, { method: 'PATCH', body: JSON.stringify({ ...expenseData, date: expenseData.expense_date }) })
+}
+
+export async function deleteExpense(businessId: string, expenseId: string) {
+  return request(`/api/businesses/${businessId}/expenses/${expenseId}/`, { method: 'DELETE' })
+}
+
 export async function getExpenses(businessId: string, startDate?: string, endDate?: string) {
   const query = new URLSearchParams()
   if (startDate) query.set('date_from', startDate)
@@ -134,4 +148,21 @@ export async function getExpenses(businessId: string, startDate?: string, endDat
 export async function getInsights(businessId: string) {
   const result = await request<any[]>(`/api/businesses/${businessId}/ai-insights/`)
   return result.success ? { success: true, data: result.data } : { ...result, data: [] }
+}
+
+export async function addCustomer(businessId: string, customerData: any) {
+  return request(`/api/businesses/${businessId}/customers/`, { method: 'POST', body: JSON.stringify(customerData) })
+}
+
+export async function updateCustomer(businessId: string, customerId: string, customerData: any) {
+  return request(`/api/businesses/${businessId}/customers/${customerId}/`, { method: 'PATCH', body: JSON.stringify(customerData) })
+}
+
+export async function deleteCustomer(businessId: string, customerId: string) {
+  return request(`/api/businesses/${businessId}/customers/${customerId}/`, { method: 'DELETE' })
+}
+
+export async function getCustomers(businessId: string) {
+  const result = await request<any[]>(`/api/businesses/${businessId}/customers/`)
+  return result.success ? { success: true as const, data: result.data } : { ...result, data: [] }
 }

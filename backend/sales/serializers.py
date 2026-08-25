@@ -21,6 +21,9 @@ class SaleSerializer(serializers.ModelSerializer):
         item = InventoryItem.objects.select_for_update().get(pk=item.pk)
         if item.business_id != business.id:
             raise serializers.ValidationError({'item': 'The inventory item does not belong to this business.'})
+        customer = validated_data.get('customer')
+        if customer is not None and customer.business_id != business.id:
+            raise serializers.ValidationError({'customer': 'The customer does not belong to this business.'})
         quantity = validated_data['quantity']
         if quantity <= 0:
             raise serializers.ValidationError({'quantity': 'Quantity must be greater than zero.'})

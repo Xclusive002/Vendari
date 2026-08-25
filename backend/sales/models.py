@@ -5,6 +5,7 @@ from django.utils import timezone
 class Sale(models.Model):
     business = models.ForeignKey('businesses.Business', related_name='sales', on_delete=models.CASCADE)
     item = models.ForeignKey('inventory.InventoryItem', null=True, blank=True, on_delete=models.SET_NULL, related_name='sales')
+    customer = models.ForeignKey('customers.Customer', null=True, blank=True, on_delete=models.SET_NULL, related_name='sales')
     product_name = models.CharField(max_length=255)
     quantity = models.IntegerField()
     unit_price = models.DecimalField(max_digits=12, decimal_places=2)

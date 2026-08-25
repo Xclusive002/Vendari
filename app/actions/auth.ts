@@ -14,15 +14,6 @@ export async function register(email: string, password: string, business_name: s
   }
 }
 
-export async function verifyEmail(token: string) {
-  try {
-    const data = await apiJson('/api/auth/verify-email/', { method: 'POST', body: JSON.stringify({ token }), skipRefresh: true })
-    return { success: true, data }
-  } catch (error) {
-    return { success: false, error: error instanceof Error ? error.message : 'Verification failed' }
-  }
-}
-
 export async function login(email: string, password: string) {
   try {
     const tokens = await apiJson<{ access: string; refresh: string }>('/api/auth/login/', { method: 'POST', body: JSON.stringify({ email, password }), skipRefresh: true })
@@ -37,7 +28,19 @@ export async function login(email: string, password: string) {
 }
 
 export async function getCurrentUser() {
-  return null
+  try {
+    return await apiJson<{ email: string; has_seen_welcome: boolean }>('/api/auth/me/')
+  } catch {
+    return null
+  }
+}
+
+export async function markWelcomeSeen() {
+  try {
+    return await apiJson<{ has_seen_welcome: boolean }>('/api/auth/mark-welcome-seen/', { method: 'POST' })
+  } catch {
+    return null
+  }
 }
 
 export async function getBusiness() {

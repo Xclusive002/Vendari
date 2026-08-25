@@ -2,24 +2,16 @@ import logging
 
 from django.db import transaction
 from rest_framework import status
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from .models import EmailVerificationToken, User
-from utils.email import VerificationEmailError, send_verification_email as send_resend_verification_email
+from .models import EmailVerificationToken
 from .serializers import InviteAcceptSerializer, LoginSerializer, RegisterSerializer, VerifyEmailSerializer
+from .serializers_profile import CurrentUserSerializer
 
 logger = logging.getLogger(__name__)
-
-
-def send_verification_email(user, verification):
-    try:
-        send_resend_verification_email(user.email, str(verification.token))
-        return True
-    except VerificationEmailError:
-        return False
 
 
 def token_pair(user):
@@ -33,40 +25,14 @@ class RegisterView(APIView):
     def post(self, request):
         serializer = RegisterSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        user, verification, was_resend = serializer.save()
-        if not send_verification_email(user, verification):
-            return Response(
-                {'error': 'We could not send the verification email. Please try again.'},
-                status=status.HTTP_503_SERVICE_UNAVAILABLE,
-            )
+        user = serializer.save()
         return Response(
             {
-                'message': 'Verification email resent.' if was_resend else 'Registration successful. Check your email to verify your account.',
+                'message': 'Registration successful. You can now sign in.',
                 'email': user.email,
             },
-            status=status.HTTP_200_OK if was_resend else status.HTTP_201_CREATED,
+            status=status.HTTP_201_CREATED,
         )
-
-
-class ResendVerificationView(APIView):
-    permission_classes = [AllowAny]
-
-    def post(self, request):
-        email = request.data.get('email', '').strip().lower()
-        user = User.objects.filter(email__iexact=email).first()
-        if user is None or user.is_verified:
-            return Response({'message': 'If that account needs verification, an email will be sent.'})
-
-        verification = EmailVerificationToken.objects.filter(user=user).first()
-        if verification:
-            verification.delete()
-        verification = EmailVerificationToken.objects.create(user=user)
-        if not send_verification_email(user, verification):
-            return Response(
-                {'error': 'We could not send the verification email. Please try again.'},
-                status=status.HTTP_503_SERVICE_UNAVAILABLE,
-            )
-        return Response({'message': 'Verification email resent.', 'email': user.email})
 
 
 class VerifyEmailView(APIView):
@@ -94,6 +60,23 @@ class LoginView(APIView):
         serializer = LoginSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         return Response(token_pair(serializer.validated_data['user']))
+
+
+class CurrentUserView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        return Response(CurrentUserSerializer(request.user).data)
+
+
+class MarkWelcomeSeenView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        if not request.user.has_seen_welcome:
+            request.user.has_seen_welcome = True
+            request.user.save(update_fields=('has_seen_welcome',))
+        return Response({'has_seen_welcome': True})
 
 
 class AcceptInviteView(APIView):

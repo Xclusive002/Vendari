@@ -103,7 +103,7 @@ export default function ReportsPage() {
         month: 'short',
         day: 'numeric',
       })
-      const existing = acc.find((item) => item.date === date)
+      const existing = acc.find((item: { date: string; revenue: number; expenses: number }) => item.date === date)
       if (existing) {
         existing.revenue += sale.total_amount
       } else {
@@ -120,7 +120,7 @@ export default function ReportsPage() {
       month: 'short',
       day: 'numeric',
     })
-    const existing = dailyData.find((item) => item.date === date)
+    const existing = dailyData.find((item: { date: string; revenue: number; expenses: number }) => item.date === date)
     if (existing) {
       existing.expenses += expense.amount
     } else {
@@ -129,7 +129,7 @@ export default function ReportsPage() {
   })
 
   // Sort by date
-  dailyData.sort((a, b) => {
+  dailyData.sort((a: { date: string; revenue: number; expenses: number }, b: { date: string; revenue: number; expenses: number }) => {
     const dateA = new Date(a.date)
     const dateB = new Date(b.date)
     return dateA.getTime() - dateB.getTime()
@@ -138,7 +138,7 @@ export default function ReportsPage() {
   // Expense breakdown
   const expenseByCategory = expenses.reduce(
     (acc, expense) => {
-      const existing = acc.find((item) => item.category === expense.category)
+      const existing = acc.find((item: { category: string; amount: number }) => item.category === expense.category)
       if (existing) {
         existing.amount += expense.amount
       } else {
@@ -368,7 +368,7 @@ export default function ReportsPage() {
           <CardContent>
             {expenseByCategory.length > 0 ? (
               <div className="space-y-2">
-                {expenseByCategory.map((item) => (
+                {expenseByCategory.map((item: { category: string; amount: number }) => (
                   <div key={item.category} className="flex items-center justify-between rounded-lg border-b border-border p-4 hover:bg-blue/5">
                     <span className="text-text-secondary">{item.category}</span>
                     <span className="dashboard-number font-semibold text-ink">N{item.amount.toLocaleString()}</span>

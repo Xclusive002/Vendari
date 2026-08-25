@@ -79,6 +79,21 @@ body {
   .dashboard-danger {
     color: var(--negative);
   }
+
+  .welcome-modal {
+    animation: welcome-modal-in 220ms ease-out both;
+  }
+
+  @keyframes welcome-modal-in {
+    from {
+      opacity: 0;
+      transform: scale(0.96);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -95,6 +110,10 @@ body {
   .motion-hover:hover {
     transform: none;
     box-shadow: none;
+  }
+
+  .welcome-modal {
+    animation: none;
   }
 }
 
