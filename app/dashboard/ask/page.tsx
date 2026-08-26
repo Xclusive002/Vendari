@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { askBusiness } from '@/app/actions/query'
 import { getBusiness } from '@/app/actions/business'
 import { Button } from '@/components/ui/button'
@@ -12,6 +12,7 @@ export default function AskPage() {
   const [question, setQuestion] = useState('')
   const [answer, setAnswer] = useState<{ text: string; data: Record<string, unknown> } | null>(null)
   const [loading, setLoading] = useState(false)
+  const askingRef = useRef(false)
 
   useEffect(() => {
     getBusiness().then((business) => business && setBusinessId(String(business.id)))
@@ -19,10 +20,16 @@ export default function AskPage() {
 
   const submit = async (event: React.FormEvent) => {
     event.preventDefault()
+    if (askingRef.current) return
+    askingRef.current = true
     setLoading(true)
-    const result = await askBusiness(businessId, question)
-    if ('answer' in result) setAnswer({ text: result.answer, data: result.data_used })
-    setLoading(false)
+    try {
+      const result = await askBusiness(businessId, question)
+      if ('answer' in result) setAnswer({ text: result.answer, data: result.data_used })
+    } finally {
+      askingRef.current = false
+      setLoading(false)
+    }
   }
 
   return (

@@ -2,7 +2,7 @@
 
 import React from "react"
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -18,6 +18,8 @@ export default function InventoryPage() {
   const [loading, setLoading] = useState(true)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
+  const [saving, setSaving] = useState(false)
+  const savingRef = useRef(false)
   const [formData, setFormData] = useState({
     product_name: '',
     product_code: '',
@@ -86,12 +88,15 @@ export default function InventoryPage() {
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (savingRef.current) return
 
     if (!formData.product_name) {
       toast.error('Product name is required')
       return
     }
 
+    savingRef.current = true
+    setSaving(true)
     try {
       if (editingId) {
         const result = await updateInventoryItem(business.id, editingId, formData)
@@ -114,6 +119,9 @@ export default function InventoryPage() {
     } catch (error) {
       console.error('[Inventory] Error:', error)
       toast.error('An error occurred')
+    } finally {
+      savingRef.current = false
+      setSaving(false)
     }
   }
 
@@ -270,8 +278,8 @@ export default function InventoryPage() {
                   />
                 </div>
 
-                <Button type="submit" className="dashboard-primary w-full">
-                  {editingId ? 'Update Item' : 'Add Item'}
+                <Button type="submit" disabled={saving} className="dashboard-primary w-full">
+                  {saving ? 'Saving...' : editingId ? 'Update Item' : 'Add Item'}
                 </Button>
               </form>
             </DialogContent>

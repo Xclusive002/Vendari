@@ -24,6 +24,9 @@ class SalesApiTests(APITestCase):
     def test_sale_decrements_stock(self):
         response = self.client.post(self.url, {'item': self.item_a.pk, 'quantity': 2, 'payment_method': 'cash'})
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.data['product_name'], 'Widget')
+        self.assertEqual(response.data['unit_price'], '2.00')
+        self.assertEqual(response.data['total'], '4.00')
         self.item_a.refresh_from_db()
         self.assertEqual(self.item_a.qty_in_stock, 3)
 

@@ -7,7 +7,7 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 from businesses.models import Business, InviteCode, Membership
 
-from .models import EmailVerificationToken, User
+from .models import User
 
 
 class RegisterSerializer(serializers.Serializer):
@@ -17,7 +17,7 @@ class RegisterSerializer(serializers.Serializer):
 
     def validate_email(self, value):
         existing_user = User.objects.filter(email__iexact=value).first()
-        if existing_user and existing_user.is_verified:
+        if existing_user:
             raise serializers.ValidationError('A user with this email already exists.')
         return value.lower()
 
@@ -25,11 +25,7 @@ class RegisterSerializer(serializers.Serializer):
     def create(self, validated_data):
         existing_user = User.objects.filter(email__iexact=validated_data['email']).first()
         if existing_user:
-            verification = EmailVerificationToken.objects.filter(user=existing_user).first()
-            if verification:
-                verification.delete()
-            verification = EmailVerificationToken.objects.create(user=existing_user)
-            return existing_user, verification, True
+            raise serializers.ValidationError('A user with this email already exists.')
 
         user = User.objects.create_user(
             email=validated_data['email'],
@@ -41,8 +37,7 @@ class RegisterSerializer(serializers.Serializer):
             email=user.email,
         )
         Membership.objects.create(user=user, business=business, role=Membership.ROLE_OWNER)
-        verification = EmailVerificationToken.objects.create(user=user)
-        return user, verification, False
+        return user
 
 
 class VerifyEmailSerializer(serializers.Serializer):
@@ -57,8 +52,6 @@ class LoginSerializer(serializers.Serializer):
         user = authenticate(email=attrs['email'], password=attrs['password'])
         if user is None:
             raise serializers.ValidationError('Invalid email or password.')
-        if not user.is_verified:
-            raise serializers.ValidationError('Please verify your email before logging in.')
         if not user.is_active:
             raise serializers.ValidationError('This account is inactive.')
         attrs['user'] = user

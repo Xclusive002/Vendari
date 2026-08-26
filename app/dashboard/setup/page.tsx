@@ -2,7 +2,7 @@
 
 import React from "react"
 
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -13,6 +13,7 @@ import { Loader2 } from 'lucide-react'
 
 export default function SetupPage() {
   const [loading, setLoading] = useState(false)
+  const submittingRef = useRef(false)
   const router = useRouter()
   const [formData, setFormData] = useState({
     business_name: '',
@@ -32,12 +33,14 @@ export default function SetupPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (submittingRef.current) return
 
     if (!formData.business_name.trim()) {
       toast.error('Business name is required')
       return
     }
 
+    submittingRef.current = true
     setLoading(true)
 
     try {
@@ -53,6 +56,7 @@ export default function SetupPage() {
       console.error('[Setup] Error:', error)
       toast.error('An error occurred')
     } finally {
+      submittingRef.current = false
       setLoading(false)
     }
   }

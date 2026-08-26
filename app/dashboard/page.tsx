@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from 'react'
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
-import { AlertTriangle, ArrowDownRight, ArrowUpRight, CircleDollarSign, Lightbulb, Package, ShoppingCart, Wallet } from 'lucide-react'
+import { AlertTriangle, ArrowDownRight, ArrowUpRight, ArrowRight, CircleDollarSign, Lightbulb, Package, ShoppingCart, Wallet } from 'lucide-react'
+import Link from 'next/link'
 import { getBusiness, getExpenses, getInsights, getInventory, getSales } from '@/app/actions/business'
 import { getCurrentUser, markWelcomeSeen } from '@/app/actions/auth'
 import { useCountUp } from '@/hooks/use-count-up'
@@ -83,6 +84,13 @@ export default function DashboardPage() {
       <section className="mx-auto mt-6 grid max-w-7xl gap-6 lg:grid-cols-[1fr_1.35fr]" aria-label="Stock alerts and AI insights">
         <article className="rounded-xl border border-warning/25 bg-surface p-5 shadow-sm sm:p-6"><div className="flex items-center justify-between"><div className="flex items-center gap-2"><AlertTriangle className="h-4 w-4 text-warning" /><h2 className="font-display text-lg font-semibold text-ink">Low stock alerts</h2></div><span className="rounded-full bg-negative/10 px-2 py-1 text-xs font-medium text-negative">{lowStock.length} items</span></div><div className="mt-5 space-y-3">{lowStock.length ? lowStock.map(([name, quantity, reorder]) => <div key={name} className="flex items-center justify-between rounded-lg border border-border bg-bg p-3"><div><p className="text-sm font-medium text-ink">{name}</p><p className="mt-1 text-xs text-text-muted">Reorder at {reorder}</p></div><p className="font-mono text-sm font-medium text-negative">{quantity} left</p></div>) : <p className="text-sm text-text-muted">Add inventory items to start tracking stock levels.</p>}</div></article>
         <article className="rounded-xl bg-ink p-5 text-white shadow-sm sm:p-6"><div className="flex items-center gap-2 text-blue"><Lightbulb className="h-4 w-4" /><h2 className="font-display text-lg font-semibold">AI insights</h2></div>{insight ? <><p className="mt-5 font-display text-xl font-semibold leading-snug">{insight.summary_text}</p><div className="mt-6 grid gap-4 border-t border-white/10 pt-4 text-xs sm:grid-cols-2"><div><p className="text-white/45">Computed from your real numbers</p><p className="mt-1 font-mono text-white/80">Sales + stock + purchases</p></div><div><p className="text-white/45">AI explanation</p><p className="mt-1 text-white/75">This explanation is based on your latest business data.</p></div></div></> : <p className="mt-5 font-display text-xl font-semibold leading-snug">Insights appear here once you&apos;ve recorded a few days of sales and inventory activity — check back soon.</p>}</article>
+      </section>
+
+      <section className="mx-auto mt-6 max-w-7xl rounded-xl border border-blue/20 bg-surface p-5 shadow-sm sm:p-6" aria-labelledby="concierge-promo-heading">
+        <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+          <div className="max-w-2xl"><p className="text-xs font-semibold uppercase tracking-[0.18em] text-blue">VENDARI CONCIERGE</p><h2 id="concierge-promo-heading" className="mt-3 font-display text-2xl font-semibold text-ink">Ready for more customers to find you?</h2><p className="mt-3 text-sm leading-6 text-text-secondary">Vendari Concierge pairs you with a dedicated growth officer who builds your website, sets up your Google listing, and runs your ads — using your real sales data to know what to promote. You keep ownership of everything; your officer just runs it.</p></div>
+          <Link href="/dashboard/concierge" className="inline-flex shrink-0 items-center justify-center gap-2 rounded-lg bg-brand-gradient px-5 py-3 text-sm font-semibold text-white">Learn about Concierge <ArrowRight className="h-4 w-4" /></Link>
+        </div>
       </section>
     </main>
     </>

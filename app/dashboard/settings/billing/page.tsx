@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 
 import { initializePayment } from '@/app/actions/payment'
 import { Button } from '@/components/ui/button'
@@ -10,18 +10,27 @@ export default function BillingPage() {
   const [planId, setPlanId] = useState('1')
   const [businessId, setBusinessId] = useState('')
   const [loading, setLoading] = useState(false)
+  const paymentRef = useRef(false)
   const [error, setError] = useState('')
 
   const startPayment = async () => {
+    if (paymentRef.current) return
+    paymentRef.current = true
     setLoading(true)
     setError('')
-    const result = await initializePayment(businessId, planId)
-    if ('authorization_url' in result && result.success && result.authorization_url) {
-      window.location.href = result.authorization_url
-      return
+    try {
+      const result = await initializePayment(businessId, planId)
+      if ('authorization_url' in result && result.success && result.authorization_url) {
+        window.location.href = result.authorization_url
+        return
+      }
+      setError(result.error || 'Unable to initialize payment')
+    } catch (error) {
+      setError(error instanceof Error ? error.message : 'Unable to initialize payment')
+    } finally {
+      paymentRef.current = false
+      setLoading(false)
     }
-    setError(result.error || 'Unable to initialize payment')
-    setLoading(false)
   }
 
   return (

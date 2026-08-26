@@ -34,7 +34,8 @@ DEBUG = env('DEBUG', default=True)
 ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=['localhost', '127.0.0.1', '0.0.0.0'])
 CORS_ALLOWED_ORIGINS = env.list('CORS_ALLOWED_ORIGINS', default=['http://localhost:3000'])
 PAYSTACK_SECRET_KEY = env('PAYSTACK_SECRET_KEY', default='')
-ANTHROPIC_API_KEY = env('ANTHROPIC_API_KEY', default='')
+GEMINI_API_KEY = env('GEMINI_API_KEY', default='')
+GEMINI_MODEL = env('GEMINI_MODEL', default='models/gemini-3.6-flash')
 
 # Application definition
 
@@ -55,6 +56,7 @@ INSTALLED_APPS = [
     'expenses',
     'customers',
     'notifications',
+    'invoices',
     'billing',
     'ai_insights',
 ]
@@ -160,6 +162,11 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = 'static/'
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+# Local media is for development only; production should use durable cloud storage
+# such as django-storages with S3 or Cloudinary.
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field

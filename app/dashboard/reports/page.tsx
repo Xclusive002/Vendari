@@ -2,7 +2,7 @@
 
 import React from "react"
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -19,6 +19,8 @@ export default function ReportsPage() {
   const [expenses, setExpenses] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [dialogOpen, setDialogOpen] = useState(false)
+  const [savingExpense, setSavingExpense] = useState(false)
+  const savingExpenseRef = useRef(false)
   const [dateRange, setDateRange] = useState({
     start: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
     end: new Date().toISOString().split('T')[0],
@@ -61,12 +63,15 @@ export default function ReportsPage() {
 
   const handleAddExpense = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (savingExpenseRef.current) return
 
     if (!formData.category || formData.amount <= 0) {
       toast.error('Please fill in all required fields')
       return
     }
 
+    savingExpenseRef.current = true
+    setSavingExpense(true)
     try {
       const result = await addExpense(business.id, formData)
 
@@ -87,6 +92,9 @@ export default function ReportsPage() {
     } catch (error) {
       console.error('[Expenses] Error:', error)
       toast.error('An error occurred')
+    } finally {
+      savingExpenseRef.current = false
+      setSavingExpense(false)
     }
   }
 
@@ -236,7 +244,6 @@ export default function ReportsPage() {
                   <Label className="text-text-secondary">Date</Label>
                   <Input
                     type="date"
-                    value={formData.expense_date}
                     onChange={(e) =>
                       setFormData({ ...formData, expense_date: e.target.value })
                     }
@@ -288,8 +295,8 @@ export default function ReportsPage() {
                     required
                   />
                 </div>
-                <Button type="submit" className="dashboard-primary w-full">
-                  Record Expense
+                <Button type="submit" disabled={savingExpense} className="dashboard-primary w-full">
+                  {savingExpense ? 'Saving...' : 'Record Expense'}
                 </Button>
               </form>
             </DialogContent>

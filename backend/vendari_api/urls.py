@@ -17,15 +17,18 @@ Including another URLconf
 from django.contrib import admin
 from django.http import JsonResponse
 from django.urls import include, path
+from django.conf import settings
+from django.conf.urls.static import static
 from rest_framework_nested import routers
 
-from businesses.views import BusinessViewSet
+from businesses.views import BusinessViewSet, ConciergeInquiryView
 from inventory.views import InventoryItemViewSet
 from sales.views import SaleViewSet
 from expenses.views import ExpenseViewSet
 from customers.views import CustomerViewSet
 from billing.views import PaystackInitializeView, PaystackWebhookView
 from ai_insights.views import BusinessAskView, BusinessInsightsView
+from invoices.views import InvoiceViewSet, SaleReceiptView, GenerateInvoiceNotesView
 
 business_router = routers.SimpleRouter()
 business_router.register('businesses', BusinessViewSet, basename='business')
@@ -38,6 +41,8 @@ expenses_router = routers.NestedSimpleRouter(business_router, 'businesses', look
 expenses_router.register('expenses', ExpenseViewSet, basename='business-expenses')
 customers_router = routers.NestedSimpleRouter(business_router, 'businesses', lookup='business')
 customers_router.register('customers', CustomerViewSet, basename='business-customers')
+invoices_router = routers.NestedSimpleRouter(business_router, 'businesses', lookup='business')
+invoices_router.register('invoices', InvoiceViewSet, basename='business-invoices')
 
 
 def health_check(request):
@@ -47,14 +52,21 @@ urlpatterns = [
     path('', health_check, name='health-check'),
     path('admin/', admin.site.urls),
     path('api/auth/', include('accounts.urls')),
+    path('api/concierge-inquiries/', ConciergeInquiryView.as_view()),
     path('api/billing/paystack/initialize/', PaystackInitializeView.as_view()),
     path('api/billing/paystack/webhook/', PaystackWebhookView.as_view()),
     path('api/businesses/<int:business_id>/ai-insights/', BusinessInsightsView.as_view()),
     path('api/businesses/<int:business_id>/ask/', BusinessAskView.as_view()),
+    path('api/businesses/<int:business_id>/sales/<int:sale_id>/receipt/', SaleReceiptView.as_view()),
+    path('api/businesses/<int:business_id>/invoices/generate-notes/', GenerateInvoiceNotesView.as_view()),
     path('api/notifications/', include('notifications.urls')),
     path('api/', include(business_router.urls)),
     path('api/', include(inventory_router.urls)),
     path('api/', include(sales_router.urls)),
     path('api/', include(expenses_router.urls)),
     path('api/', include(customers_router.urls)),
+    path('api/', include(invoices_router.urls)),
 ]
+
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

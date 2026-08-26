@@ -23,6 +23,9 @@ export async function login(email: string, password: string) {
     cookieStore.set('vendari_refresh', tokens.refresh, { ...options, maxAge: 7 * 24 * 60 * 60 })
     return { success: true }
   } catch (error) {
+    const cookieStore = await cookies()
+    cookieStore.delete('vendari_access')
+    cookieStore.delete('vendari_refresh')
     return { success: false, error: error instanceof Error ? error.message : 'Login failed' }
   }
 }

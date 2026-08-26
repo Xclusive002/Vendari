@@ -1,7 +1,4 @@
-import json
 import math
-import urllib.error
-import urllib.request
 from datetime import timedelta
 from decimal import Decimal
 
@@ -16,6 +13,7 @@ from inventory.models import InventoryItem
 from sales.models import Sale
 
 from .models import AIInsight
+from .gemini import GeminiRateLimitError, generate_content, response_text
 
 
 def _number(value):
@@ -29,29 +27,17 @@ def _percentage_change(current, previous):
 
 
 def _summarize(payload):
-    if not settings.ANTHROPIC_API_KEY:
-        return 'Computed from your business data; an AI summary is unavailable until Anthropic is configured.'
-    request_body = json.dumps({
-        'model': 'claude-sonnet-4-6',
-        'max_tokens': 300,
-        'system': 'Explain only the supplied numbers in one or two plain-language sentences for a small business owner with no accounting background. Do not calculate, infer, or introduce any numbers not present in the payload.',
-        'messages': [{'role': 'user', 'content': json.dumps(payload, separators=(',', ':'))}],
-    }).encode()
-    request = urllib.request.Request(
-        'https://api.anthropic.com/v1/messages',
-        data=request_body,
-        headers={
-            'x-api-key': settings.ANTHROPIC_API_KEY,
-            'anthropic-version': '2023-06-01',
-            'content-type': 'application/json',
-        },
-        method='POST',
-    )
+    if not settings.GEMINI_API_KEY:
+        return 'Computed from your business data; an AI summary is unavailable until Gemini is configured.'
     try:
-        with urllib.request.urlopen(request, timeout=20) as response:
-            data = json.loads(response.read())
-        return ''.join(block.get('text', '') for block in data.get('content', [])).strip() or 'No AI summary was returned.'
-    except (urllib.error.URLError, TimeoutError, json.JSONDecodeError):
+        response = generate_content(
+            str(payload),
+            system_instruction='Explain only the supplied numbers in one or two plain-language sentences for a small business owner with no accounting background. Do not calculate, infer, or introduce any numbers not present in the payload.',
+        )
+        return response_text(response) or 'No AI summary was returned.'
+    except GeminiRateLimitError:
+        return 'The computed figures are available below; Gemini is busy, so try again in a moment for an AI summary.'
+    except Exception:
         return 'The computed figures are available below; an AI summary could not be generated right now.'
 
 

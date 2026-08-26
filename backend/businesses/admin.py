@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Business, InviteCode, Membership
+from .models import Business, ConciergeInquiry, InviteCode, Membership
 
 
 @admin.register(Business)
@@ -22,3 +22,10 @@ class InviteCodeAdmin(admin.ModelAdmin):
     list_display = ('code', 'business', 'role', 'used', 'created_at')
     list_filter = ('business', 'role', 'used')
     search_fields = ('code', 'business__name')
+
+
+@admin.register(ConciergeInquiry)
+class ConciergeInquiryAdmin(admin.ModelAdmin):
+    list_display = ('business_name', 'name', 'phone', 'created_at')
+    list_filter = ('created_at',)
+    search_fields = ('name', 'business_name', 'phone', 'interest')

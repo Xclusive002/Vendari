@@ -9,6 +9,7 @@ from businesses.models import Business, Membership
 from .models import AIInsight
 from .serializers import AIInsightSerializer
 from .query_service import answer_business_question
+from .gemini import GeminiRateLimitError
 
 
 class BusinessInsightsView(APIView):
@@ -38,5 +39,7 @@ class BusinessAskView(APIView):
 			return Response({'detail': 'Question is required.'}, status=status.HTTP_400_BAD_REQUEST)
 		try:
 			return Response(answer_business_question(business, question))
+		except GeminiRateLimitError:
+			return Response({'detail': 'AI is busy, try again in a moment.'}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
 		except Exception:
 			return Response({'detail': 'Unable to answer this question right now.'}, status=status.HTTP_502_BAD_GATEWAY)

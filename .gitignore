@@ -10,3 +10,11 @@ node_modules/
 .next/
 .env*.local
 .DS_Store
+
+# Backend local configuration and generated/runtime files
+backend/.env
+backend/db.sqlite3
+backend/media/
+backend/**/__pycache__/
+*.py[cod]
+tsconfig.tsbuildinfo

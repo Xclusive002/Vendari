@@ -8,6 +8,7 @@ type BusinessData = {
   business_phone?: string
   business_address?: string
   business_type?: string
+  logo?: File | null
 }
 
 type ItemData = {
@@ -80,7 +81,13 @@ export async function createBusiness(businessData: BusinessData) {
 }
 
 export async function updateBusiness(businessId: string, updates: Partial<BusinessData>) {
-  return request(`/api/businesses/${businessId}/`, { method: 'PATCH', body: JSON.stringify({ name: updates.business_name, email: updates.business_email }) })
+  const formData = new FormData()
+  if (updates.business_name !== undefined) formData.set('name', updates.business_name)
+  if (updates.business_email !== undefined) formData.set('email', updates.business_email)
+  if (updates.business_phone !== undefined) formData.set('phone', updates.business_phone)
+  if (updates.business_address !== undefined) formData.set('address', updates.business_address)
+  if (updates.logo) formData.set('logo', updates.logo)
+  return request(`/api/businesses/${businessId}/`, { method: 'PATCH', body: formData })
 }
 
 export async function getBusiness() {
@@ -123,6 +130,33 @@ export async function getSales(businessId: string, startDate?: string, endDate?:
   if (endDate) query.set('date_to', endDate)
   const result = await request<any[]>(`/api/businesses/${businessId}/sales/?${query}`)
   return result.success ? { success: true, data: result.data } : { ...result, data: [] }
+}
+
+export async function generateSaleReceipt(businessId: string, saleId: string) {
+  return request(`/api/businesses/${businessId}/sales/${saleId}/receipt/`, { method: 'POST' })
+}
+
+export async function getInvoice(businessId: string, invoiceId: string) {
+  return request(`/api/businesses/${businessId}/invoices/${invoiceId}/`)
+}
+
+export async function getInvoices(businessId: string, docType?: string, status?: string) {
+  const query = new URLSearchParams()
+  if (docType) query.set('doc_type', docType)
+  if (status) query.set('status', status)
+  const result = await request<any[]>(`/api/businesses/${businessId}/invoices/?${query}`)
+  return result.success ? { success: true, data: result.data } : { ...result, data: [] }
+}
+
+export async function createInvoice(businessId: string, invoiceData: any) {
+  return request(`/api/businesses/${businessId}/invoices/`, { method: 'POST', body: JSON.stringify(invoiceData) })
+}
+
+export async function generateInvoiceNotes(businessId: string, description: string) {
+  return request<{ line_items: any[]; notes: string }>(`/api/businesses/${businessId}/invoices/generate-notes/`, {
+    method: 'POST',
+    body: JSON.stringify({ description }),
+  })
 }
 
 export async function addExpense(businessId: string, expenseData: any) {

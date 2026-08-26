@@ -2,6 +2,7 @@ from datetime import timedelta
 from unittest.mock import patch
 
 from django.utils import timezone
+from django.test import override_settings
 from rest_framework import status
 from rest_framework.test import APITestCase
 
@@ -74,12 +75,15 @@ class InsightsTests(APITestCase):
 		response = self.client.get(f'/api/businesses/{self.business.pk}/ai-insights/')
 		self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
-	@patch('ai_insights.query_service._anthropic_request')
-	def test_ask_data_used_matches_server_tool_result(self, anthropic_request):
-		anthropic_request.side_effect = [
-			{'content': [{'type': 'tool_use', 'id': 'tool-1', 'name': 'get_sales_total', 'input': {'date_from': '2026-01-01', 'date_to': '2026-01-31'}}]},
-			{'content': [{'type': 'text', 'text': 'Your sales total was 123.45.'}]},
-		]
+	@override_settings(GEMINI_API_KEY='test-key')
+	@patch('ai_insights.query_service.response_text', return_value='Your sales total was 123.45.')
+	@patch('ai_insights.query_service.generate_content')
+	@patch('ai_insights.query_service.function_calls')
+	def test_ask_data_used_matches_server_tool_result(self, function_calls, generate_content, response_text):
+		call = type('FunctionCall', (), {'name': 'get_sales_total', 'args': {'date_from': '2026-01-01', 'date_to': '2026-01-31'}})()
+		function_calls.return_value = [call]
+		initial = type('Response', (), {'candidates': [type('Candidate', (), {'content': object()})()]})()
+		generate_content.side_effect = [initial, object()]
 		from billing.models import Plan
 
 		self.business.plan = Plan.objects.create(name='pro')

@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -24,6 +24,8 @@ export default function ExpensesPage() {
   const [loading, setLoading] = useState(true)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
+  const [saving, setSaving] = useState(false)
+  const savingRef = useRef(false)
   const [formData, setFormData] = useState(emptyForm)
 
   useEffect(() => {
@@ -67,20 +69,28 @@ export default function ExpensesPage() {
 
   const handleSave = async (event: React.FormEvent) => {
     event.preventDefault()
+    if (savingRef.current) return
     if (!formData.category || formData.amount <= 0) {
       toast.error('Please fill in all required fields')
       return
     }
 
-    const result = editingId
-      ? await updateExpense(business.id, editingId, formData)
-      : await addExpense(business.id, formData)
-    if (result.success) {
-      toast.success(editingId ? 'Expense updated successfully!' : 'Expense recorded successfully!')
-      setDialogOpen(false)
-      await loadData()
-    } else {
-      toast.error(result.error)
+    savingRef.current = true
+    setSaving(true)
+    try {
+      const result = editingId
+        ? await updateExpense(business.id, editingId, formData)
+        : await addExpense(business.id, formData)
+      if (result.success) {
+        toast.success(editingId ? 'Expense updated successfully!' : 'Expense recorded successfully!')
+        setDialogOpen(false)
+        await loadData()
+      } else {
+        toast.error(result.error)
+      }
+    } finally {
+      savingRef.current = false
+      setSaving(false)
     }
   }
 
@@ -119,7 +129,7 @@ export default function ExpensesPage() {
                 <div><Label className="text-text-secondary">Description</Label><Input value={formData.description} onChange={(event) => setFormData({ ...formData, description: event.target.value })} className="dashboard-input mt-1" placeholder="Optional" /></div>
                 <div><Label className="text-text-secondary">Amount (₦) *</Label><Input type="number" min="0" step="0.01" value={formData.amount} onChange={(event) => setFormData({ ...formData, amount: parseFloat(event.target.value) || 0 })} className="dashboard-input mt-1" required /></div>
                 <div><Label className="text-text-secondary">Payment method</Label><select value={formData.payment_method} onChange={(event) => setFormData({ ...formData, payment_method: event.target.value })} className="dashboard-input mt-1 w-full px-3 py-2"><option value="cash">Cash</option><option value="card">Card</option><option value="transfer">Transfer</option><option value="cheque">Cheque</option></select></div>
-                <Button type="submit" className="dashboard-primary w-full">{editingId ? 'Update Expense' : 'Record Expense'}</Button>
+                <Button type="submit" disabled={saving} className="dashboard-primary w-full">{saving ? 'Saving...' : editingId ? 'Update Expense' : 'Record Expense'}</Button>
               </form>
             </DialogContent>
           </Dialog>

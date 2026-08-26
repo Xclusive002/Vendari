@@ -136,6 +136,33 @@ body {
   }
 }
 
+@media print {
+  body {
+    background: white;
+  }
+
+  .receipt-page {
+    padding: 0;
+  }
+
+  .receipt-page > div {
+    max-width: none;
+  }
+
+  .receipt-actions,
+  aside,
+  header,
+  nav {
+    display: none !important;
+  }
+
+  .receipt-document {
+    box-shadow: none;
+    margin: 0;
+    width: 100%;
+  }
+}
+
 @layer base {
   * {
     border-color: var(--border);

@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -18,6 +18,8 @@ export default function CustomersPage() {
   const [loading, setLoading] = useState(true)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
+  const [saving, setSaving] = useState(false)
+  const savingRef = useRef(false)
   const [formData, setFormData] = useState(emptyForm)
 
   useEffect(() => {
@@ -55,19 +57,27 @@ export default function CustomersPage() {
 
   const handleSave = async (event: React.FormEvent) => {
     event.preventDefault()
+    if (savingRef.current) return
     if (!formData.name || !formData.phone) {
       toast.error('Name and phone are required')
       return
     }
-    const result = editingId
-      ? await updateCustomer(business.id, editingId, formData)
-      : await addCustomer(business.id, formData)
-    if (result.success) {
-      toast.success(editingId ? 'Customer updated successfully!' : 'Customer added successfully!')
-      setDialogOpen(false)
-      await loadData()
-    } else {
-      toast.error(result.error)
+    savingRef.current = true
+    setSaving(true)
+    try {
+      const result = editingId
+        ? await updateCustomer(business.id, editingId, formData)
+        : await addCustomer(business.id, formData)
+      if (result.success) {
+        toast.success(editingId ? 'Customer updated successfully!' : 'Customer added successfully!')
+        setDialogOpen(false)
+        await loadData()
+      } else {
+        toast.error(result.error)
+      }
+    } finally {
+      savingRef.current = false
+      setSaving(false)
     }
   }
 
@@ -98,7 +108,7 @@ export default function CustomersPage() {
                 <div><Label className="text-text-secondary">Email</Label><Input type="email" value={formData.email} onChange={(event) => setFormData({ ...formData, email: event.target.value })} className="dashboard-input mt-1" placeholder="Email address" /></div>
                 <div><Label className="text-text-secondary">Address</Label><Input value={formData.address} onChange={(event) => setFormData({ ...formData, address: event.target.value })} className="dashboard-input mt-1" placeholder="Address" /></div>
                 <div><Label className="text-text-secondary">Notes</Label><Input value={formData.notes} onChange={(event) => setFormData({ ...formData, notes: event.target.value })} className="dashboard-input mt-1" placeholder="Optional notes" /></div>
-                <Button type="submit" className="dashboard-primary w-full">{editingId ? 'Update Customer' : 'Add Customer'}</Button>
+                <Button type="submit" disabled={saving} className="dashboard-primary w-full">{saving ? 'Saving...' : editingId ? 'Update Customer' : 'Add Customer'}</Button>
               </form>
             </DialogContent>
           </Dialog>

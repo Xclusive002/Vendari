@@ -10,6 +10,17 @@ function apiUrl(path: string) {
   return `${baseUrl.replace(/\/api\/?$/, '').replace(/\/$/, '')}${path}`
 }
 
+  function isPublicAuthRequest(path: string) {
+    const pathname = path.split('?')[0].replace(/\/$/, '')
+    return pathname === '/api/auth/login' || pathname === '/api/auth/register' || pathname === '/api/auth/token/refresh'
+  }
+
+  async function clearAuthCookies() {
+    const cookieStore = await cookies()
+    cookieStore.delete('vendari_access')
+    cookieStore.delete('vendari_refresh')
+  }
+
 export async function appOrigin() {
   const requestHeaders = await headers()
   return `${requestHeaders.get('x-forwarded-proto') || 'http'}://${requestHeaders.get('host') || 'localhost:3000'}`
@@ -19,12 +30,13 @@ export async function apiFetch(path: string, options: ApiOptions = {}): Promise<
   const { skipRefresh, ...requestOptions } = options
   const access = (await cookies()).get('vendari_access')?.value
   const requestHeaders = new Headers(requestOptions.headers)
-  if (access) requestHeaders.set('Authorization', `Bearer ${access}`)
-  requestHeaders.set('Content-Type', 'application/json')
+  if (access && !isPublicAuthRequest(path)) requestHeaders.set('Authorization', `Bearer ${access}`)
+  if (!(requestOptions.body instanceof FormData)) requestHeaders.set('Content-Type', 'application/json')
   const response = await fetch(apiUrl(path), { ...requestOptions, headers: requestHeaders, cache: 'no-store' })
   if (response.status === 401 && !skipRefresh && await refreshSession()) {
     return apiFetch(path, { ...options, skipRefresh: true })
   }
+  if (response.status === 401 && !isPublicAuthRequest(path)) await clearAuthCookies()
   return response
 }
 
@@ -35,6 +47,10 @@ async function refreshSession() {
     method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ refresh }), cache: 'no-store',
   })
   if (!response.ok) return false
+  if (!response.ok) {
+    await clearAuthCookies()
+    return false
+  }
   const tokens = await response.json()
   ;(await cookies()).set('vendari_access', tokens.access, {
     httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', path: '/', maxAge: 15 * 60,
