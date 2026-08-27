@@ -2,6 +2,7 @@ from decimal import Decimal
 
 from rest_framework import status
 from rest_framework.test import APITestCase
+from unittest.mock import patch
 
 from accounts.models import User
 from businesses.models import Business, Membership
@@ -77,3 +78,30 @@ class InvoiceApiTests(APITestCase):
         self.assertEqual(response.data['line_items'][0]['quantity'], 2)
         self.assertEqual(response.data['line_items'][0]['unit_price'], '12.50')
         self.assertEqual(Decimal(response.data['total']), Decimal('25.00'))
+
+    @patch('invoices.views.generate_content')
+    @patch('invoices.views.response_text', return_value='{"line_items": [{"description": "Cement", "quantity": 5, "unit_price": 8000}], "notes": "Due in 14 days."}')
+    @patch('invoices.views.settings.GEMINI_API_KEY', 'test-key')
+    def test_generate_notes_returns_json_mode_line_items(self, response_text_mock, generate_content_mock):
+        response = self.client.post(
+            f'/api/businesses/{self.business_a.pk}/invoices/generate-notes/',
+            {'description': '5 bags of cement at 8000 each'},
+            format='json',
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['line_items'][0]['description'], 'Cement')
+        self.assertEqual(response.data['line_items'][0]['quantity'], 5)
+        self.assertEqual(response.data['line_items'][0]['unit_price'], 8000.0)
+        generate_content_mock.assert_called_once()
+        self.assertEqual(generate_content_mock.call_args.kwargs['response_mime_type'], 'application/json')
+
+    @patch('invoices.views.generate_content', side_effect=Exception('ConnectError: [Errno 11002] getaddrinfo failed'))
+    @patch('invoices.views.settings.GEMINI_API_KEY', 'test-key')
+    def test_generate_notes_exposes_network_failure(self, generate_content_mock):
+        response = self.client.post(
+            f'/api/businesses/{self.business_a.pk}/invoices/generate-notes/',
+            {'description': '5 bags of cement at 8000 each'},
+            format='json',
+        )
+        self.assertEqual(response.status_code, status.HTTP_502_BAD_GATEWAY)
+        self.assertIn('unreachable', response.data['detail'])

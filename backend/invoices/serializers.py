@@ -21,8 +21,10 @@ class InvoiceSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Invoice
-        fields = ('id', 'business', 'customer', 'customer_name', 'doc_type', 'doc_number', 'status', 'issue_date', 'due_date', 'notes', 'subtotal', 'tax_amount', 'total', 'linked_sale', 'line_items')
+        fields = ('id', 'business', 'customer', 'customer_name', 'doc_type', 'doc_number', 'status', 'issue_date', 'due_date', 'notes', 'subtotal', 'tax_amount', 'total', 'linked_sale', 'line_items', 'paystack_subaccount_ready')
         read_only_fields = ('id', 'business', 'doc_number', 'subtotal', 'total', 'linked_sale')
+
+    paystack_subaccount_ready = serializers.BooleanField(source='business.paystack_subaccount_code', read_only=True)
 
     def validate(self, attrs):
         business = self.context['business']

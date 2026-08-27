@@ -39,6 +39,9 @@ type RequestResult<T> =
   | { success: true; data: T }
   | { success: false; error: string }
 
+type CustomerResult = { id: number }
+type InvoiceResult = { id: number | string }
+
 function itemFromApi(item: ApiItem) {
   return {
     ...item,
@@ -99,6 +102,22 @@ export async function getBusiness() {
   }
 }
 
+export async function getPaystackBanks() {
+  return request<Array<{ name: string; code: string }>>('/api/paystack/banks/')
+}
+
+export async function verifyBankAccount(businessId: string, bank_code: string, account_number: string) {
+  return request<{ account_name: string; verification_token: string }>(`/api/businesses/${businessId}/verify-bank-account/`, { method: 'POST', body: JSON.stringify({ bank_code, account_number }) })
+}
+
+export async function createPaystackSubaccount(businessId: string, bank_code: string, account_number: string, verification_token: string) {
+  return request<{ account_name: string; subaccount_code: string }>(`/api/businesses/${businessId}/create-subaccount/`, { method: 'POST', body: JSON.stringify({ bank_code, account_number, verification_token }) })
+}
+
+export async function initializeInvoicePayment(businessId: string, invoiceId: string) {
+  return request<{ authorization_url: string; reference: string }>(`/api/businesses/${businessId}/invoices/${invoiceId}/pay/`, { method: 'POST' })
+}
+
 export async function addInventoryItem(businessId: string, itemData: ItemData) {
   const result = await request<ApiItem>(`/api/businesses/${businessId}/inventory/`, { method: 'POST', body: JSON.stringify(itemToApi(itemData)) })
   if (!result.success) return result
@@ -148,8 +167,8 @@ export async function getInvoices(businessId: string, docType?: string, status?:
   return result.success ? { success: true, data: result.data } : { ...result, data: [] }
 }
 
-export async function createInvoice(businessId: string, invoiceData: any) {
-  return request(`/api/businesses/${businessId}/invoices/`, { method: 'POST', body: JSON.stringify(invoiceData) })
+export async function createInvoice(businessId: string, invoiceData: any): Promise<RequestResult<InvoiceResult>> {
+  return request<InvoiceResult>(`/api/businesses/${businessId}/invoices/`, { method: 'POST', body: JSON.stringify(invoiceData) })
 }
 
 export async function generateInvoiceNotes(businessId: string, description: string) {
@@ -184,8 +203,8 @@ export async function getInsights(businessId: string) {
   return result.success ? { success: true, data: result.data } : { ...result, data: [] }
 }
 
-export async function addCustomer(businessId: string, customerData: any) {
-  return request(`/api/businesses/${businessId}/customers/`, { method: 'POST', body: JSON.stringify(customerData) })
+export async function addCustomer(businessId: string, customerData: any): Promise<RequestResult<CustomerResult>> {
+  return request<CustomerResult>(`/api/businesses/${businessId}/customers/`, { method: 'POST', body: JSON.stringify(customerData) })
 }
 
 export async function updateCustomer(businessId: string, customerId: string, customerData: any) {

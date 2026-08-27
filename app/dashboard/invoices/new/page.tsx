@@ -87,7 +87,7 @@ export default function NewInvoicePage() {
         setError(result.error || 'Failed to generate invoice notes')
       }
     } catch (err) {
-      setError('Error generating invoice notes')
+      setError(err instanceof Error ? err.message : 'Unable to generate invoice notes')
     } finally {
       setGenerating(false)
     }

@@ -10,7 +10,7 @@ class BusinessSerializer(serializers.ModelSerializer):
     class Meta:
         model = Business
         fields = '__all__'
-        read_only_fields = ('owner', 'created_at', 'updated_at')
+        read_only_fields = ('owner', 'created_at', 'updated_at', 'bank_code', 'bank_account_number', 'bank_account_name', 'paystack_subaccount_code', 'platform_fee_percentage')
 
     def to_representation(self, instance):
         data = super().to_representation(instance)

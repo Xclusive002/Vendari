@@ -3,9 +3,9 @@
 import { useEffect, useRef, useState } from 'react'
 import { useParams } from 'next/navigation'
 import dynamic from 'next/dynamic'
-import { ArrowLeft, Printer, Loader2 } from 'lucide-react'
+import { ArrowLeft, Printer, Loader2, CreditCard } from 'lucide-react'
 import Link from 'next/link'
-import { getBusiness, getInvoice } from '@/app/actions/business'
+import { getBusiness, getInvoice, initializeInvoicePayment } from '@/app/actions/business'
 import ReceiptDocument, { type ReceiptBusiness, type ReceiptInvoice } from '@/components/dashboard/ReceiptDocument'
 
 const ReceiptExportActions = dynamic(() => import('@/components/dashboard/ReceiptExportActions'), { ssr: false })
@@ -17,6 +17,8 @@ export default function ReceiptPage() {
   const [business, setBusiness] = useState<ReceiptBusiness | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [paying, setPaying] = useState(false)
+  const [businessReady, setBusinessReady] = useState(false)
 
   useEffect(() => {
     getBusiness()
@@ -36,6 +38,7 @@ export default function ReceiptPage() {
           phone: businessResult.phone,
           logo: businessResult.logo,
         })
+        setBusinessReady(Boolean(businessResult.paystack_subaccount_code))
         setInvoice(invoiceResult.data as ReceiptInvoice)
       })
       .catch(() => setError('This receipt could not be loaded.'))
@@ -44,6 +47,15 @@ export default function ReceiptPage() {
 
   const handlePrint = () => {
     window.print()
+  }
+
+  const handlePayNow = async () => {
+    if (!business || !invoice) return
+    setPaying(true)
+    const result = await initializeInvoicePayment(String(invoice.business), String(invoice.id))
+    if (result.success) window.location.href = result.data.authorization_url
+    else setError(result.error)
+    setPaying(false)
   }
 
   if (loading)
@@ -127,6 +139,7 @@ export default function ReceiptPage() {
               Back to sales
             </Link>
             <div className="flex flex-wrap gap-2">
+              {invoice.doc_type === 'invoice' && invoice.status !== 'paid' && (businessReady ? <button type="button" onClick={handlePayNow} disabled={paying} className="dashboard-primary inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold disabled:opacity-60"><CreditCard className="h-4 w-4" />{paying ? 'Opening Paystack...' : 'Pay Now'}</button> : <Link href="/dashboard/settings" className="inline-flex items-center gap-2 rounded-lg border border-blue/30 bg-blue/5 px-4 py-2 text-sm font-semibold text-blue">Set up payments</Link>)}
               <ReceiptExportActions documentRef={documentRef} documentNumber={invoice.doc_number} />
               <button
                 type="button"

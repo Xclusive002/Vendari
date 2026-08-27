@@ -26,7 +26,7 @@ from inventory.views import InventoryItemViewSet
 from sales.views import SaleViewSet
 from expenses.views import ExpenseViewSet
 from customers.views import CustomerViewSet
-from billing.views import PaystackInitializeView, PaystackWebhookView
+from billing.views import PaystackInitializeView, PaystackWebhookView, PaystackBanksView, VerifyBankAccountView, CreateSubaccountView, InvoicePaymentInitializeView
 from ai_insights.views import BusinessAskView, BusinessInsightsView
 from invoices.views import InvoiceViewSet, SaleReceiptView, GenerateInvoiceNotesView
 
@@ -55,6 +55,10 @@ urlpatterns = [
     path('api/concierge-inquiries/', ConciergeInquiryView.as_view()),
     path('api/billing/paystack/initialize/', PaystackInitializeView.as_view()),
     path('api/billing/paystack/webhook/', PaystackWebhookView.as_view()),
+    path('api/paystack/banks/', PaystackBanksView.as_view()),
+    path('api/businesses/<int:business_id>/verify-bank-account/', VerifyBankAccountView.as_view()),
+    path('api/businesses/<int:business_id>/create-subaccount/', CreateSubaccountView.as_view()),
+    path('api/businesses/<int:business_id>/invoices/<int:invoice_id>/pay/', InvoicePaymentInitializeView.as_view()),
     path('api/businesses/<int:business_id>/ai-insights/', BusinessInsightsView.as_view()),
     path('api/businesses/<int:business_id>/ask/', BusinessAskView.as_view()),
     path('api/businesses/<int:business_id>/sales/<int:sale_id>/receipt/', SaleReceiptView.as_view()),

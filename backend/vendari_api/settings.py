@@ -13,14 +13,15 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 from pathlib import Path
 
 import environ
+from django.core.exceptions import ImproperlyConfigured
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 env = environ.Env(
     DEBUG=(bool, False),
-    ALLOWED_HOSTS=(list, []),
-    CORS_ALLOWED_ORIGINS=(list, []),
+    ALLOWED_HOSTS=(list, ['localhost', '127.0.0.1']),
+    CORS_ALLOWED_ORIGINS=(list, ['http://localhost:3000']),
 )
 environ.Env.read_env(BASE_DIR / '.env')
 
@@ -29,9 +30,14 @@ AUTH_USER_MODEL = 'accounts.User'
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
-SECRET_KEY = env('SECRET_KEY', default='dev-only-secret-key')
-DEBUG = env('DEBUG', default=True)
-ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=['localhost', '127.0.0.1', '0.0.0.0'])
+DEBUG = env.bool('DEBUG', default=False)
+SECRET_KEY = env('SECRET_KEY', default='')
+if not SECRET_KEY:
+    if DEBUG:
+        SECRET_KEY = 'dev-only-secret-key'
+    else:
+        raise ImproperlyConfigured('SECRET_KEY must be set when DEBUG is False')
+ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=['localhost', '127.0.0.1'])
 CORS_ALLOWED_ORIGINS = env.list('CORS_ALLOWED_ORIGINS', default=['http://localhost:3000'])
 PAYSTACK_SECRET_KEY = env('PAYSTACK_SECRET_KEY', default='')
 GEMINI_API_KEY = env('GEMINI_API_KEY', default='')
@@ -46,6 +52,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'cloudinary',
+    'cloudinary_storage',
     'rest_framework',
     'rest_framework_simplejwt',
     'corsheaders',
@@ -64,6 +72,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -162,11 +171,20 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = 'static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
-# Local media is for development only; production should use durable cloud storage
-# such as django-storages with S3 or Cloudinary.
+CLOUDINARY_URL = env('CLOUDINARY_URL', default='')
+CLOUDINARY_STORAGE = {'CLOUDINARY_URL': CLOUDINARY_URL}
+STORAGES = {
+    'default': {
+        'BACKEND': 'cloudinary_storage.storage.MediaCloudinaryStorage',
+    },
+    'staticfiles': {
+        'BACKEND': 'whitenoise.storage.CompressedManifestStaticFilesStorage',
+    },
+}
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field

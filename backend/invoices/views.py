@@ -1,4 +1,5 @@
 import json
+import logging
 from decimal import Decimal
 
 from django.conf import settings
@@ -14,6 +15,9 @@ from ai_insights.gemini import GeminiRateLimitError, generate_content, response_
 
 from .models import Invoice, InvoiceLineItem
 from .serializers import InvoiceSerializer
+
+
+logger = logging.getLogger(__name__)
 
 
 class InvoiceViewSet(viewsets.ModelViewSet):
@@ -70,27 +74,25 @@ Return ONLY this JSON structure:
                 response_mime_type='application/json',
             )
 
-            # Extract the text content from the response
             response_text_value = response_text(response)
             if not response_text_value:
                 return Response({'detail': 'No response from AI service.'}, status=status.HTTP_502_BAD_GATEWAY)
 
-            # Parse JSON from response
             try:
                 result = json.loads(response_text_value)
             except json.JSONDecodeError:
-                # Try to extract JSON from markdown code blocks
                 if '```json' in response_text_value:
                     json_part = response_text_value.split('```json')[1].split('```')[0].strip()
-                    result = json.loads(json_part)
                 elif '```' in response_text_value:
                     json_part = response_text_value.split('```')[1].split('```')[0].strip()
-                    result = json.loads(json_part)
                 else:
                     return Response({'detail': 'Could not parse AI response.'}, status=status.HTTP_502_BAD_GATEWAY)
+                try:
+                    result = json.loads(json_part)
+                except json.JSONDecodeError:
+                    return Response({'detail': 'Could not parse AI response.'}, status=status.HTTP_502_BAD_GATEWAY)
 
-            # Validate structure
-            if not isinstance(result.get('line_items'), list) or not result.get('notes'):
+            if not isinstance(result, dict) or not isinstance(result.get('line_items'), list) or not result.get('notes'):
                 return Response({'detail': 'Invalid response structure from AI.'}, status=status.HTTP_502_BAD_GATEWAY)
 
             # Validate and normalize line items
@@ -115,8 +117,13 @@ Return ONLY this JSON structure:
 
         except GeminiRateLimitError:
             return Response({'detail': 'AI is busy, try again in a moment.'}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
-        except Exception as e:
-            return Response({'detail': 'Unable to generate invoice notes.'}, status=status.HTTP_502_BAD_GATEWAY)
+        except Exception as error:
+            logger.exception('Invoice note generation failed for business %s', business_id)
+            if 'ConnectError' in type(error).__name__ or 'getaddrinfo failed' in str(error):
+                detail = 'AI service is unreachable. Check the backend network or DNS connection and try again.'
+            else:
+                detail = 'AI service failed while generating invoice notes. Check the backend logs for details.'
+            return Response({'detail': detail}, status=status.HTTP_502_BAD_GATEWAY)
 
 
 class SaleReceiptView(APIView):

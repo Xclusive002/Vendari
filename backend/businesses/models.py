@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.db import models
+from decimal import Decimal
 
 
 class Business(models.Model):
@@ -10,6 +11,11 @@ class Business(models.Model):
     address = models.TextField(blank=True)
     logo = models.ImageField(upload_to='business_logos/', blank=True, null=True)
     business_type = models.CharField(max_length=100, blank=True)
+    bank_code = models.CharField(max_length=20, blank=True)
+    bank_account_number = models.CharField(max_length=20, blank=True)
+    bank_account_name = models.CharField(max_length=255, blank=True)
+    paystack_subaccount_code = models.CharField(max_length=100, blank=True)
+    platform_fee_percentage = models.DecimalField(max_digits=5, decimal_places=2, default=Decimal('0.00'))
     plan = models.ForeignKey('billing.Plan', null=True, blank=True, on_delete=models.SET_NULL, related_name='businesses')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

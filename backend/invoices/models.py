@@ -53,3 +53,14 @@ class InvoiceLineItem(models.Model):
     def save(self, *args, **kwargs):
         self.line_total = Decimal(self.quantity) * self.unit_price
         return super().save(*args, **kwargs)
+
+
+class InvoicePayment(models.Model):
+    invoice = models.ForeignKey(Invoice, related_name='payments', on_delete=models.CASCADE)
+    paystack_reference = models.CharField(max_length=255, unique=True)
+    amount = models.DecimalField(max_digits=12, decimal_places=2)
+    status = models.CharField(max_length=20, default='success')
+    paid_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ('-paid_at',)

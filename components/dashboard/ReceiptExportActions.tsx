@@ -19,7 +19,6 @@ export default function ReceiptExportActions({ documentRef, documentNumber }: { 
       return await html2canvas(documentRef.current, {
         scale: 2,
         useCORS: true,
-        allowTaint: true,
         backgroundColor: '#ffffff',
       })
     } finally {
