@@ -4,7 +4,7 @@ import { apiJson } from '@/lib/api-client'
 
 export async function askBusiness(businessId: string, question: string) {
   try {
-    return await apiJson<{ answer: string; data_used: Record<string, unknown> }>(`/api/businesses/${businessId}/ask/`, {
+    return await apiJson<{ answer: string; data_used: Record<string, unknown> }>(`/businesses/${businessId}/ask/`, {
       method: 'POST',
       body: JSON.stringify({ question }),
     })

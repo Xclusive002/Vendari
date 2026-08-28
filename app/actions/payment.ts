@@ -4,7 +4,7 @@ import { apiJson } from '@/lib/api-client'
 
 export async function initializePayment(business_id: string, plan_id: string) {
   try {
-    const data = await apiJson<{ authorization_url: string; reference: string }>('/api/billing/paystack/initialize/', {
+    const data = await apiJson<{ authorization_url: string; reference: string }>('/billing/paystack/initialize/', {
       method: 'POST',
       body: JSON.stringify({ business_id: Number(business_id), plan_id: Number(plan_id) }),
     })
@@ -16,10 +16,9 @@ export async function initializePayment(business_id: string, plan_id: string) {
 
 export async function verifyPayment(reference: string) {
   try {
-    const baseUrl = process.env.NEXT_PUBLIC_API_URL
+    const baseUrl = process.env.NEXT_PUBLIC_API_URL?.trim().replace(/\/+$/, '')
     if (!baseUrl) throw new Error('NEXT_PUBLIC_API_URL is not configured')
-    const apiOrigin = baseUrl.replace(/\/api\/?$/, '').replace(/\/$/, '')
-    const response = await fetch(`${apiOrigin}/api/payment/verify/`, {
+    const response = await fetch(`${baseUrl}/payment/verify/`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ reference }),

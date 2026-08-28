@@ -7,7 +7,7 @@ import { apiJson } from '@/lib/api-client'
 
 export async function register(email: string, password: string, business_name: string) {
   try {
-    const data = await apiJson('/api/auth/register/', { method: 'POST', body: JSON.stringify({ email, password, business_name }), skipRefresh: true })
+    const data = await apiJson('/auth/register/', { method: 'POST', body: JSON.stringify({ email, password, business_name }), skipRefresh: true })
     return { success: true, data }
   } catch (error) {
     return { success: false, error: error instanceof Error ? error.message : 'Registration failed' }
@@ -16,7 +16,7 @@ export async function register(email: string, password: string, business_name: s
 
 export async function login(email: string, password: string) {
   try {
-    const tokens = await apiJson<{ access: string; refresh: string }>('/api/auth/login/', { method: 'POST', body: JSON.stringify({ email, password }), skipRefresh: true })
+    const tokens = await apiJson<{ access: string; refresh: string }>('/auth/login/', { method: 'POST', body: JSON.stringify({ email, password }), skipRefresh: true })
     const cookieStore = await cookies()
     const options = { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax' as const, path: '/' }
     cookieStore.set('vendari_access', tokens.access, { ...options, maxAge: 15 * 60 })
@@ -32,7 +32,7 @@ export async function login(email: string, password: string) {
 
 export async function getCurrentUser() {
   try {
-    return await apiJson<{ email: string; has_seen_welcome: boolean }>('/api/auth/me/')
+    return await apiJson<{ email: string; has_seen_welcome: boolean }>('/auth/me/')
   } catch {
     return null
   }
@@ -40,7 +40,7 @@ export async function getCurrentUser() {
 
 export async function markWelcomeSeen() {
   try {
-    return await apiJson<{ has_seen_welcome: boolean }>('/api/auth/mark-welcome-seen/', { method: 'POST' })
+    return await apiJson<{ has_seen_welcome: boolean }>('/auth/mark-welcome-seen/', { method: 'POST' })
   } catch {
     return null
   }
@@ -48,7 +48,7 @@ export async function markWelcomeSeen() {
 
 export async function getBusiness() {
   try {
-    const businesses = await apiJson<any[]>('/api/businesses/')
+    const businesses = await apiJson<any[]>('/businesses/')
     return businesses[0] ? { ...businesses[0], business_name: businesses[0].name } : null
   } catch {
     return null

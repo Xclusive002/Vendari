@@ -13,7 +13,7 @@ type ConciergeInquiryResult = { success: true } | { error: string }
 
 export async function submitConciergeInquiry(data: ConciergeInquiryData): Promise<ConciergeInquiryResult> {
   try {
-    await apiJson('/api/concierge-inquiries/', {
+    await apiJson('/concierge-inquiries/', {
       method: 'POST',
       body: JSON.stringify(data),
     })

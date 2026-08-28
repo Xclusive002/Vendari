@@ -3,10 +3,9 @@ import { NextResponse } from 'next/server'
 
 export async function POST() {
   const refresh = (await cookies()).get('vendari_refresh')?.value
-  const baseUrl = process.env.NEXT_PUBLIC_API_URL
+  const baseUrl = process.env.NEXT_PUBLIC_API_URL?.trim().replace(/\/+$/, '')
   if (!refresh || !baseUrl) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  const apiOrigin = baseUrl.replace(/\/api\/?$/, '').replace(/\/$/, '')
-  const djangoResponse = await fetch(`${apiOrigin}/api/auth/token/refresh/`, {
+  const djangoResponse = await fetch(`${baseUrl}/auth/token/refresh/`, {
     method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ refresh }), cache: 'no-store',
   })
   if (!djangoResponse.ok) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })

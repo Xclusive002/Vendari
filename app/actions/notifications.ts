@@ -17,7 +17,7 @@ type NotificationResult =
 
 export async function getNotifications(): Promise<NotificationResult> {
   try {
-    return { success: true, data: await apiJson<NotificationData[]>('/api/notifications/') }
+    return { success: true, data: await apiJson<NotificationData[]>('/notifications/') }
   } catch (error) {
     return {
       success: false,
@@ -31,7 +31,7 @@ export async function markNotificationRead(notificationId: number) {
   try {
     return {
       success: true as const,
-      data: await apiJson<{ read: boolean }>(`/api/notifications/${notificationId}/mark-read/`, { method: 'POST' }),
+      data: await apiJson<{ read: boolean }>(`/notifications/${notificationId}/mark-read/`, { method: 'POST' }),
     }
   } catch (error) {
     return { success: false as const, error: error instanceof Error ? error.message : 'Failed to mark notification as read' }

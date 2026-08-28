@@ -74,7 +74,7 @@ async function request<T>(path: string, options?: RequestInit): Promise<RequestR
 }
 
 export async function createBusiness(businessData: BusinessData) {
-  return request('/api/businesses/', { method: 'POST', body: JSON.stringify({
+  return request('/businesses/', { method: 'POST', body: JSON.stringify({
     name: businessData.business_name,
     email: businessData.business_email || '',
     phone: businessData.business_phone || '',
@@ -90,12 +90,12 @@ export async function updateBusiness(businessId: string, updates: Partial<Busine
   if (updates.business_phone !== undefined) formData.set('phone', updates.business_phone)
   if (updates.business_address !== undefined) formData.set('address', updates.business_address)
   if (updates.logo) formData.set('logo', updates.logo)
-  return request(`/api/businesses/${businessId}/`, { method: 'PATCH', body: formData })
+  return request(`/businesses/${businessId}/`, { method: 'PATCH', body: formData })
 }
 
 export async function getBusiness() {
   try {
-    const businesses = await apiJson<any[]>('/api/businesses/')
+    const businesses = await apiJson<any[]>('/businesses/')
     return businesses[0] ? { ...businesses[0], business_name: businesses[0].name } : null
   } catch {
     return null
@@ -103,119 +103,119 @@ export async function getBusiness() {
 }
 
 export async function getPaystackBanks() {
-  return request<Array<{ name: string; code: string }>>('/api/paystack/banks/')
+  return request<Array<{ name: string; code: string }>>('/paystack/banks/')
 }
 
 export async function verifyBankAccount(businessId: string, bank_code: string, account_number: string) {
-  return request<{ account_name: string; verification_token: string }>(`/api/businesses/${businessId}/verify-bank-account/`, { method: 'POST', body: JSON.stringify({ bank_code, account_number }) })
+  return request<{ account_name: string; verification_token: string }>(`/businesses/${businessId}/verify-bank-account/`, { method: 'POST', body: JSON.stringify({ bank_code, account_number }) })
 }
 
 export async function createPaystackSubaccount(businessId: string, bank_code: string, account_number: string, verification_token: string) {
-  return request<{ account_name: string; subaccount_code: string }>(`/api/businesses/${businessId}/create-subaccount/`, { method: 'POST', body: JSON.stringify({ bank_code, account_number, verification_token }) })
+  return request<{ account_name: string; subaccount_code: string }>(`/businesses/${businessId}/create-subaccount/`, { method: 'POST', body: JSON.stringify({ bank_code, account_number, verification_token }) })
 }
 
 export async function initializeInvoicePayment(businessId: string, invoiceId: string) {
-  return request<{ authorization_url: string; reference: string }>(`/api/businesses/${businessId}/invoices/${invoiceId}/pay/`, { method: 'POST' })
+  return request<{ authorization_url: string; reference: string }>(`/businesses/${businessId}/invoices/${invoiceId}/pay/`, { method: 'POST' })
 }
 
 export async function addInventoryItem(businessId: string, itemData: ItemData) {
-  const result = await request<ApiItem>(`/api/businesses/${businessId}/inventory/`, { method: 'POST', body: JSON.stringify(itemToApi(itemData)) })
+  const result = await request<ApiItem>(`/businesses/${businessId}/inventory/`, { method: 'POST', body: JSON.stringify(itemToApi(itemData)) })
   if (!result.success) return result
   return { success: true as const, data: itemFromApi(result.data) }
 }
 
 export async function getInventory(businessId: string) {
-  const result = await request<ApiItem[]>(`/api/businesses/${businessId}/inventory/`)
+  const result = await request<ApiItem[]>(`/businesses/${businessId}/inventory/`)
   return result.success ? { success: true, data: result.data.map(itemFromApi) } : { ...result, data: [] }
 }
 
 export async function updateInventoryItem(businessId: string, itemId: string, updates: Partial<ItemData>) {
-  const result = await request<ApiItem>(`/api/businesses/${businessId}/inventory/${itemId}/`, { method: 'PATCH', body: JSON.stringify(itemToApi(updates)) })
+  const result = await request<ApiItem>(`/businesses/${businessId}/inventory/${itemId}/`, { method: 'PATCH', body: JSON.stringify(itemToApi(updates)) })
   if (!result.success) return result
   return { success: true as const, data: itemFromApi(result.data) }
 }
 
 export async function deleteInventoryItem(businessId: string, itemId: string) {
-  return request(`/api/businesses/${businessId}/inventory/${itemId}/`, { method: 'DELETE' })
+  return request(`/businesses/${businessId}/inventory/${itemId}/`, { method: 'DELETE' })
 }
 
 export async function addSale(businessId: string, saleData: any) {
-  return request(`/api/businesses/${businessId}/sales/`, { method: 'POST', body: JSON.stringify(saleData) })
+  return request(`/businesses/${businessId}/sales/`, { method: 'POST', body: JSON.stringify(saleData) })
 }
 
 export async function getSales(businessId: string, startDate?: string, endDate?: string) {
   const query = new URLSearchParams()
   if (startDate) query.set('date_from', startDate)
   if (endDate) query.set('date_to', endDate)
-  const result = await request<any[]>(`/api/businesses/${businessId}/sales/?${query}`)
+  const result = await request<any[]>(`/businesses/${businessId}/sales/?${query}`)
   return result.success ? { success: true, data: result.data } : { ...result, data: [] }
 }
 
 export async function generateSaleReceipt(businessId: string, saleId: string) {
-  return request(`/api/businesses/${businessId}/sales/${saleId}/receipt/`, { method: 'POST' })
+  return request(`/businesses/${businessId}/sales/${saleId}/receipt/`, { method: 'POST' })
 }
 
 export async function getInvoice(businessId: string, invoiceId: string) {
-  return request(`/api/businesses/${businessId}/invoices/${invoiceId}/`)
+  return request(`/businesses/${businessId}/invoices/${invoiceId}/`)
 }
 
 export async function getInvoices(businessId: string, docType?: string, status?: string) {
   const query = new URLSearchParams()
   if (docType) query.set('doc_type', docType)
   if (status) query.set('status', status)
-  const result = await request<any[]>(`/api/businesses/${businessId}/invoices/?${query}`)
+  const result = await request<any[]>(`/businesses/${businessId}/invoices/?${query}`)
   return result.success ? { success: true, data: result.data } : { ...result, data: [] }
 }
 
 export async function createInvoice(businessId: string, invoiceData: any): Promise<RequestResult<InvoiceResult>> {
-  return request<InvoiceResult>(`/api/businesses/${businessId}/invoices/`, { method: 'POST', body: JSON.stringify(invoiceData) })
+  return request<InvoiceResult>(`/businesses/${businessId}/invoices/`, { method: 'POST', body: JSON.stringify(invoiceData) })
 }
 
 export async function generateInvoiceNotes(businessId: string, description: string) {
-  return request<{ line_items: any[]; notes: string }>(`/api/businesses/${businessId}/invoices/generate-notes/`, {
+  return request<{ line_items: any[]; notes: string }>(`/businesses/${businessId}/invoices/generate-notes/`, {
     method: 'POST',
     body: JSON.stringify({ description }),
   })
 }
 
 export async function addExpense(businessId: string, expenseData: any) {
-  return request(`/api/businesses/${businessId}/expenses/`, { method: 'POST', body: JSON.stringify({ ...expenseData, date: expenseData.expense_date }) })
+  return request(`/businesses/${businessId}/expenses/`, { method: 'POST', body: JSON.stringify({ ...expenseData, date: expenseData.expense_date }) })
 }
 
 export async function updateExpense(businessId: string, expenseId: string, expenseData: any) {
-  return request(`/api/businesses/${businessId}/expenses/${expenseId}/`, { method: 'PATCH', body: JSON.stringify({ ...expenseData, date: expenseData.expense_date }) })
+  return request(`/businesses/${businessId}/expenses/${expenseId}/`, { method: 'PATCH', body: JSON.stringify({ ...expenseData, date: expenseData.expense_date }) })
 }
 
 export async function deleteExpense(businessId: string, expenseId: string) {
-  return request(`/api/businesses/${businessId}/expenses/${expenseId}/`, { method: 'DELETE' })
+  return request(`/businesses/${businessId}/expenses/${expenseId}/`, { method: 'DELETE' })
 }
 
 export async function getExpenses(businessId: string, startDate?: string, endDate?: string) {
   const query = new URLSearchParams()
   if (startDate) query.set('date_from', startDate)
   if (endDate) query.set('date_to', endDate)
-  const result = await request<any[]>(`/api/businesses/${businessId}/expenses/?${query}`)
+  const result = await request<any[]>(`/businesses/${businessId}/expenses/?${query}`)
   return result.success ? { success: true, data: result.data.map((item) => ({ ...item, expense_date: item.date })) } : { ...result, data: [] }
 }
 
 export async function getInsights(businessId: string) {
-  const result = await request<any[]>(`/api/businesses/${businessId}/ai-insights/`)
+  const result = await request<any[]>(`/businesses/${businessId}/ai-insights/`)
   return result.success ? { success: true, data: result.data } : { ...result, data: [] }
 }
 
 export async function addCustomer(businessId: string, customerData: any): Promise<RequestResult<CustomerResult>> {
-  return request<CustomerResult>(`/api/businesses/${businessId}/customers/`, { method: 'POST', body: JSON.stringify(customerData) })
+  return request<CustomerResult>(`/businesses/${businessId}/customers/`, { method: 'POST', body: JSON.stringify(customerData) })
 }
 
 export async function updateCustomer(businessId: string, customerId: string, customerData: any) {
-  return request(`/api/businesses/${businessId}/customers/${customerId}/`, { method: 'PATCH', body: JSON.stringify(customerData) })
+  return request(`/businesses/${businessId}/customers/${customerId}/`, { method: 'PATCH', body: JSON.stringify(customerData) })
 }
 
 export async function deleteCustomer(businessId: string, customerId: string) {
-  return request(`/api/businesses/${businessId}/customers/${customerId}/`, { method: 'DELETE' })
+  return request(`/businesses/${businessId}/customers/${customerId}/`, { method: 'DELETE' })
 }
 
 export async function getCustomers(businessId: string) {
-  const result = await request<any[]>(`/api/businesses/${businessId}/customers/`)
+  const result = await request<any[]>(`/businesses/${businessId}/customers/`)
   return result.success ? { success: true as const, data: result.data } : { ...result, data: [] }
 }
