@@ -6,6 +6,7 @@ import { getBusiness } from '@/app/actions/business'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
+import { LoadingButton } from '@/components/ui/loading-button'
 
 export default function AskPage() {
   const [businessId, setBusinessId] = useState('')
@@ -40,7 +41,7 @@ export default function AskPage() {
           <CardContent>
             <form onSubmit={submit} className="flex gap-3">
               <Input value={question} onChange={(event) => setQuestion(event.target.value)} placeholder="How did sales perform this month?" className="bg-slate-700 border-slate-600 text-white" required />
-              <Button type="submit" disabled={loading || !businessId}>{loading ? 'Thinking...' : 'Ask'}</Button>
+              <LoadingButton type="submit" loading={loading} disabled={!businessId}>Ask</LoadingButton>
             </form>
             {answer && (
               <div className="mt-6 space-y-4">

@@ -5,6 +5,7 @@ import { useRef, useState } from 'react'
 import { initializePayment } from '@/app/actions/payment'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { LoadingButton } from '@/components/ui/loading-button'
 
 export default function BillingPage() {
   const [planId, setPlanId] = useState('1')
@@ -51,9 +52,7 @@ export default function BillingPage() {
             <option value="3">Plan 3</option>
           </select>
           {error && <p className="text-sm text-negative">{error}</p>}
-          <Button onClick={startPayment} disabled={!businessId || loading} className="dashboard-primary">
-            {loading ? 'Starting payment...' : 'Continue to Paystack'}
-          </Button>
+          <LoadingButton onClick={startPayment} loading={loading} disabled={!businessId} className="dashboard-primary">Continue to Paystack</LoadingButton>
         </CardContent>
       </Card>
       </div>

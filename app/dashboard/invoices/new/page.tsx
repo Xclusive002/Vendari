@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation'
 import { ArrowLeft, Loader2, Plus, Sparkles, Trash2, X } from 'lucide-react'
 import Link from 'next/link'
 import { addCustomer, getBusiness, getCustomers, createInvoice, generateInvoiceNotes } from '@/app/actions/business'
+import { LoadingButton } from '@/components/ui/loading-button'
+import { PageSkeleton } from '@/components/ui/skeleton'
 
 interface LineItem {
   id: string
@@ -181,8 +183,7 @@ export default function NewInvoicePage() {
     return (
       <main className="dashboard-page md:pl-8">
         <div className="mx-auto max-w-4xl flex items-center justify-center py-12 text-text-secondary">
-          <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-          Loading...
+          <PageSkeleton rows={4} />
         </div>
       </main>
     )
@@ -264,16 +265,16 @@ export default function NewInvoicePage() {
                 className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-blue"
                 rows={4}
               />
-              <button
+              <LoadingButton
                 type="button"
                 onClick={handleGenerateNotes}
                 disabled={generating || !aiDescription.trim()}
+                loading={generating}
                 className="mt-4 inline-flex items-center gap-2 rounded-lg bg-brand-gradient px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
               >
-                {generating && <Loader2 className="h-4 w-4 animate-spin" />}
                 {!generating && <Sparkles className="h-4 w-4" />}
                 Generate Invoice
-              </button>
+              </LoadingButton>
             </div>
           )}
 
@@ -433,14 +434,13 @@ export default function NewInvoicePage() {
             >
               Cancel
             </Link>
-            <button
+            <LoadingButton
               type="submit"
-              disabled={saving}
+              loading={saving}
               className="dashboard-primary inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold disabled:opacity-60"
             >
-              {saving && <Loader2 className="h-4 w-4 animate-spin" />}
-              {saving ? 'Creating...' : 'Create Invoice'}
-            </button>
+              Create Invoice
+            </LoadingButton>
           </div>
         </form>
       </div>

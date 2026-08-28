@@ -10,6 +10,8 @@ import Link from 'next/link'
 import { getBusiness, updateBusiness } from '@/app/actions/business'
 import { logout } from '@/app/actions/auth'
 import { toast } from 'sonner'
+import { LoadingButton } from '@/components/ui/loading-button'
+import { Skeleton } from '@/components/ui/skeleton'
 
 export default function SettingsPage() {
   const [businessId, setBusinessId] = useState('')
@@ -87,7 +89,7 @@ export default function SettingsPage() {
             <CardDescription>Manage the business information your team sees.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            {loadingProfile ? <p className="text-sm text-text-secondary">Loading business profile...</p> : <>
+            {loadingProfile ? <div className="space-y-3"><Skeleton className="h-10 w-full" /><Skeleton className="h-10 w-full" /><Skeleton className="h-10 w-full" /></div> : <>
             <div>
               <Label htmlFor="businessName" className="text-text-secondary">
                 Business name
@@ -140,14 +142,14 @@ export default function SettingsPage() {
               />
             </div>
 
-            <Button
+            <LoadingButton
               onClick={handleSave}
-              disabled={loading}
+              loading={loading}
               className="dashboard-primary w-full"
             >
               <Save className="w-4 h-4 mr-2" />
               {loading ? 'Saving...' : 'Save business settings'}
-            </Button>
+            </LoadingButton>
             </>}
           </CardContent>
         </Card>

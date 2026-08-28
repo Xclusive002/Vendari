@@ -12,6 +12,8 @@ import { BarChart3, Plus, Download, Receipt } from 'lucide-react'
 import { toast } from 'sonner'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar } from 'recharts'
+import { LoadingButton } from '@/components/ui/loading-button'
+import { PageSkeleton } from '@/components/ui/skeleton'
 
 export default function ReportsPage() {
   const [business, setBusiness] = useState<any>(null)
@@ -160,7 +162,7 @@ export default function ReportsPage() {
   if (loading) {
     return (
       <div className="dashboard-page flex items-center justify-center">
-        <div className="text-text-secondary">Loading your reports...</div>
+        <PageSkeleton rows={4} />
       </div>
     )
   }
@@ -295,9 +297,9 @@ export default function ReportsPage() {
                     required
                   />
                 </div>
-                <Button type="submit" disabled={savingExpense} className="dashboard-primary w-full">
+                <LoadingButton type="submit" loading={savingExpense} className="dashboard-primary w-full">
                   {savingExpense ? 'Saving...' : 'Record Expense'}
-                </Button>
+                </LoadingButton>
               </form>
             </DialogContent>
           </Dialog>

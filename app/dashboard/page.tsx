@@ -7,6 +7,8 @@ import Link from 'next/link'
 import { getBusiness, getExpenses, getInsights, getInventory, getSales } from '@/app/actions/business'
 import { getCurrentUser, markWelcomeSeen } from '@/app/actions/auth'
 import { useCountUp } from '@/hooks/use-count-up'
+import { Skeleton } from '@/components/ui/skeleton'
+import { LoadingButton } from '@/components/ui/loading-button'
 
 function withTimeout<T>(promise: Promise<T>, fallback: T, milliseconds = 5000) {
   return Promise.race([promise, new Promise<T>((resolve) => setTimeout(() => resolve(fallback), milliseconds))])
@@ -31,6 +33,7 @@ export default function DashboardPage() {
   const [expenses, setExpenses] = useState<any[]>([])
   const [inventory, setInventory] = useState<any[]>([])
   const [insights, setInsights] = useState<any[]>([])
+  const [insightsLoading, setInsightsLoading] = useState(true)
   const [showWelcome, setShowWelcome] = useState(false)
   const [loading, setLoading] = useState(true)
 
@@ -52,9 +55,10 @@ export default function DashboardPage() {
       setExpenses(expensesResult.data || [])
       setInventory(inventoryResult.data || [])
       setLoading(false)
+      setInsightsLoading(true)
       getInsights(currentBusiness.id).then((insightResult) => {
         if (currentLoad === loadVersion) setInsights(insightResult.data || [])
-      }).catch(() => setInsights([]))
+      }).catch(() => setInsights([])).finally(() => setInsightsLoading(false))
     }
     load()
     const refreshOnReturn = () => {
@@ -70,7 +74,7 @@ export default function DashboardPage() {
     }
   }, [])
 
-  if (loading) return <main className="flex min-h-screen items-center justify-center bg-bg text-sm text-text-secondary">Loading your dashboard...</main>
+  if (loading) return <main className="min-h-screen bg-bg px-5 pb-12 pt-20 sm:px-8 md:pt-8"><div className="mx-auto max-w-7xl space-y-6"><div className="space-y-3"><Skeleton className="h-4 w-48" /><Skeleton className="h-10 w-96 max-w-full" /><Skeleton className="h-4 w-80 max-w-full" /></div><div className="grid gap-4 md:grid-cols-3">{[1, 2, 3].map((item) => <Skeleton key={item} className="h-32 rounded-xl" />)}</div><div className="grid gap-6 lg:grid-cols-[1.45fr_1fr]"><Skeleton className="h-80 rounded-xl" /><Skeleton className="h-80 rounded-xl" /></div><div className="grid gap-6 lg:grid-cols-[1fr_1.35fr]"><Skeleton className="h-56 rounded-xl" /><Skeleton className="h-56 rounded-xl" /></div></div></main>
 
   const totalSales = sales.reduce((sum, sale) => sum + Number(sale.total || 0), 0)
   const orders = sales.length
@@ -88,7 +92,7 @@ export default function DashboardPage() {
 
   return (
     <>
-    {showWelcome && <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/60 px-5 py-8" role="dialog" aria-modal="true" aria-labelledby="welcome-title"><div className="welcome-modal relative w-full max-w-md overflow-hidden rounded-xl border border-border bg-surface p-6 shadow-2xl sm:p-8"><div className="absolute right-0 top-0 h-24 w-24 rounded-bl-full bg-blue/10" /><div className="relative"><p className="text-sm font-semibold text-blue">A clear start</p><h2 id="welcome-title" className="mt-2 font-display text-2xl font-semibold text-ink">Welcome to Vendari, {business?.business_name}.</h2><p className="mt-3 text-sm leading-6 text-text-secondary">Add your first inventory item, then record a sale when you are ready. Vendari will keep the important numbers in view as your business gets moving.</p><button type="button" onClick={async () => { await markWelcomeSeen(); setShowWelcome(false) }} className="dashboard-primary mt-6 w-full rounded-lg px-4 py-3 text-sm font-semibold shadow-lg shadow-blue/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue">Let&apos;s get started</button></div></div></div>}
+    {showWelcome && <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/60 px-5 py-8" role="dialog" aria-modal="true" aria-labelledby="welcome-title"><div className="welcome-modal relative w-full max-w-md overflow-hidden rounded-xl border border-border bg-surface p-6 shadow-2xl sm:p-8"><div className="absolute right-0 top-0 h-24 w-24 rounded-bl-full bg-blue/10" /><div className="relative"><p className="text-sm font-semibold text-blue">A clear start</p><h2 id="welcome-title" className="mt-2 font-display text-2xl font-semibold text-ink">Welcome to Vendari, {business?.business_name}.</h2><p className="mt-3 text-sm leading-6 text-text-secondary">Add your first inventory item, then record a sale when you are ready. Vendari will keep the important numbers in view as your business gets moving.</p><LoadingButton type="button" onClick={async () => { await markWelcomeSeen(); setShowWelcome(false) }} className="dashboard-primary mt-6 w-full rounded-lg px-4 py-3 text-sm font-semibold shadow-lg shadow-blue/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue">Let&apos;s get started</LoadingButton></div></div></div>}
     <main className="min-h-screen bg-bg px-5 pb-12 pt-20 sm:px-8 md:pt-8">
       <div className="mx-auto max-w-7xl"><p className="text-sm text-text-muted">{new Intl.DateTimeFormat('en-US', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).format(new Date())}</p><h1 className="mt-1 font-display text-3xl font-semibold text-ink">Good morning{business?.business_name ? `, ${business.business_name}` : ''}.</h1><p className="mt-2 text-sm text-text-secondary">Here is what is happening across your business today.</p></div>
 

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { ArrowRight, FileText, Loader2, Plus } from 'lucide-react'
 import Link from 'next/link'
 import { getBusiness, getInvoices } from '@/app/actions/business'
+import { PageSkeleton } from '@/components/ui/skeleton'
 
 interface Invoice {
   id: number
@@ -80,8 +81,7 @@ export default function InvoicesPage() {
     return (
       <main className="dashboard-page md:pl-8">
         <div className="mx-auto max-w-6xl flex items-center justify-center py-12 text-text-secondary">
-          <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-          Loading invoices...
+          <PageSkeleton rows={5} />
         </div>
       </main>
     )

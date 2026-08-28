@@ -6,6 +6,7 @@ import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { ArrowRight, LockKeyhole } from 'lucide-react'
 import { login } from '@/app/actions/auth'
+import { LoadingButton } from '@/components/ui/loading-button'
 
 export default function LoginPage() {
   const router = useRouter()

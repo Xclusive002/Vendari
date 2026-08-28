@@ -1,7 +1,4 @@
 'use client'
-
-import React from "react"
-
 import { useEffect, useRef, useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -11,6 +8,8 @@ import { getBusiness, getInventory, addInventoryItem, updateInventoryItem, delet
 import { Plus, Edit2, AlertTriangle, Package } from 'lucide-react'
 import { toast } from 'sonner'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { LoadingButton } from '@/components/ui/loading-button'
+import { PageSkeleton } from '@/components/ui/skeleton'
 
 export default function InventoryPage() {
   const [business, setBusiness] = useState<any>(null)
@@ -278,9 +277,7 @@ export default function InventoryPage() {
                   />
                 </div>
 
-                <Button type="submit" disabled={saving} className="dashboard-primary w-full">
-                  {saving ? 'Saving...' : editingId ? 'Update Item' : 'Add Item'}
-                </Button>
+                <LoadingButton type="submit" loading={saving} className="dashboard-primary w-full">{editingId ? 'Update Item' : 'Add Item'}</LoadingButton>
               </form>
             </DialogContent>
           </Dialog>

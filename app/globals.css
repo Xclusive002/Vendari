@@ -76,6 +76,31 @@ body {
     color: white;
   }
 
+  .loading-spinner {
+    display: inline-block;
+    width: 1rem;
+    height: 1rem;
+    flex: 0 0 auto;
+    border: 2px solid transparent;
+    border-radius: 999px;
+    background: linear-gradient(var(--ink), var(--ink)) padding-box, var(--brand-gradient) border-box;
+    animation: loading-spin 700ms linear infinite;
+  }
+
+  .skeleton-shimmer {
+    background: linear-gradient(90deg, #e9edf4 25%, #f7f9fc 50%, #e9edf4 75%);
+    background-size: 200% 100%;
+    animation: skeleton-shimmer 1.5s ease-in-out infinite;
+  }
+
+  @keyframes loading-spin {
+    to { transform: rotate(360deg); }
+  }
+
+  @keyframes skeleton-shimmer {
+    to { background-position: -200% 0; }
+  }
+
   .dashboard-danger {
     color: var(--negative);
   }
@@ -113,6 +138,11 @@ body {
   }
 
   .welcome-modal {
+    animation: none;
+  }
+
+  .loading-spinner,
+  .skeleton-shimmer {
     animation: none;
   }
 }

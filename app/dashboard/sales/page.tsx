@@ -13,6 +13,8 @@ import { ClipboardList, Plus, Receipt, Search, Download } from 'lucide-react'
 import { toast } from 'sonner'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
+import { LoadingButton } from '@/components/ui/loading-button'
+import { PageSkeleton } from '@/components/ui/skeleton'
 
 export default function SalesPage() {
   const router = useRouter()
@@ -176,7 +178,7 @@ export default function SalesPage() {
   if (loading) {
     return (
       <div className="dashboard-page flex items-center justify-center">
-        <div className="text-text-secondary">Loading your sales...</div>
+        <PageSkeleton rows={5} />
       </div>
     )
   }
@@ -385,10 +387,10 @@ export default function SalesPage() {
                           </span>
                         </td>
                         <td className="py-3 px-4">
-                          <Button type="button" onClick={() => handleGenerateReceipt(sale)} size="sm" variant="ghost" className="text-blue-400 hover:bg-blue-500/10" disabled={receiptLoadingId === String(sale.id)} aria-label="Generate receipt">
+                                  <LoadingButton type="button" onClick={() => handleGenerateReceipt(sale)} size="sm" variant="ghost" className="text-blue-400 hover:bg-blue-500/10" loading={receiptLoadingId === String(sale.id)} aria-label="Generate receipt">
                             <Receipt className="h-4 w-4" />
                             <span className="sr-only">{receiptLoadingId === String(sale.id) ? 'Generating receipt' : 'Generate receipt'}</span>
-                          </Button>
+                                  </LoadingButton>
                         </td>
                       </tr>
                     ))}

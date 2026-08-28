@@ -9,6 +9,8 @@ import { addCustomer, deleteCustomer, getBusiness, getCustomers, updateCustomer 
 import { Edit2, Plus, Users } from 'lucide-react'
 import { toast } from 'sonner'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { LoadingButton } from '@/components/ui/loading-button'
+import { PageSkeleton } from '@/components/ui/skeleton'
 
 const emptyForm = () => ({ name: '', phone: '', email: '', address: '', notes: '' })
 
@@ -92,7 +94,7 @@ export default function CustomersPage() {
     }
   }
 
-  if (loading) return <div className="dashboard-page flex items-center justify-center"><div className="text-text-secondary">Loading your customers...</div></div>
+  if (loading) return <PageSkeleton rows={6} />
 
   return (
     <div className="dashboard-page md:pl-8">
@@ -108,7 +110,7 @@ export default function CustomersPage() {
                 <div><Label className="text-text-secondary">Email</Label><Input type="email" value={formData.email} onChange={(event) => setFormData({ ...formData, email: event.target.value })} className="dashboard-input mt-1" placeholder="Email address" /></div>
                 <div><Label className="text-text-secondary">Address</Label><Input value={formData.address} onChange={(event) => setFormData({ ...formData, address: event.target.value })} className="dashboard-input mt-1" placeholder="Address" /></div>
                 <div><Label className="text-text-secondary">Notes</Label><Input value={formData.notes} onChange={(event) => setFormData({ ...formData, notes: event.target.value })} className="dashboard-input mt-1" placeholder="Optional notes" /></div>
-                <Button type="submit" disabled={saving} className="dashboard-primary w-full">{saving ? 'Saving...' : editingId ? 'Update Customer' : 'Add Customer'}</Button>
+                <LoadingButton type="submit" loading={saving} className="dashboard-primary w-full">{editingId ? 'Update Customer' : 'Add Customer'}</LoadingButton>
               </form>
             </DialogContent>
           </Dialog>

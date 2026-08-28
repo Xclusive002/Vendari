@@ -6,6 +6,7 @@ import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { ArrowRight, MailCheck } from 'lucide-react'
 import { register } from '@/app/actions/auth'
+import { LoadingButton } from '@/components/ui/loading-button'
 
 export default function RegisterPage() {
   const router = useRouter()

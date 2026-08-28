@@ -10,6 +10,7 @@ import { createBusiness } from '@/app/actions/business'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { Loader2 } from 'lucide-react'
+import { LoadingButton } from '@/components/ui/loading-button'
 
 export default function SetupPage() {
   const [loading, setLoading] = useState(false)
@@ -210,9 +211,10 @@ export default function SetupPage() {
                 </div>
               </div>
 
-              <Button
+              <LoadingButton
                 type="submit"
                 disabled={loading || !formData.business_name}
+                loading={loading}
                 className="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white h-11"
               >
                 {loading ? (
@@ -223,7 +225,7 @@ export default function SetupPage() {
                 ) : (
                   'Complete Setup'
                 )}
-              </Button>
+              </LoadingButton>
             </form>
           </CardContent>
         </Card>

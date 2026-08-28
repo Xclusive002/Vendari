@@ -9,6 +9,8 @@ import { addExpense, deleteExpense, getBusiness, getExpenses, updateExpense } fr
 import { Edit2, Plus, Receipt } from 'lucide-react'
 import { toast } from 'sonner'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { LoadingButton } from '@/components/ui/loading-button'
+import { PageSkeleton } from '@/components/ui/skeleton'
 
 const emptyForm = () => ({
   expense_date: new Date().toISOString().split('T')[0],
@@ -129,7 +131,7 @@ export default function ExpensesPage() {
                 <div><Label className="text-text-secondary">Description</Label><Input value={formData.description} onChange={(event) => setFormData({ ...formData, description: event.target.value })} className="dashboard-input mt-1" placeholder="Optional" /></div>
                 <div><Label className="text-text-secondary">Amount (₦) *</Label><Input type="number" min="0" step="0.01" value={formData.amount} onChange={(event) => setFormData({ ...formData, amount: parseFloat(event.target.value) || 0 })} className="dashboard-input mt-1" required /></div>
                 <div><Label className="text-text-secondary">Payment method</Label><select value={formData.payment_method} onChange={(event) => setFormData({ ...formData, payment_method: event.target.value })} className="dashboard-input mt-1 w-full px-3 py-2"><option value="cash">Cash</option><option value="card">Card</option><option value="transfer">Transfer</option><option value="cheque">Cheque</option></select></div>
-                <Button type="submit" disabled={saving} className="dashboard-primary w-full">{saving ? 'Saving...' : editingId ? 'Update Expense' : 'Record Expense'}</Button>
+                <LoadingButton type="submit" loading={saving} className="dashboard-primary w-full">{editingId ? 'Update Expense' : 'Record Expense'}</LoadingButton>
               </form>
             </DialogContent>
           </Dialog>
