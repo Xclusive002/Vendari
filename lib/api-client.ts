@@ -32,7 +32,11 @@ export async function apiFetch(path: string, options: ApiOptions = {}): Promise<
   const requestHeaders = new Headers(requestOptions.headers)
   if (access && !isPublicAuthRequest(path)) requestHeaders.set('Authorization', `Bearer ${access}`)
   if (!(requestOptions.body instanceof FormData)) requestHeaders.set('Content-Type', 'application/json')
-  const response = await fetch(apiUrl(path), { ...requestOptions, headers: requestHeaders, cache: 'no-store' })
+  const fullUrl = apiUrl(path)
+  const isLoginRequest = path === '/api/auth/login/'
+  if (isLoginRequest) console.log('LOGIN REQUEST URL:', fullUrl)
+  const response = await fetch(fullUrl, { ...requestOptions, headers: requestHeaders, cache: 'no-store' })
+  if (isLoginRequest) console.log('LOGIN RESPONSE:', response.status, await response.clone().text())
   if (response.status === 401 && !skipRefresh && await refreshSession()) {
     return apiFetch(path, { ...options, skipRefresh: true })
   }
