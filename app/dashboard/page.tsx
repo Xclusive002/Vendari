@@ -44,15 +44,17 @@ export default function DashboardPage() {
       if (currentLoad !== loadVersion) return
       setBusiness(currentBusiness)
       setShowWelcome(currentUser?.has_seen_welcome === false)
-      const [salesResult, expensesResult, inventoryResult, insightResult] = await Promise.all([
-        getSales(currentBusiness.id), getExpenses(currentBusiness.id), getInventory(currentBusiness.id), getInsights(currentBusiness.id),
+      const [salesResult, expensesResult, inventoryResult] = await Promise.all([
+        getSales(currentBusiness.id), getExpenses(currentBusiness.id), getInventory(currentBusiness.id),
       ])
       if (currentLoad !== loadVersion) return
       setSales(salesResult.data || [])
       setExpenses(expensesResult.data || [])
       setInventory(inventoryResult.data || [])
-      setInsights(insightResult.data || [])
       setLoading(false)
+      getInsights(currentBusiness.id).then((insightResult) => {
+        if (currentLoad === loadVersion) setInsights(insightResult.data || [])
+      }).catch(() => setInsights([]))
     }
     load()
     const refreshOnReturn = () => {
