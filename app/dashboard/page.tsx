@@ -50,6 +50,11 @@ export default function DashboardPage() {
       setLoading(false)
     }
     load()
+    const refreshOnReturn = () => {
+      if (document.visibilityState === 'visible') load()
+    }
+    document.addEventListener('visibilitychange', refreshOnReturn)
+    return () => document.removeEventListener('visibilitychange', refreshOnReturn)
   }, [])
 
   if (loading) return <main className="flex min-h-screen items-center justify-center bg-bg text-sm text-text-secondary">Loading your dashboard...</main>
