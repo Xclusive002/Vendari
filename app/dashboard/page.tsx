@@ -35,14 +35,19 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    let loadVersion = 0
+
     async function load() {
+      const currentLoad = ++loadVersion
       const [currentBusiness, currentUser] = await Promise.all([withTimeout(getBusiness(), null), withTimeout(getCurrentUser(), null)])
       if (!currentBusiness) { setLoading(false); return }
+      if (currentLoad !== loadVersion) return
       setBusiness(currentBusiness)
       setShowWelcome(currentUser?.has_seen_welcome === false)
-      const [salesResult, expensesResult, inventoryResult, insightResult] = await withTimeout(Promise.all([
+      const [salesResult, expensesResult, inventoryResult, insightResult] = await Promise.all([
         getSales(currentBusiness.id), getExpenses(currentBusiness.id), getInventory(currentBusiness.id), getInsights(currentBusiness.id),
-      ]), [{ success: false, data: [] }, { success: false, data: [] }, { success: false, data: [] }, { success: false, data: [] }])
+      ])
+      if (currentLoad !== loadVersion) return
       setSales(salesResult.data || [])
       setExpenses(expensesResult.data || [])
       setInventory(inventoryResult.data || [])
@@ -53,8 +58,14 @@ export default function DashboardPage() {
     const refreshOnReturn = () => {
       if (document.visibilityState === 'visible') load()
     }
+    window.addEventListener('focus', refreshOnReturn)
+    window.addEventListener('pageshow', refreshOnReturn)
     document.addEventListener('visibilitychange', refreshOnReturn)
-    return () => document.removeEventListener('visibilitychange', refreshOnReturn)
+    return () => {
+      window.removeEventListener('focus', refreshOnReturn)
+      window.removeEventListener('pageshow', refreshOnReturn)
+      document.removeEventListener('visibilitychange', refreshOnReturn)
+    }
   }, [])
 
   if (loading) return <main className="flex min-h-screen items-center justify-center bg-bg text-sm text-text-secondary">Loading your dashboard...</main>
