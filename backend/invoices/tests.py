@@ -97,11 +97,13 @@ class InvoiceApiTests(APITestCase):
 
     @patch('invoices.views.generate_content', side_effect=Exception('ConnectError: [Errno 11002] getaddrinfo failed'))
     @patch('invoices.views.settings.GEMINI_API_KEY', 'test-key')
-    def test_generate_notes_exposes_network_failure(self, generate_content_mock):
+    def test_generate_notes_hides_network_failure_details(self, generate_content_mock):
         response = self.client.post(
             f'/api/businesses/{self.business_a.pk}/invoices/generate-notes/',
             {'description': '5 bags of cement at 8000 each'},
             format='json',
         )
         self.assertEqual(response.status_code, status.HTTP_502_BAD_GATEWAY)
-        self.assertIn('unreachable', response.data['detail'])
+        self.assertEqual(response.data['detail'], 'We could not create the invoice draft right now. Please try again or enter the invoice details manually.')
+        self.assertNotIn('ConnectError', response.data['detail'])
+        self.assertNotIn('backend logs', response.data['detail'])

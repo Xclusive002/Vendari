@@ -119,11 +119,7 @@ Return ONLY this JSON structure:
             return Response({'detail': 'AI is busy, try again in a moment.'}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
         except Exception as error:
             logger.exception('Invoice note generation failed for business %s', business_id)
-            if 'ConnectError' in type(error).__name__ or 'getaddrinfo failed' in str(error):
-                detail = 'AI service is unreachable. Check the backend network or DNS connection and try again.'
-            else:
-                detail = 'AI service failed while generating invoice notes. Check the backend logs for details.'
-            return Response({'detail': detail}, status=status.HTTP_502_BAD_GATEWAY)
+            return Response({'detail': 'We could not create the invoice draft right now. Please try again or enter the invoice details manually.'}, status=status.HTTP_502_BAD_GATEWAY)
 
 
 class SaleReceiptView(APIView):

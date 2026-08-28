@@ -284,9 +284,10 @@ export default function NewInvoicePage() {
           )}
 
           {/* Customer Section */}
-          <div className="dashboard-panel p-6">
-            <h3 className="text-lg font-semibold text-text-primary mb-4">Customer</h3>
-            <div className="flex gap-4 mb-4">
+          <div className="dashboard-panel p-5 sm:p-6">
+            <h3 className="text-lg font-semibold text-text-primary mb-1">Customer</h3>
+            <p className="mb-4 text-sm text-text-secondary">Choose an existing customer or add the person or company receiving this invoice.</p>
+            <div className="flex flex-col gap-3 mb-4 sm:flex-row sm:gap-4">
               <label className="flex items-center gap-2 cursor-pointer">
                 <input
                   type="radio"
@@ -317,18 +318,19 @@ export default function NewInvoicePage() {
                 ))}
               </select>
             ) : (
-              <div className="space-y-3">
-                <input type="text" value={newCustomerName} onChange={(e) => setNewCustomerName(e.target.value)} placeholder="Customer name" className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-blue" />
-                <input type="tel" value={newCustomerPhone} onChange={(e) => setNewCustomerPhone(e.target.value)} placeholder="Customer phone number" className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-blue" />
+              <div className="grid gap-3 sm:grid-cols-2">
+                <label className="text-sm font-medium text-text-secondary">Customer name<input type="text" value={newCustomerName} onChange={(e) => setNewCustomerName(e.target.value)} placeholder="e.g. Musa Bello" className="mt-1.5 w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-blue" /></label>
+                <label className="text-sm font-medium text-text-secondary">Phone number<input type="tel" value={newCustomerPhone} onChange={(e) => setNewCustomerPhone(e.target.value)} placeholder="e.g. 0803 123 4567" className="mt-1.5 w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-blue" /></label>
               </div>
             )}
           </div>
 
           {/* Due Date Section */}
-          <div className="dashboard-panel p-6">
+          <div className="dashboard-panel p-5 sm:p-6">
             <label className="block mb-2">
-              <span className="text-sm font-medium text-text-primary">Due Date (Optional)</span>
+              <span className="text-sm font-medium text-text-primary">Due date <span className="font-normal text-text-muted">(optional)</span></span>
             </label>
+            <p className="mb-2 text-sm text-text-secondary">Select when payment is expected. Leave blank if payment is due immediately.</p>
             <input
               type="date"
               value={dueDate}
@@ -338,44 +340,16 @@ export default function NewInvoicePage() {
           </div>
 
           {/* Line Items Section */}
-          <div className="dashboard-panel p-6">
-            <h3 className="text-lg font-semibold text-text-primary mb-4">Line Items</h3>
-            <div className="space-y-3">
-              {lineItems.map((item, idx) => (
-                <div key={item.id} className="flex gap-3 items-start">
-                  <div className="flex-1">
-                    <input
-                      type="text"
-                      value={item.description}
-                      onChange={(e) => updateLineItem(item.id, 'description', e.target.value)}
-                      placeholder="Description"
-                      className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-blue"
-                    />
-                  </div>
-                  <div className="w-20">
-                    <input
-                      type="number"
-                      min="1"
-                      value={item.quantity}
-                      onChange={(e) => updateLineItem(item.id, 'quantity', e.target.value)}
-                      placeholder="Qty"
-                      className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-blue"
-                    />
-                  </div>
-                  <div className="w-28">
-                    <input
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      value={item.unit_price}
-                      onChange={(e) => updateLineItem(item.id, 'unit_price', e.target.value)}
-                      placeholder="Price"
-                      className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-blue"
-                    />
-                  </div>
-                  <div className="w-24 text-right">
-                    <div className="text-sm font-semibold text-text-primary">{(item.quantity * item.unit_price).toFixed(2)}</div>
-                  </div>
+          <div className="dashboard-panel p-5 sm:p-6">
+            <h3 className="text-lg font-semibold text-text-primary mb-1">Items or services</h3>
+            <p className="mb-4 text-sm text-text-secondary">Add each product or service separately. Quantity is the number sold; unit price is the price for one unit.</p>
+            <div className="space-y-4">
+              {lineItems.map((item) => (
+                <div key={item.id} className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_7rem_8rem_6rem_auto] sm:items-end">
+                  <label className="text-sm font-medium text-text-secondary">Description<input type="text" value={item.description} onChange={(e) => updateLineItem(item.id, 'description', e.target.value)} placeholder="e.g. Website design" className="mt-1.5 w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-blue" /></label>
+                  <label className="text-sm font-medium text-text-secondary">Quantity<input type="number" min="1" value={item.quantity} onChange={(e) => updateLineItem(item.id, 'quantity', e.target.value)} placeholder="1" className="mt-1.5 w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-blue" /></label>
+                  <label className="text-sm font-medium text-text-secondary">Price per item<input type="number" min="0" step="0.01" value={item.unit_price} onChange={(e) => updateLineItem(item.id, 'unit_price', e.target.value)} placeholder="0.00" className="mt-1.5 w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-blue" /></label>
+                  <div className="text-sm font-semibold text-text-primary sm:pb-2">Total: {(item.quantity * item.unit_price).toFixed(2)}</div>
                   {lineItems.length > 1 && (
                     <button
                       type="button"
@@ -417,8 +391,9 @@ export default function NewInvoicePage() {
           {/* Notes Section */}
           <div className="dashboard-panel p-6">
             <label className="block mb-2">
-              <span className="text-sm font-medium text-text-primary">Notes & Terms</span>
+              <span className="text-sm font-medium text-text-primary">Notes and payment terms <span className="font-normal text-text-muted">(optional)</span></span>
             </label>
+            <p className="mb-2 text-sm text-text-secondary">Add delivery details, payment instructions, or other information your customer should see.</p>
             <textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
