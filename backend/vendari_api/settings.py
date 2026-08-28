@@ -41,7 +41,7 @@ ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=['localhost', '127.0.0.1'])
 CORS_ALLOWED_ORIGINS = env.list('CORS_ALLOWED_ORIGINS', default=['http://localhost:3000'])
 PAYSTACK_SECRET_KEY = env('PAYSTACK_SECRET_KEY', default='')
 GEMINI_API_KEY = env('GEMINI_API_KEY', default='')
-GEMINI_MODEL = env('GEMINI_MODEL', default='models/gemini-3.6-flash')
+GEMINI_MODEL = env('GEMINI_MODEL', default='gemini-2.5-flash')
 
 # Application definition
 

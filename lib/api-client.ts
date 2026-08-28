@@ -63,7 +63,10 @@ export async function apiJson<T>(path: string, options: ApiOptions = {}): Promis
   const response = await apiFetch(path, options)
   const payload = await response.json().catch(() => ({}))
   if (!response.ok) {
-    const detail = payload.detail || payload.error || Object.values(payload).flat().join(' ') || 'API request failed'
+    const fieldErrors = Object.entries(payload)
+      .filter(([key]) => key !== 'detail' && key !== 'error')
+      .flatMap(([key, value]) => `${key}: ${Array.isArray(value) ? value.join(', ') : String(value)}`)
+    const detail = payload.detail || payload.error || fieldErrors.join(' ') || 'API request failed'
     throw new Error(String(detail))
   }
   return payload as T

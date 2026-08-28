@@ -35,6 +35,7 @@ export default function NewInvoicePage() {
   const [customerOption, setCustomerOption] = useState<'existing' | 'new'>('existing')
   const [selectedCustomerId, setSelectedCustomerId] = useState<number | null>(null)
   const [newCustomerName, setNewCustomerName] = useState('')
+  const [newCustomerPhone, setNewCustomerPhone] = useState('')
   const [dueDate, setDueDate] = useState('')
   const [notes, setNotes] = useState('')
   const [lineItems, setLineItems] = useState<LineItem[]>([
@@ -149,7 +150,11 @@ export default function NewInvoicePage() {
           setError('Please enter a customer name')
           return
         }
-        const customerResult = await addCustomer(business.id, { name: newCustomerName.trim() })
+        if (!newCustomerPhone.trim()) {
+          setError('Please enter the new customer phone number')
+          return
+        }
+        const customerResult = await addCustomer(business.id, { name: newCustomerName.trim(), phone: newCustomerPhone.trim() })
         if (!customerResult.success) {
           setError(customerResult.error || 'Failed to create customer')
           return
@@ -312,13 +317,10 @@ export default function NewInvoicePage() {
                 ))}
               </select>
             ) : (
-              <input
-                type="text"
-                value={newCustomerName}
-                onChange={(e) => setNewCustomerName(e.target.value)}
-                placeholder="Customer name"
-                className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-blue"
-              />
+              <div className="space-y-3">
+                <input type="text" value={newCustomerName} onChange={(e) => setNewCustomerName(e.target.value)} placeholder="Customer name" className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-blue" />
+                <input type="tel" value={newCustomerPhone} onChange={(e) => setNewCustomerPhone(e.target.value)} placeholder="Customer phone number" className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-blue" />
+              </div>
             )}
           </div>
 
