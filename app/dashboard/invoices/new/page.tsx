@@ -7,6 +7,7 @@ import Link from 'next/link'
 import { addCustomer, getBusiness, getCustomers, createInvoice, generateInvoiceNotes } from '@/app/actions/business'
 import { LoadingButton } from '@/components/ui/loading-button'
 import { PageSkeleton } from '@/components/ui/skeleton'
+import { BackButton } from '@/components/ui/back-button'
 
 interface LineItem {
   id: string
@@ -199,10 +200,7 @@ export default function NewInvoicePage() {
       <main className="dashboard-page md:pl-8">
         <div className="mx-auto max-w-4xl">
           <p className="text-negative font-semibold mb-4">{error}</p>
-          <Link href="/dashboard/invoices" className="inline-flex items-center gap-2 text-sm font-semibold text-blue">
-            <ArrowLeft className="h-4 w-4" />
-            Back to invoices
-          </Link>
+          <BackButton fallback="/dashboard/invoices">Back to invoices</BackButton>
         </div>
       </main>
     )
@@ -219,10 +217,7 @@ export default function NewInvoicePage() {
             <h1 className="text-2xl font-bold text-text-primary">Create Invoice</h1>
             <p className="mt-1 text-sm text-text-secondary">Create a new freestanding invoice for customer invoicing</p>
           </div>
-          <Link href="/dashboard/invoices" className="inline-flex items-center gap-2 text-sm font-semibold text-text-secondary hover:text-text-primary">
-            <ArrowLeft className="h-4 w-4" />
-            Back
-          </Link>
+          <BackButton fallback="/dashboard/invoices">Back</BackButton>
         </div>
 
         {error && (

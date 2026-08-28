@@ -41,7 +41,7 @@ export function ConciergeCTA() {
         <p className="text-sm font-semibold text-ink">Talk to us about Concierge</p>
         <p className="mt-1 text-sm text-text-secondary">No commitment — we&apos;ll walk through what your business needs first.</p>
       </div>
-      <Link href="/concierge-inquiry" className="inline-flex items-center gap-2 rounded-lg bg-brand-gradient px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-blue/20">
+      <Link href="https://wa.me/2349016615446" target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-lg bg-brand-gradient px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-blue/20">
         Talk to us about Concierge <ArrowRight className="h-4 w-4" />
       </Link>
     </div>

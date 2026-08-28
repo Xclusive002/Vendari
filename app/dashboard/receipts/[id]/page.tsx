@@ -7,6 +7,7 @@ import { ArrowLeft, Printer, Loader2 } from 'lucide-react'
 import Link from 'next/link'
 import { getBusiness, getInvoice } from '@/app/actions/business'
 import ReceiptDocument, { type ReceiptBusiness, type ReceiptInvoice } from '@/components/dashboard/ReceiptDocument'
+import { BackButton } from '@/components/ui/back-button'
 
 const ReceiptExportActions = dynamic(() => import('@/components/dashboard/ReceiptExportActions'), { ssr: false })
 
@@ -61,10 +62,7 @@ export default function ReceiptPage() {
       <main className="dashboard-page md:pl-8">
         <div className="mx-auto max-w-4xl">
           <p className="text-negative font-semibold mb-4">{error || 'Receipt unavailable.'}</p>
-          <Link href="/dashboard/sales" className="inline-flex items-center gap-2 text-sm font-semibold text-blue hover:text-blue">
-            <ArrowLeft className="h-4 w-4" />
-            Back to sales
-          </Link>
+          <BackButton fallback="/dashboard/sales">Back to sales</BackButton>
         </div>
       </main>
     )
@@ -122,10 +120,7 @@ export default function ReceiptPage() {
       <main className="receipt-page dashboard-page md:pl-8">
         <div className="mx-auto max-w-4xl">
           <div className="receipt-actions mb-6 flex flex-wrap items-center justify-between gap-3">
-            <Link href="/dashboard/sales" className="inline-flex items-center gap-2 text-sm font-semibold text-text-secondary hover:text-ink">
-              <ArrowLeft className="h-4 w-4" />
-              Back to sales
-            </Link>
+            <BackButton fallback="/dashboard/sales">Back to sales</BackButton>
             <div className="flex flex-wrap gap-2">
               <ReceiptExportActions documentRef={documentRef} documentNumber={invoice.doc_number} />
               <button

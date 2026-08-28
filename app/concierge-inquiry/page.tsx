@@ -4,6 +4,7 @@ import { FormEvent, useRef, useState } from 'react'
 import Link from 'next/link'
 import { ArrowLeft, CheckCircle2, Loader2, MessageCircle } from 'lucide-react'
 import { submitConciergeInquiry } from '@/app/actions/concierge'
+import { BackButton } from '@/components/ui/back-button'
 
 export default function ConciergeInquiryPage() {
   const [submitted, setSubmitted] = useState(false)
@@ -37,7 +38,7 @@ export default function ConciergeInquiryPage() {
   return (
     <main className="min-h-screen bg-bg px-5 py-8 text-text-primary sm:px-8 sm:py-12">
       <div className="mx-auto max-w-5xl">
-        <Link href="/" className="inline-flex items-center gap-2 text-sm font-semibold text-text-secondary hover:text-ink"><ArrowLeft className="h-4 w-4" />Back to Vendari</Link>
+        <BackButton fallback="/">Back to previous page</BackButton>
         <div className="mt-12 grid gap-12 lg:grid-cols-[.9fr_1.1fr] lg:items-start">
           <div><p className="text-xs font-semibold uppercase tracking-[0.18em] text-blue">VENDARI CONCIERGE</p><h1 className="mt-4 font-display text-4xl font-semibold leading-tight text-ink sm:text-6xl">Your business, seen. Handled by a real person.</h1><p className="mt-6 text-lg leading-8 text-text-secondary">Tell us what you are building. We&apos;ll walk through what your business needs first, with no commitment.</p><div className="mt-8 flex items-center gap-3 text-sm font-semibold text-ink"><MessageCircle className="h-5 w-5 text-blue" />A dedicated growth officer, reachable on WhatsApp.</div></div>
           <div className="rounded-xl border border-border bg-surface p-6 shadow-sm sm:p-8">
