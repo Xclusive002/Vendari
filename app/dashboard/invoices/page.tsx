@@ -91,7 +91,7 @@ export default function InvoicesPage() {
     <main className="dashboard-page md:pl-8">
       <div className="mx-auto max-w-6xl">
         {/* Header */}
-        <div className="mb-6 flex items-center justify-between">
+        <div className="mb-6 flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-2xl font-bold text-text-primary">Invoices & Receipts</h1>
             <p className="mt-1 text-sm text-text-secondary">Manage your invoices and receipts</p>
@@ -106,7 +106,7 @@ export default function InvoicesPage() {
         </div>
 
         {/* Filters */}
-        <div className="dashboard-panel mb-6 p-4 flex gap-4">
+        <div className="dashboard-panel mb-6 flex flex-col gap-4 p-4 sm:flex-row">
           <div>
             <label className="block text-xs font-semibold text-text-secondary uppercase mb-2">Document Type</label>
             <select
@@ -149,8 +149,8 @@ export default function InvoicesPage() {
             </Link>
           </div>
         ) : (
-          <div className="dashboard-panel overflow-hidden">
-            <table className="w-full text-sm">
+          <div className="dashboard-panel overflow-x-auto">
+            <table className="min-w-[760px] w-full text-sm">
               <thead>
                 <tr className="border-b border-border bg-bg">
                   <th className="px-4 py-3 text-left font-semibold text-text-primary">Document</th>
@@ -159,7 +159,7 @@ export default function InvoicesPage() {
                   <th className="px-4 py-3 text-left font-semibold text-text-primary">Due Date</th>
                   <th className="px-4 py-3 text-right font-semibold text-text-primary">Total</th>
                   <th className="px-4 py-3 text-center font-semibold text-text-primary">Status</th>
-                  <th className="px-4 py-3 text-right font-semibold text-text-primary">Action</th>
+                      <th className="sticky right-0 bg-bg px-4 py-3 text-right font-semibold text-text-primary">Action</th>
                 </tr>
               </thead>
               <tbody>
@@ -174,7 +174,7 @@ export default function InvoicesPage() {
                     <td className="px-4 py-3 text-text-secondary">
                       {invoice.due_date ? formatDate(invoice.due_date) : '—'}
                     </td>
-                    <td className="px-4 py-3 text-right">
+                    <td className="sticky right-0 bg-surface px-4 py-3 text-right">
                       <div className="dashboard-number font-semibold text-text-primary">{formatMoney(invoice.total)}</div>
                     </td>
                     <td className="px-4 py-3 text-center">

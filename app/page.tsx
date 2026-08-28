@@ -83,7 +83,7 @@ function DashboardMockup() {
         <div className="flex gap-1.5" aria-hidden="true"><span className="h-2 w-2 rounded-full bg-negative" /><span className="h-2 w-2 rounded-full bg-warning" /><span className="h-2 w-2 rounded-full bg-positive" /></div>
         <span className="ml-2 text-[10px] font-medium tracking-[0.18em] text-white/40">VENDARI / OVERVIEW</span>
       </div>
-      <div className="grid min-h-[430px] grid-cols-[150px_1fr] sm:grid-cols-[190px_1fr]">
+      <div className="grid min-h-[430px] grid-cols-1 sm:grid-cols-[190px_1fr]">
         <aside className="hidden border-r border-white/10 bg-ink p-3 sm:block sm:p-4" aria-label="Dashboard preview navigation">
           <div className="mb-8 flex items-center gap-2 px-2 text-sm font-semibold text-white"><Image src="/vendari-dark-blue-bg.png" alt="Vendari" width={104} height={104} className="h-7 w-auto object-contain" /></div>
           <div className="space-y-1">
@@ -92,7 +92,7 @@ function DashboardMockup() {
         </aside>
         <div className="min-w-0 bg-[#f7f9fc] p-4 sm:p-6">
           <div className="mb-5 flex items-center justify-between"><div><p className="text-[10px] font-medium text-text-muted">Monday, 23 August 2026</p><h3 className="font-display text-lg font-semibold text-ink">Good morning, Emmanuel</h3></div><div className="flex h-7 w-7 items-center justify-center rounded-full bg-blue/10 text-[10px] font-semibold text-blue">EA</div></div>
-          <div className="grid grid-cols-3 gap-2 sm:gap-3">
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-3 sm:gap-3">
             {[['Total Sales', 'N1,284,500', '+18.4%', CircleDollarSign], ['Orders', '248', '+12.8%', ShoppingCart], ['Profit', 'N384,220', '+9.6%', Wallet]].map(([label, value, trend, Icon]) => <div key={label as string} className="rounded-lg border border-border bg-surface p-3 shadow-sm"><div className="flex items-center justify-between"><p className="text-[8px] font-medium text-text-muted sm:text-[10px]">{label as string}</p><Icon className="hidden h-3.5 w-3.5 text-blue sm:block" /></div><p className="mt-2 font-mono text-xs font-medium text-ink sm:text-base">{value as string}</p><p className="mt-1 text-[8px] font-medium text-positive sm:text-[9px]">{trend as string} <span className="text-text-muted">vs last month</span></p></div>)}
           </div>
           <div className="mt-3 grid gap-3 lg:grid-cols-[1.4fr_1fr]">

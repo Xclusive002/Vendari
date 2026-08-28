@@ -21,7 +21,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 from rest_framework_nested import routers
 
-from businesses.views import BusinessViewSet, ConciergeInquiryView
+from businesses.views import BusinessDashboardSummaryView, BusinessViewSet, ConciergeInquiryView
 from inventory.views import InventoryItemViewSet
 from sales.views import SaleViewSet
 from expenses.views import ExpenseViewSet
@@ -53,6 +53,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/auth/', include('accounts.urls')),
     path('api/concierge-inquiries/', ConciergeInquiryView.as_view()),
+    path('api/businesses/<int:business_id>/dashboard-summary/', BusinessDashboardSummaryView.as_view()),
     path('api/billing/paystack/initialize/', PaystackInitializeView.as_view()),
     path('api/billing/paystack/webhook/', PaystackWebhookView.as_view()),
     path('api/paystack/banks/', PaystackBanksView.as_view()),

@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { AlertTriangle, ArrowDownRight, ArrowUpRight, ArrowRight, CircleDollarSign, Lightbulb, Package, ShoppingCart, Wallet } from 'lucide-react'
 import Link from 'next/link'
-import { getBusiness, getExpenses, getInsights, getInventory, getSales } from '@/app/actions/business'
+import { getBusiness, getDashboardSummary, getInsights } from '@/app/actions/business'
 import { getCurrentUser, markWelcomeSeen } from '@/app/actions/auth'
 import { useCountUp } from '@/hooks/use-count-up'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -15,6 +15,15 @@ function withTimeout<T>(promise: Promise<T>, fallback: T, milliseconds = 5000) {
 }
 
 type Icon = typeof Wallet
+type DashboardSummary = {
+  total_sales: number
+  orders: number
+  total_expenses: number
+  profit: number
+  trend: Array<{ date: string; amount: number }>
+  products: Array<{ name: string; percentage: number }>
+  low_stock: Array<[string, number, number]>
+}
 
 function StatCard({ label, value, prefix = '', trend, icon: IconComponent, negative = false }: { label: string; value: number; prefix?: string; trend?: string; icon: Icon; negative?: boolean }) {
   const count = useCountUp(value)
@@ -29,9 +38,7 @@ function StatCard({ label, value, prefix = '', trend, icon: IconComponent, negat
 
 export default function DashboardPage() {
   const [business, setBusiness] = useState<{ id: string; business_name: string } | null>(null)
-  const [sales, setSales] = useState<any[]>([])
-  const [expenses, setExpenses] = useState<any[]>([])
-  const [inventory, setInventory] = useState<any[]>([])
+  const [summary, setSummary] = useState<DashboardSummary>({ total_sales: 0, orders: 0, total_expenses: 0, profit: 0, trend: [], products: [], low_stock: [] })
   const [insights, setInsights] = useState<any[]>([])
   const [insightsLoading, setInsightsLoading] = useState(true)
   const [showWelcome, setShowWelcome] = useState(false)
@@ -47,13 +54,9 @@ export default function DashboardPage() {
       if (currentLoad !== loadVersion) return
       setBusiness(currentBusiness)
       setShowWelcome(currentUser?.has_seen_welcome === false)
-      const [salesResult, expensesResult, inventoryResult] = await Promise.all([
-        getSales(currentBusiness.id), getExpenses(currentBusiness.id), getInventory(currentBusiness.id),
-      ])
+      const summaryResult = await getDashboardSummary(currentBusiness.id)
       if (currentLoad !== loadVersion) return
-      setSales(salesResult.data || [])
-      setExpenses(expensesResult.data || [])
-      setInventory(inventoryResult.data || [])
+      setSummary(summaryResult.success ? summaryResult.data : { total_sales: 0, orders: 0, total_expenses: 0, profit: 0, trend: [], products: [], low_stock: [] })
       setLoading(false)
       setInsightsLoading(true)
       getInsights(currentBusiness.id).then((insightResult) => {
@@ -76,18 +79,13 @@ export default function DashboardPage() {
 
   if (loading) return <main className="min-h-screen bg-bg px-5 pb-12 pt-20 sm:px-8 md:pt-8"><div className="mx-auto max-w-7xl space-y-6"><div className="space-y-3"><Skeleton className="h-4 w-48" /><Skeleton className="h-10 w-96 max-w-full" /><Skeleton className="h-4 w-80 max-w-full" /></div><div className="grid gap-4 md:grid-cols-3">{[1, 2, 3].map((item) => <Skeleton key={item} className="h-32 rounded-xl" />)}</div><div className="grid gap-6 lg:grid-cols-[1.45fr_1fr]"><Skeleton className="h-80 rounded-xl" /><Skeleton className="h-80 rounded-xl" /></div><div className="grid gap-6 lg:grid-cols-[1fr_1.35fr]"><Skeleton className="h-56 rounded-xl" /><Skeleton className="h-56 rounded-xl" /></div></div></main>
 
-  const totalSales = sales.reduce((sum, sale) => sum + Number(sale.total || 0), 0)
-  const orders = sales.length
-  const totalExpenses = expenses.reduce((sum, expense) => sum + Number(expense.amount || 0), 0)
-  const profit = totalSales - totalExpenses
-  const lowStock = inventory.filter((item) => item.quantity_in_stock <= (item.reorder_level || 10)).map((item) => [item.product_name, item.quantity_in_stock, item.reorder_level || 10])
-  const productTotals = sales.reduce<Record<string, number>>((totals, sale) => {
-    totals[sale.product_name] = (totals[sale.product_name] || 0) + Number(sale.total || 0)
-    return totals
-  }, {})
-  const topProductTotal = Math.max(...Object.values(productTotals), 0)
-  const products = Object.entries(productTotals).sort(([, first], [, second]) => second - first).slice(0, 4).map(([name, amount]) => [name, topProductTotal ? Math.round((amount / topProductTotal) * 100) : 0] as [string, number])
-  const trend = sales.slice(-7).map((sale) => ({ date: new Date(sale.sold_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }), amount: Number(sale.total || 0) }))
+  const totalSales = Number(summary.total_sales || 0)
+  const orders = Number(summary.orders || 0)
+  const totalExpenses = Number(summary.total_expenses || 0)
+  const profit = Number(summary.profit || 0)
+  const lowStock = summary.low_stock || []
+  const products: Array<[string, number]> = summary.products.map((product) => [product.name, product.percentage])
+  const trend = summary.trend.map((point) => ({ date: new Date(`${point.date}T00:00:00`).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }), amount: Number(point.amount || 0) }))
   const insight = insights[0]
 
   return (

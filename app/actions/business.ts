@@ -102,6 +102,18 @@ export async function getBusiness() {
   }
 }
 
+export async function getDashboardSummary(businessId: string) {
+  return request<{
+    total_sales: number
+    orders: number
+    total_expenses: number
+    profit: number
+    trend: Array<{ date: string; amount: number }>
+    products: Array<{ name: string; percentage: number }>
+    low_stock: Array<[string, number, number]>
+  }>(`/businesses/${businessId}/dashboard-summary/`)
+}
+
 export async function getPaystackBanks() {
   return request<Array<{ name: string; code: string }>>('/paystack/banks/')
 }

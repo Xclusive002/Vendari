@@ -17,7 +17,7 @@ export default async function DashboardLayout({
     <div className="min-h-screen bg-bg">
       <DashboardNav />
       <div className="min-h-screen md:pl-64">
-        <header className="flex h-20 items-center justify-end gap-3 border-b border-border bg-surface px-5 sm:px-8">
+        <header className="flex h-20 items-center justify-end gap-2 border-b border-border bg-surface px-4 sm:gap-3 sm:px-8">
           <NotificationBell />
           <AccountMenu />
         </header>
