@@ -10,10 +10,6 @@ import { useCountUp } from '@/hooks/use-count-up'
 import { Skeleton } from '@/components/ui/skeleton'
 import { LoadingButton } from '@/components/ui/loading-button'
 
-function withTimeout<T>(promise: Promise<T>, fallback: T, milliseconds = 5000) {
-  return Promise.race([promise, new Promise<T>((resolve) => setTimeout(() => resolve(fallback), milliseconds))])
-}
-
 type Icon = typeof Wallet
 type DashboardSummary = {
   total_sales: number
@@ -46,22 +42,35 @@ export default function DashboardPage() {
 
   useEffect(() => {
     let loadVersion = 0
+    let loadingRequest = false
 
     async function load() {
+      if (loadingRequest) return
+      loadingRequest = true
       const currentLoad = ++loadVersion
-      const [currentBusiness, currentUser] = await Promise.all([withTimeout(getBusiness(), null), withTimeout(getCurrentUser(), null)])
-      if (!currentBusiness) { setLoading(false); return }
-      if (currentLoad !== loadVersion) return
-      setBusiness(currentBusiness)
-      setShowWelcome(currentUser?.has_seen_welcome === false)
-      const summaryResult = await getDashboardSummary(currentBusiness.id)
-      if (currentLoad !== loadVersion) return
-      setSummary(summaryResult.success ? summaryResult.data : { total_sales: 0, orders: 0, total_expenses: 0, profit: 0, trend: [], products: [], low_stock: [] })
-      setLoading(false)
-      setInsightsLoading(true)
-      getInsights(currentBusiness.id).then((insightResult) => {
-        if (currentLoad === loadVersion) setInsights(insightResult.data || [])
-      }).catch(() => setInsights([])).finally(() => setInsightsLoading(false))
+      try {
+        const currentBusiness = await getBusiness()
+        if (!currentBusiness) {
+          setLoading(false)
+          return
+        }
+        if (currentLoad !== loadVersion) return
+        setBusiness(currentBusiness)
+
+        const summaryResult = await getDashboardSummary(currentBusiness.id)
+        if (currentLoad !== loadVersion) return
+        setSummary(summaryResult.success ? summaryResult.data : { total_sales: 0, orders: 0, total_expenses: 0, profit: 0, trend: [], products: [], low_stock: [] })
+        setLoading(false)
+        getCurrentUser().then((currentUser) => {
+          if (currentLoad === loadVersion) setShowWelcome(currentUser?.has_seen_welcome === false)
+        })
+        setInsightsLoading(true)
+        getInsights(currentBusiness.id).then((insightResult) => {
+          if (currentLoad === loadVersion) setInsights(insightResult.data || [])
+        }).catch(() => setInsights([])).finally(() => setInsightsLoading(false))
+      } finally {
+        loadingRequest = false
+      }
     }
     load()
     const refreshOnReturn = () => {
