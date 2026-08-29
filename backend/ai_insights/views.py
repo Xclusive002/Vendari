@@ -25,7 +25,10 @@ class BusinessInsightsView(APIView):
 	permission_classes = [IsBusinessMember]
 
 	def get(self, request, business_id):
-		if not Membership.objects.filter(user=request.user, business_id=business_id).exists():
+		if not (
+			Membership.objects.filter(user=request.user, business_id=business_id).exists()
+			or Business.objects.filter(pk=business_id, owner=request.user).exists()
+		):
 			return Response({'detail': 'You must be a member of this business.'}, status=status.HTTP_403_FORBIDDEN)
 		business = Business.objects.get(pk=business_id)
 		if not has_feature(business, 'ai_insights'):
@@ -38,7 +41,10 @@ class BusinessAskView(APIView):
 	permission_classes = [IsBusinessMember]
 
 	def post(self, request, business_id):
-		if not Membership.objects.filter(user=request.user, business_id=business_id).exists():
+		if not (
+			Membership.objects.filter(user=request.user, business_id=business_id).exists()
+			or Business.objects.filter(pk=business_id, owner=request.user).exists()
+		):
 			return Response({'detail': 'You must be a member of this business.'}, status=status.HTTP_403_FORBIDDEN)
 		business = Business.objects.get(pk=business_id)
 		if not has_feature(business, 'nl_reporting'):
@@ -73,8 +79,11 @@ class VoiceEntryView(APIView):
 	permission_classes = [IsBusinessMember]
 
 	def post(self, request, business_id):
-		# Verify user is member of business
-		if not Membership.objects.filter(user=request.user, business_id=business_id).exists():
+		# Verify user is member or owner of business
+		if not (
+			Membership.objects.filter(user=request.user, business_id=business_id).exists()
+			or Business.objects.filter(pk=business_id, owner=request.user).exists()
+		):
 			return Response({'detail': 'You must be a member of this business.'}, status=status.HTTP_403_FORBIDDEN)
 		
 		# Get business

@@ -56,7 +56,7 @@ class User(AbstractBaseUser, PermissionsMixin):
 
 class EmailVerificationToken(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='verification_token')
-    token = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
+    token = models.CharField(max_length=10, unique=True, editable=False)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

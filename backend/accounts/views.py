@@ -1,4 +1,5 @@
 import logging
+import random
 import threading
 
 from django.conf import settings
@@ -16,6 +17,42 @@ from .serializers import InviteAcceptSerializer, LoginSerializer, RegisterSerial
 from .serializers_profile import CurrentUserSerializer
 
 logger = logging.getLogger(__name__)
+
+
+def send_verification_email(user_email, code):
+    subject = 'Verify your Vendari email'
+    html_content = f'''
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+</head>
+<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #0B1220; background: #f7f9fc; padding: 24px;">
+    <div style="max-width: 560px; margin: 0 auto; background: white; border-radius: 12px; padding: 32px;">
+        <h2 style="margin-top: 0;">Verify your email</h2>
+        <p>Use the code below to complete your Vendari registration:</p>
+        <div style="font-size: 32px; letter-spacing: 8px; font-weight: 700; padding: 18px 0; text-align: center; background: #eef3ff; border-radius: 8px; color: #1d4ed8;">{code}</div>
+        <p>This code expires soon. If you did not create this account, you can ignore this email.</p>
+    </div>
+</body>
+</html>
+'''
+    text_content = f'''Verify your Vendari email
+
+Use the code below to complete your registration:
+
+{code}
+
+This code expires soon. If you did not create this account, you can ignore this email.
+'''
+    message = EmailMultiAlternatives(
+        subject=subject,
+        body=text_content,
+        from_email=getattr(settings, 'DEFAULT_FROM_EMAIL', 'hello@vendari.name.ng'),
+        to=[user_email],
+    )
+    message.attach_alternative(html_content, 'text/html')
+    return message.send(fail_silently=False)
 
 
 def token_pair(user):
@@ -129,15 +166,26 @@ class RegisterView(APIView):
         serializer = RegisterSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
-        
-        # Get the business name for the welcome email
+
+        code = ''.join(str(random.randint(0, 9)) for _ in range(6))
+        for _ in range(10):
+            if not EmailVerificationToken.objects.filter(token=code).exists():
+                break
+            code = ''.join(str(random.randint(0, 9)) for _ in range(6))
+
+        EmailVerificationToken.objects.update_or_create(
+            user=user,
+            defaults={'token': code},
+        )
+        send_verification_email(user.email, code)
+
         business = Business.objects.filter(owner=user).first()
         if business:
             send_welcome_email(user.email, business.name)
 
         return Response(
             {
-                'message': 'Registration successful. You can now sign in.',
+                'message': 'Registration successful. A 6-digit verification code has been sent to your email.',
                 'email': user.email,
             },
             status=status.HTTP_201_CREATED,
@@ -151,11 +199,12 @@ class VerifyEmailView(APIView):
     def post(self, request):
         serializer = VerifyEmailSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
+        code = serializer.validated_data['code']
         verification = EmailVerificationToken.objects.select_for_update().select_related('user').filter(
-            token=serializer.validated_data['token'],
+            token=code,
         ).first()
         if verification is None:
-            return Response({'error': 'Invalid verification token.'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': 'Invalid verification code.'}, status=status.HTTP_400_BAD_REQUEST)
         verification.user.is_verified = True
         verification.user.save(update_fields=['is_verified'])
         verification.delete()

@@ -41,7 +41,15 @@ class RegisterSerializer(serializers.Serializer):
 
 
 class VerifyEmailSerializer(serializers.Serializer):
-    token = serializers.UUIDField()
+    code = serializers.CharField(max_length=10, required=False, allow_blank=False)
+    token = serializers.CharField(max_length=10, required=False, allow_blank=False)
+
+    def validate(self, attrs):
+        code = attrs.get('code') or attrs.get('token')
+        if not code:
+            raise serializers.ValidationError({'code': 'Verification code is required.'})
+        attrs['code'] = code.strip()
+        return attrs
 
 
 class LoginSerializer(serializers.Serializer):
@@ -54,6 +62,8 @@ class LoginSerializer(serializers.Serializer):
             raise serializers.ValidationError('Invalid email or password.')
         if not user.is_active:
             raise serializers.ValidationError('This account is inactive.')
+        if not user.is_verified:
+            raise serializers.ValidationError('Please verify your email before logging in.')
         attrs['user'] = user
         return attrs
 
