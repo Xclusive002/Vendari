@@ -16,6 +16,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { LoadingButton } from '@/components/ui/loading-button'
 import { PageSkeleton } from '@/components/ui/skeleton'
 import { VoiceInputButton } from '@/components/voice-input-button'
+import { QuickSaleGrid } from '@/components/quick-sale-grid'
 
 export default function SalesPage() {
   const router = useRouter()
@@ -272,6 +273,9 @@ export default function SalesPage() {
             )}
           </CardContent>
         </Card>
+
+        {/* Quick Sale Grid */}
+        <QuickSaleGrid businessId={business.id} onSaleAdded={loadData} />
 
         {/* Search and Add */}
         <div className="flex gap-4 mb-6 flex-col sm:flex-row">

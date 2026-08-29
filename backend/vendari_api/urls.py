@@ -22,7 +22,7 @@ from django.conf.urls.static import static
 from rest_framework_nested import routers
 
 from businesses.views import BusinessDashboardSummaryView, BusinessViewSet, ConciergeInquiryView
-from inventory.views import InventoryItemViewSet
+from inventory.views import InventoryItemViewSet, TopProductsView
 from sales.views import SaleViewSet
 from expenses.views import ExpenseViewSet
 from customers.views import CustomerViewSet
@@ -63,6 +63,7 @@ urlpatterns = [
     path('api/businesses/<int:business_id>/ai-insights/', BusinessInsightsView.as_view()),
     path('api/businesses/<int:business_id>/ask/', BusinessAskView.as_view()),
     path('api/businesses/<int:business_id>/voice-entry/', VoiceEntryView.as_view()),
+    path('api/businesses/<int:business_id>/top-products/', TopProductsView.as_view()),
     path('api/businesses/<int:business_id>/sales/<int:sale_id>/receipt/', SaleReceiptView.as_view()),
     path('api/businesses/<int:business_id>/invoices/generate-notes/', GenerateInvoiceNotesView.as_view()),
     path('api/notifications/', include('notifications.urls')),

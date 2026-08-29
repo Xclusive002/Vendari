@@ -231,3 +231,8 @@ export async function getCustomers(businessId: string) {
   const result = await request<any[]>(`/businesses/${businessId}/customers/`)
   return result.success ? { success: true as const, data: result.data } : { ...result, data: [] }
 }
+
+export async function getTopProducts(businessId: string, limit: number = 20) {
+  const result = await request<ApiItem[]>(`/businesses/${businessId}/top-products/?limit=${limit}`)
+  return result.success ? { success: true, data: result.data.map(itemFromApi) } : { ...result, data: [] }
+}

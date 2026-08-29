@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { LoadingButton } from '@/components/ui/loading-button'
 import { PageSkeleton } from '@/components/ui/skeleton'
 import { VoiceInputButton } from '@/components/voice-input-button'
+import { QuickRestockGrid } from '@/components/quick-restock-grid'
 
 export default function InventoryPage() {
   const [business, setBusiness] = useState<any>(null)
@@ -318,6 +319,9 @@ export default function InventoryPage() {
             </CardContent>
           </Card>
         )}
+
+        {/* Quick Restock Grid */}
+        <QuickRestockGrid items={inventory} businessId={business.id} onRestockAdded={loadData} />
 
         {/* Inventory Table */}
         <Card className="dashboard-panel">
