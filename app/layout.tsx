@@ -3,6 +3,7 @@ import type { Metadata } from 'next'
 import type { Viewport } from 'next'
 import { IBM_Plex_Mono, Inter, Space_Grotesk } from 'next/font/google'
 
+import { Toaster } from '@/components/ui/sonner'
 import './globals.css'
 
 const displayFont = Space_Grotesk({
@@ -48,6 +49,7 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${displayFont.variable} ${bodyFont.variable} ${monoFont.variable} font-body antialiased`}>
         {children}
+        <Toaster richColors closeButton position="top-right" />
       </body>
     </html>
   )

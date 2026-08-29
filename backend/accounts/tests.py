@@ -43,6 +43,36 @@ class WelcomeStateTests(APITestCase):
 		self.assertTrue(result)
 		mock_send.assert_called_once()
 
+	@patch('accounts.views.send_verification_email')
+	@patch('accounts.views.send_welcome_email')
+	def test_registration_sends_verification_code_before_welcome_email(self, mock_welcome_email, mock_verification_email):
+		response = self.client.post('/api/auth/register/', {
+			'email': 'verify-owner@example.com',
+			'password': 'StrongPass123!',
+			'business_name': 'Verify Co',
+		}, format='json')
+
+		self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+		mock_verification_email.assert_called_once()
+		self.assertEqual(mock_welcome_email.call_count, 0)
+		self.assertFalse(User.objects.get(email='verify-owner@example.com').is_verified)
+
+	@patch('accounts.views.send_welcome_email')
+	@patch('accounts.views.send_verification_email')
+	def test_verifying_code_marks_user_verified_and_sends_welcome_email(self, mock_verification_email, mock_welcome_email):
+		user = User.objects.create_user('code-owner@example.com', 'StrongPass123!')
+		code = '123456'
+		from accounts.models import EmailVerificationToken
+		EmailVerificationToken.objects.create(user=user, token=code)
+
+		response = self.client.post('/api/auth/verify-email/', {'code': code}, format='json')
+
+		self.assertEqual(response.status_code, status.HTTP_200_OK)
+		user.refresh_from_db()
+		self.assertTrue(user.is_verified)
+		mock_welcome_email.assert_called_once_with('code-owner@example.com', user.businesses.first().name)
+		self.assertEqual(mock_verification_email.call_count, 0)
+
 	@patch('vendari_api.resend_backend.requests.post')
 	def test_resend_backend_sends_html_alternative(self, mock_post):
 		mock_post.return_value.raise_for_status.return_value = None

@@ -41,6 +41,7 @@ class RegisterSerializer(serializers.Serializer):
 
 
 class VerifyEmailSerializer(serializers.Serializer):
+    email = serializers.EmailField(required=False)
     code = serializers.CharField(max_length=10, required=False, allow_blank=False)
     token = serializers.CharField(max_length=10, required=False, allow_blank=False)
 
@@ -48,6 +49,8 @@ class VerifyEmailSerializer(serializers.Serializer):
         code = attrs.get('code') or attrs.get('token')
         if not code:
             raise serializers.ValidationError({'code': 'Verification code is required.'})
+        if attrs.get('email'):
+            attrs['email'] = attrs['email'].lower()
         attrs['code'] = code.strip()
         return attrs
 

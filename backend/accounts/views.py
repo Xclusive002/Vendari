@@ -179,10 +179,6 @@ class RegisterView(APIView):
         )
         send_verification_email(user.email, code)
 
-        business = Business.objects.filter(owner=user).first()
-        if business:
-            send_welcome_email(user.email, business.name)
-
         return Response(
             {
                 'message': 'Registration successful. A 6-digit verification code has been sent to your email.',
@@ -200,14 +196,23 @@ class VerifyEmailView(APIView):
         serializer = VerifyEmailSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         code = serializer.validated_data['code']
-        verification = EmailVerificationToken.objects.select_for_update().select_related('user').filter(
-            token=code,
-        ).first()
+        email = serializer.validated_data.get('email')
+
+        verification_qs = EmailVerificationToken.objects.select_for_update().select_related('user')
+        if email:
+            verification_qs = verification_qs.filter(user__email__iexact=email)
+        verification = verification_qs.filter(token=code).first()
         if verification is None:
             return Response({'error': 'Invalid verification code.'}, status=status.HTTP_400_BAD_REQUEST)
+
         verification.user.is_verified = True
         verification.user.save(update_fields=['is_verified'])
         verification.delete()
+
+        business = Business.objects.filter(owner=verification.user).first()
+        if business:
+            send_welcome_email(verification.user.email, business.name)
+
         return Response({'message': 'Email verified successfully.'})
 
 

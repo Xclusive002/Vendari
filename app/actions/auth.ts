@@ -14,6 +14,19 @@ export async function register(email: string, password: string, business_name: s
   }
 }
 
+export async function verifyEmail(email: string, code: string) {
+  try {
+    const data = await apiJson('/auth/verify-email/', {
+      method: 'POST',
+      body: JSON.stringify({ email, code }),
+      skipRefresh: true,
+    })
+    return { success: true, data }
+  } catch (error) {
+    return { success: false, error: error instanceof Error ? error.message : 'Verification failed' }
+  }
+}
+
 export async function login(email: string, password: string) {
   try {
     const tokens = await apiJson<{ access: string; refresh: string }>('/auth/login/', { method: 'POST', body: JSON.stringify({ email, password }), skipRefresh: true })

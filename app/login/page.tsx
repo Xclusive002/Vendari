@@ -5,6 +5,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { ArrowRight, LockKeyhole } from 'lucide-react'
+import { toast } from 'sonner'
 import { login } from '@/app/actions/auth'
 import { LoadingButton } from '@/components/ui/loading-button'
 
@@ -41,6 +42,11 @@ export default function LoginPage() {
     }
 
     setLoading(false)
+    if (result.error?.includes('verify your email')) {
+      toast.error('Please verify your email before logging in.')
+      router.push(`/verify-email?email=${encodeURIComponent(trimmedEmail)}`)
+      return
+    }
     setError(result.error || 'Check your email and password, then try again.')
   }
 
