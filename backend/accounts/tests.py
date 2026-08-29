@@ -43,9 +43,9 @@ class WelcomeStateTests(APITestCase):
 		self.assertTrue(result)
 		mock_send.assert_called_once()
 
-	@patch('vendari_api.resend_backend.Resend')
-	def test_resend_backend_sends_html_alternative(self, mock_resend_cls):
-		mock_client = mock_resend_cls.return_value
+	@patch('vendari_api.resend_backend.requests.post')
+	def test_resend_backend_sends_html_alternative(self, mock_post):
+		mock_post.return_value.raise_for_status.return_value = None
 		message = EmailMultiAlternatives(
 			subject='Welcome',
 			body='Plain text body',
@@ -58,8 +58,8 @@ class WelcomeStateTests(APITestCase):
 			result = ResendBackend().send_messages([message])
 
 		self.assertEqual(result, 1)
-		mock_client.emails.send.assert_called_once()
-		payload = mock_client.emails.send.call_args[0][0]
+		mock_post.assert_called_once()
+		payload = mock_post.call_args.kwargs['json']
 		self.assertEqual(payload['html'], '<p>HTML body</p>')
 		self.assertEqual(payload['text'], 'Plain text body')
 

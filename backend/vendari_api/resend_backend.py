@@ -1,5 +1,6 @@
 import logging
 
+import requests
 from django.conf import settings
 from django.core.mail.backends.base import BaseEmailBackend
 
@@ -19,8 +20,6 @@ class ResendBackend(BaseEmailBackend):
                 continue
 
             try:
-                from resend import Resend
-
                 api_key = getattr(settings, 'RESEND_API_KEY', '').strip()
                 from_email = (message.from_email or getattr(settings, 'DEFAULT_FROM_EMAIL', '')).strip()
                 if not api_key:
@@ -39,13 +38,22 @@ class ResendBackend(BaseEmailBackend):
                     'from': from_email,
                     'to': list(message.to),
                     'subject': message.subject,
-                    'html': html_body,
                     'text': message.body,
                 }
+                if html_body:
+                    payload['html'] = html_body
 
                 logger.info('[RESEND_BACKEND] Sending email via Resend: from=%s to=%s subject=%s', from_email, message.to, message.subject)
-                client = Resend(api_key=api_key)
-                client.emails.send(payload)
+                response = requests.post(
+                    'https://api.resend.com/emails',
+                    headers={
+                        'Authorization': f'Bearer {api_key}',
+                        'Content-Type': 'application/json',
+                    },
+                    json=payload,
+                    timeout=30,
+                )
+                response.raise_for_status()
                 sent += 1
             except Exception:
                 logger.exception('[RESEND_BACKEND] Email send failed for %s', list(message.to))
