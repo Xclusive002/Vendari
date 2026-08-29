@@ -1,5 +1,8 @@
 import logging
+import threading
 
+from django.conf import settings
+from django.core.mail import EmailMessage
 from django.db import transaction
 from rest_framework import status
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -7,6 +10,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 
+from businesses.models import Business
 from .models import EmailVerificationToken
 from .serializers import InviteAcceptSerializer, LoginSerializer, RegisterSerializer, VerifyEmailSerializer
 from .serializers_profile import CurrentUserSerializer
@@ -19,6 +23,77 @@ def token_pair(user):
     return {'access': str(refresh.access_token), 'refresh': str(refresh)}
 
 
+def send_welcome_email_async(user_email, business_name):
+    """
+    Send welcome email to newly registered user asynchronously.
+    Failures are logged but do not break registration.
+    """
+    def _send():
+        try:
+            dashboard_url = settings.DASHBOARD_URL
+            subject = f'Welcome to Vendari, {business_name}'
+            html_content = f'''
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body {{ font-family: Inter, -apple-system, BlinkMacSystemFont, sans-serif; line-height: 1.6; color: #0B1220; }}
+        .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
+        .header {{ margin-bottom: 30px; }}
+        .header h1 {{ font-size: 24px; font-weight: 600; color: #06122B; margin: 0 0 10px 0; }}
+        .content {{ margin-bottom: 30px; color: #4B5768; }}
+        .cta {{ display: inline-block; background: linear-gradient(135deg, #4683EC 0%, #4954F1 100%); color: white; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-weight: 600; margin: 20px 0; }}
+        .footer {{ font-size: 14px; color: #8792A2; border-top: 1px solid #E3E8F1; padding-top: 20px; }}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Welcome to Vendari</h1>
+        </div>
+        <div class="content">
+            <p>Hi there,</p>
+            <p>Your {business_name} account is ready. Start recording sales and inventory right away — track what's low before it runs out, and see the real numbers about your business, computed live.</p>
+            <a href="{dashboard_url}/dashboard" class="cta">Go to your dashboard</a>
+            <p>Need help getting started? Reach out anytime — we're here to make this smooth for you.</p>
+        </div>
+        <div class="footer">
+            <p>Vendari — track sales, inventory, and expenses. Made for business owners who want clarity, not complexity.</p>
+        </div>
+    </div>
+</body>
+</html>
+'''
+            text_content = f'''Welcome to Vendari
+
+Hi there,
+
+Your {business_name} account is ready. Start recording sales and inventory right away — track what's low before it runs out, and see the real numbers about your business, computed live.
+
+Go to your dashboard: {dashboard_url}/dashboard
+
+Need help getting started? Reach out anytime — we're here to make this smooth for you.
+
+Vendari — track sales, inventory, and expenses. Made for business owners who want clarity, not complexity.
+'''
+
+            message = EmailMessage(
+                subject=subject,
+                body=text_content,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                to=[user_email],
+            )
+            message.attach_alternative(html_content, 'text/html')
+            message.send()
+            logger.info(f'Welcome email sent to {user_email}')
+        except Exception as e:
+            logger.error(f'Failed to send welcome email to {user_email}: {str(e)}')
+
+    thread = threading.Thread(target=_send, daemon=True)
+    thread.start()
+
+
 class RegisterView(APIView):
     permission_classes = [AllowAny]
 
@@ -26,6 +101,12 @@ class RegisterView(APIView):
         serializer = RegisterSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
+        
+        # Get the business name for the welcome email
+        business = Business.objects.filter(owner=user).first()
+        if business:
+            send_welcome_email_async(user.email, business.name)
+        
         return Response(
             {
                 'message': 'Registration successful. You can now sign in.',

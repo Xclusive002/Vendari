@@ -105,7 +105,10 @@ WSGI_APPLICATION = 'vendari_api.wsgi.application'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
 DATABASES = {
-    'default': env.db('DATABASE_URL', default=f'sqlite:///{BASE_DIR / "db.sqlite3"}'),
+    'default': {
+        **env.db('DATABASE_URL', default=f'sqlite:///{BASE_DIR / "db.sqlite3"}'),
+        'CONN_MAX_AGE': env.int('DB_CONN_MAX_AGE', default=60),
+    }
 }
 
 REST_FRAMEWORK = {
@@ -119,6 +122,15 @@ REST_FRAMEWORK = {
 
 RESEND_API_KEY = env('RESEND_API_KEY', default='')
 DEFAULT_FROM_EMAIL = env('DEFAULT_FROM_EMAIL', default='noreply@yourdomain.com')
+EMAIL_BACKEND = env('EMAIL_BACKEND', default='vendari_api.resend_backend.ResendBackend')
+EMAIL_HOST = env('EMAIL_HOST', default='')
+EMAIL_PORT = env.int('EMAIL_PORT', default=0)
+EMAIL_USE_TLS = env.bool('EMAIL_USE_TLS', default=False)
+EMAIL_USE_SSL = env.bool('EMAIL_USE_SSL', default=False)
+EMAIL_TIMEOUT = env.int('EMAIL_TIMEOUT', default=10)
+EMAIL_HOST_USER = env('EMAIL_HOST_USER', default='')
+EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD', default='')
+DASHBOARD_URL = env('DASHBOARD_URL', default=(CORS_ALLOWED_ORIGINS[0] if CORS_ALLOWED_ORIGINS else 'http://localhost:3000'))
 
 SIMPLE_JWT = {
     'ALGORITHM': 'HS256',
