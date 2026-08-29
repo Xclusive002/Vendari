@@ -21,8 +21,8 @@ class WelcomeStateTests(APITestCase):
 		self.assertTrue(user.has_seen_welcome)
 		self.assertEqual(self.client.post('/api/auth/mark-welcome-seen/').status_code, status.HTTP_200_OK)
 
-	@patch('accounts.views.threading.Thread')
-	def test_registration_starts_welcome_email_thread(self, mock_thread):
+	@patch('accounts.views.send_welcome_email')
+	def test_registration_attempts_welcome_email_immediately(self, mock_send_welcome_email):
 		response = self.client.post('/api/auth/register/', {
 			'email': 'new-owner@example.com',
 			'password': 'StrongPass123!',
@@ -30,8 +30,7 @@ class WelcomeStateTests(APITestCase):
 		}, format='json')
 
 		self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-		mock_thread.assert_called_once()
-		self.assertTrue(mock_thread.return_value.start.called)
+		mock_send_welcome_email.assert_called_once_with('new-owner@example.com', 'Bluebird Market')
 
 
 class EmailAndDatabaseConfigTests(APITestCase):

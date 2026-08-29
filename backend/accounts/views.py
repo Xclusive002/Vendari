@@ -23,21 +23,30 @@ def token_pair(user):
     return {'access': str(refresh.access_token), 'refresh': str(refresh)}
 
 
-def send_welcome_email_async(user_email, business_name):
+def send_welcome_email(user_email, business_name):
     """
-    Send welcome email to newly registered user asynchronously.
-    Failures are logged but do not break registration.
-    Uses Resend API exclusively via custom backend.
+    Send a welcome email immediately and log any failure without breaking registration.
+    This avoids background-thread issues on managed hosts where the request worker can
+    terminate before a daemon thread finishes.
     """
-    def _send():
-        logger.info(f'[WELCOME_EMAIL] Async thread started for user={user_email}, business={business_name}')
-        try:
-            from_email = settings.DEFAULT_FROM_EMAIL
-            logger.info(f'[WELCOME_EMAIL] Configuration: from_email={from_email}, resend_api_key_set={bool(settings.RESEND_API_KEY)}, backend={settings.EMAIL_BACKEND}')
-            
-            dashboard_url = settings.DASHBOARD_URL
-            subject = f'Welcome to Vendari, {business_name}'
-            html_content = f'''
+    logger.info(f'[WELCOME_EMAIL] Starting immediate send for user={user_email}, business={business_name}')
+    try:
+        from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', '').strip()
+        logger.info(
+            '[WELCOME_EMAIL] Configuration: from_email=%s, resend_api_key_set=%s, backend=%s',
+            from_email,
+            bool(getattr(settings, 'RESEND_API_KEY', '')),
+            getattr(settings, 'EMAIL_BACKEND', ''),
+        )
+
+        if not from_email:
+            raise ValueError('DEFAULT_FROM_EMAIL is not configured.')
+        if not getattr(settings, 'RESEND_API_KEY', ''):
+            raise ValueError('RESEND_API_KEY is not configured.')
+
+        dashboard_url = settings.DASHBOARD_URL
+        subject = f'Welcome to Vendari, {business_name}'
+        html_content = f'''
 <!DOCTYPE html>
 <html>
 <head>
@@ -70,7 +79,7 @@ def send_welcome_email_async(user_email, business_name):
 </body>
 </html>
 '''
-            text_content = f'''Welcome to Vendari
+        text_content = f'''Welcome to Vendari
 
 Hi there,
 
@@ -83,25 +92,33 @@ Need help getting started? Reach out anytime — we're here to make this smooth 
 Vendari — track sales, inventory, and expenses. Made for business owners who want clarity, not complexity.
 '''
 
-            logger.info(f'[WELCOME_EMAIL] Creating EmailMessage with from_email={from_email}, to={user_email}, subject={subject[:50]}...')
-            message = EmailMessage(
-                subject=subject,
-                body=text_content,
-                from_email=from_email,
-                to=[user_email],
-            )
-            message.attach_alternative(html_content, 'text/html')
-            
-            logger.info(f'[WELCOME_EMAIL] Calling message.send() via {settings.EMAIL_BACKEND}...')
-            result = message.send()
-            logger.info(f'[WELCOME_EMAIL] SUCCESS: message.send() returned {result} for {user_email}')
-        except Exception as e:
-            import traceback
-            error_details = traceback.format_exc()
-            logger.error(f'[WELCOME_EMAIL] EXCEPTION for {user_email}: {type(e).__name__}: {str(e)}\n{error_details}', exc_info=True)
+        logger.info(
+            '[WELCOME_EMAIL] Creating EmailMessage with from_email=%s, to=%s, subject=%s',
+            from_email,
+            user_email,
+            subject[:50],
+        )
+        message = EmailMessage(
+            subject=subject,
+            body=text_content,
+            from_email=from_email,
+            to=[user_email],
+        )
+        message.attach_alternative(html_content, 'text/html')
 
-    logger.info(f'[WELCOME_EMAIL] Starting daemon thread for {user_email}')
-    thread = threading.Thread(target=_send, daemon=True)
+        logger.info('[WELCOME_EMAIL] Calling message.send() via %s...', settings.EMAIL_BACKEND)
+        result = message.send(fail_silently=False)
+        logger.info('[WELCOME_EMAIL] SUCCESS: message.send() returned %s for %s', result, user_email)
+        return True
+    except Exception:
+        logger.exception('[WELCOME_EMAIL] EXCEPTION for %s', user_email)
+        return False
+
+
+def send_welcome_email_async(user_email, business_name):
+    """Backward-compatible wrapper kept for callers that still prefer background execution."""
+    logger.info('[WELCOME_EMAIL] Dispatching background thread for %s', user_email)
+    thread = threading.Thread(target=send_welcome_email, args=(user_email, business_name), daemon=True)
     thread.start()
 
 
@@ -116,8 +133,8 @@ class RegisterView(APIView):
         # Get the business name for the welcome email
         business = Business.objects.filter(owner=user).first()
         if business:
-            send_welcome_email_async(user.email, business.name)
-        
+            send_welcome_email(user.email, business.name)
+
         return Response(
             {
                 'message': 'Registration successful. You can now sign in.',
