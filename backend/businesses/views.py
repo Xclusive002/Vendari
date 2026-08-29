@@ -7,6 +7,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from accounts.permissions import IsBusinessMember
+from billing.models import Plan
 
 from .models import Business, Membership
 from .serializers import BusinessSerializer, ConciergeInquirySerializer
@@ -24,6 +25,19 @@ class BusinessViewSet(viewsets.ModelViewSet):
 
 	def perform_create(self, serializer):
 		business = serializer.save(owner=self.request.user)
+		# Assign a default Free plan if no plan exists
+		if not business.plan:
+			default_plan, _ = Plan.objects.get_or_create(name=Plan.PLAN_FREE, defaults={
+				'amount': 0,
+				'interval': Plan.INTERVAL_MONTHLY,
+				'feature_flags': {
+					'ai_insights': True,
+					'nl_reporting': True,
+					'forecasting': True,
+				}
+			})
+			business.plan = default_plan
+			business.save(update_fields=['plan'])
 		business.membership_set.create(user=self.request.user, role='owner')
 
 
