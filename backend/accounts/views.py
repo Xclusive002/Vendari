@@ -27,9 +27,14 @@ def send_welcome_email_async(user_email, business_name):
     """
     Send welcome email to newly registered user asynchronously.
     Failures are logged but do not break registration.
+    Uses Resend API exclusively via custom backend.
     """
     def _send():
+        logger.info(f'[WELCOME_EMAIL] Async thread started for user={user_email}, business={business_name}')
         try:
+            from_email = settings.DEFAULT_FROM_EMAIL
+            logger.info(f'[WELCOME_EMAIL] Configuration: from_email={from_email}, resend_api_key_set={bool(settings.RESEND_API_KEY)}, backend={settings.EMAIL_BACKEND}')
+            
             dashboard_url = settings.DASHBOARD_URL
             subject = f'Welcome to Vendari, {business_name}'
             html_content = f'''
@@ -78,18 +83,24 @@ Need help getting started? Reach out anytime — we're here to make this smooth 
 Vendari — track sales, inventory, and expenses. Made for business owners who want clarity, not complexity.
 '''
 
+            logger.info(f'[WELCOME_EMAIL] Creating EmailMessage with from_email={from_email}, to={user_email}, subject={subject[:50]}...')
             message = EmailMessage(
                 subject=subject,
                 body=text_content,
-                from_email=settings.DEFAULT_FROM_EMAIL,
+                from_email=from_email,
                 to=[user_email],
             )
             message.attach_alternative(html_content, 'text/html')
-            message.send()
-            logger.info(f'Welcome email sent to {user_email}')
+            
+            logger.info(f'[WELCOME_EMAIL] Calling message.send() via {settings.EMAIL_BACKEND}...')
+            result = message.send()
+            logger.info(f'[WELCOME_EMAIL] SUCCESS: message.send() returned {result} for {user_email}')
         except Exception as e:
-            logger.error(f'Failed to send welcome email to {user_email}: {str(e)}')
+            import traceback
+            error_details = traceback.format_exc()
+            logger.error(f'[WELCOME_EMAIL] EXCEPTION for {user_email}: {type(e).__name__}: {str(e)}\n{error_details}', exc_info=True)
 
+    logger.info(f'[WELCOME_EMAIL] Starting daemon thread for {user_email}')
     thread = threading.Thread(target=_send, daemon=True)
     thread.start()
 

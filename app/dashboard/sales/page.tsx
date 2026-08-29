@@ -15,6 +15,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 import { LoadingButton } from '@/components/ui/loading-button'
 import { PageSkeleton } from '@/components/ui/skeleton'
+import { VoiceInputButton } from '@/components/voice-input-button'
 
 export default function SalesPage() {
   const router = useRouter()
@@ -120,6 +121,25 @@ export default function SalesPage() {
     } finally {
       submitRef.current = false
       setSubmitting(false)
+    }
+  }
+
+  const handleVoiceExtracted = (voiceData: any) => {
+    // Gemini extracts: product_name, quantity, unit_price, item_id, estimated_total
+    // Pre-fill the form with extracted data
+    if (voiceData.item_id) {
+      setFormData((prev) => ({
+        ...prev,
+        item: String(voiceData.item_id),
+        quantity: String(voiceData.quantity),
+      }))
+    } else if (voiceData.product_name) {
+      // Product not found; show warning and let user select manually
+      toast.warning(`Product "${voiceData.product_name}" not found. Please select from the list.`)
+      setFormData((prev) => ({
+        ...prev,
+        quantity: String(voiceData.quantity),
+      }))
     }
   }
 
@@ -276,6 +296,15 @@ export default function SalesPage() {
                 <DialogTitle className="font-display text-ink">Record a new sale</DialogTitle>
               </DialogHeader>
               <form onSubmit={handleAddSale} className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <h3 className="font-medium text-slate-300">Enter sale details</h3>
+                  <VoiceInputButton
+                    context="sale"
+                    businessId={business.id}
+                    onExtracted={handleVoiceExtracted}
+                    className="text-xs"
+                  />
+                </div>
                 <div>
                   <Label className="text-slate-300">Inventory Item *</Label>
                   <select value={formData.item} onChange={(e) => setFormData({ ...formData, item: e.target.value })} className="dashboard-input mt-1 w-full px-3 py-2" required>

@@ -10,6 +10,7 @@ import { toast } from 'sonner'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { LoadingButton } from '@/components/ui/loading-button'
 import { PageSkeleton } from '@/components/ui/skeleton'
+import { VoiceInputButton } from '@/components/voice-input-button'
 
 export default function InventoryPage() {
   const [business, setBusiness] = useState<any>(null)
@@ -83,6 +84,17 @@ export default function InventoryPage() {
       })
     }
     setDialogOpen(true)
+  }
+
+  const handleVoiceExtracted = (voiceData: any) => {
+    // Gemini extracts for inventory: product_name, quantity_in_stock, unit_cost, selling_price
+    setFormData((prev) => ({
+      ...prev,
+      product_name: voiceData.product_name || prev.product_name,
+      ...(voiceData.quantity_in_stock !== undefined && { quantity_in_stock: voiceData.quantity_in_stock }),
+      ...(voiceData.unit_cost !== undefined && { unit_cost: voiceData.unit_cost }),
+      ...(voiceData.selling_price !== undefined && { selling_price: voiceData.selling_price }),
+    }))
   }
 
   const handleSave = async (e: React.FormEvent) => {
@@ -159,6 +171,17 @@ export default function InventoryPage() {
                 </DialogTitle>
               </DialogHeader>
               <form onSubmit={handleSave} className="space-y-4 max-h-96 overflow-y-auto">
+                <div className="flex justify-between items-center">
+                  <h3 className="font-medium text-slate-300">Item information</h3>
+                  {!editingId && (
+                    <VoiceInputButton
+                      context="inventory"
+                      businessId={business.id}
+                      onExtracted={handleVoiceExtracted}
+                      className="text-xs"
+                    />
+                  )}
+                </div>
                 <div>
                   <Label className="text-slate-300">Product Name *</Label>
                   <Input

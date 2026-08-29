@@ -27,7 +27,7 @@ from sales.views import SaleViewSet
 from expenses.views import ExpenseViewSet
 from customers.views import CustomerViewSet
 from billing.views import PaystackInitializeView, PaystackWebhookView, PaystackBanksView, VerifyBankAccountView, CreateSubaccountView, InvoicePaymentInitializeView
-from ai_insights.views import BusinessAskView, BusinessInsightsView
+from ai_insights.views import BusinessAskView, BusinessInsightsView, VoiceEntryView
 from invoices.views import InvoiceViewSet, SaleReceiptView, GenerateInvoiceNotesView
 
 business_router = routers.SimpleRouter()
@@ -62,6 +62,7 @@ urlpatterns = [
     path('api/businesses/<int:business_id>/invoices/<int:invoice_id>/pay/', InvoicePaymentInitializeView.as_view()),
     path('api/businesses/<int:business_id>/ai-insights/', BusinessInsightsView.as_view()),
     path('api/businesses/<int:business_id>/ask/', BusinessAskView.as_view()),
+    path('api/businesses/<int:business_id>/voice-entry/', VoiceEntryView.as_view()),
     path('api/businesses/<int:business_id>/sales/<int:sale_id>/receipt/', SaleReceiptView.as_view()),
     path('api/businesses/<int:business_id>/invoices/generate-notes/', GenerateInvoiceNotesView.as_view()),
     path('api/notifications/', include('notifications.urls')),
