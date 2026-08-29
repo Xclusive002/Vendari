@@ -42,7 +42,10 @@ class BusinessDashboardSummaryView(APIView):
 	permission_classes = [IsBusinessMember]
 
 	def get(self, request, business_id):
-		if not Membership.objects.filter(user=request.user, business_id=business_id).exists():
+		if not (
+			Membership.objects.filter(user=request.user, business_id=business_id).exists()
+			or Business.objects.filter(pk=business_id, owner=request.user).exists()
+		):
 			return Response({'detail': 'You must be a member of this business.'}, status=status.HTTP_403_FORBIDDEN)
 
 		business = Business.objects.get(pk=business_id)
