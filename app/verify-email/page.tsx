@@ -1,6 +1,6 @@
 'use client'
 
-import { FormEvent, useMemo, useState } from 'react'
+import { FormEvent, Suspense, useMemo, useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useRouter, useSearchParams } from 'next/navigation'
@@ -10,7 +10,7 @@ import { toast } from 'sonner'
 import { verifyEmail } from '@/app/actions/auth'
 import { LoadingButton } from '@/components/ui/loading-button'
 
-export default function VerifyEmailPage() {
+function VerifyEmailContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const initialEmail = useMemo(() => searchParams.get('email') || '', [searchParams])
@@ -100,5 +100,13 @@ export default function VerifyEmailPage() {
         </section>
       </div>
     </main>
+  )
+}
+
+export default function VerifyEmailPage() {
+  return (
+    <Suspense fallback={<div className="flex min-h-screen items-center justify-center bg-bg">Loading...</div>}>
+      <VerifyEmailContent />
+    </Suspense>
   )
 }
