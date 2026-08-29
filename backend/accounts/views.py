@@ -2,7 +2,7 @@ import logging
 import threading
 
 from django.conf import settings
-from django.core.mail import EmailMessage
+from django.core.mail import EmailMultiAlternatives
 from django.db import transaction
 from rest_framework import status
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -93,12 +93,12 @@ Vendari — track sales, inventory, and expenses. Made for business owners who w
 '''
 
         logger.info(
-            '[WELCOME_EMAIL] Creating EmailMessage with from_email=%s, to=%s, subject=%s',
+            '[WELCOME_EMAIL] Creating EmailMultiAlternatives with from_email=%s, to=%s, subject=%s',
             from_email,
             user_email,
             subject[:50],
         )
-        message = EmailMessage(
+        message = EmailMultiAlternatives(
             subject=subject,
             body=text_content,
             from_email=from_email,

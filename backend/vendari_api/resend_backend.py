@@ -28,7 +28,13 @@ class ResendBackend(BaseEmailBackend):
                 if not from_email:
                     raise ValueError('DEFAULT_FROM_EMAIL is not configured.')
 
-                html_body = message.alternatives[0][0] if message.alternatives else message.body
+                html_body = message.body
+                if getattr(message, 'alternatives', None):
+                    for content, mime_type in message.alternatives:
+                        if mime_type.lower() == 'text/html':
+                            html_body = content
+                            break
+
                 payload = {
                     'from': from_email,
                     'to': list(message.to),
