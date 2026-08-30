@@ -28,8 +28,9 @@ export const metadata: Metadata = {
   generator: 'v0.app',
   manifest: '/manifest.json',
   icons: {
-    icon: '/favicon.ico',
-    apple: '/apple-touch-icon.png',
+    icon: '/vendari-app-logo.jpeg',
+    apple: '/vendari-app-logo.jpeg',
+    shortcut: '/vendari-app-logo.jpeg',
   },
   appleWebApp: {
     capable: true,

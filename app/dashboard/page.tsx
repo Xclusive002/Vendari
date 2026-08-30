@@ -176,7 +176,7 @@ export default function DashboardPage() {
       </div>
 
       <div className="md:hidden">
-        <main className="min-h-screen bg-bg px-4 pb-28 pt-5">
+        <main className="min-h-screen bg-bg px-4 pb-[calc(7.5rem+env(safe-area-inset-bottom))] pt-5">
           <div className="mx-auto max-w-sm">
             <header className="mb-4 pt-2">
               <p className="text-[11px] font-medium uppercase tracking-[0.2em] text-text-muted">{new Intl.DateTimeFormat('en-US', { weekday: 'short', month: 'short', day: 'numeric' }).format(new Date())}</p>

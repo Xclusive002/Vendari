@@ -51,8 +51,8 @@ function VerifyEmailContent() {
 
   if (verified) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-bg px-5 py-12">
-        <div className="w-full max-w-md rounded-xl border border-border bg-surface p-6 shadow-xl shadow-ink/5 sm:p-8">
+      <main className="auth-shell">
+        <div className="auth-card auth-inner">
           <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-lg bg-emerald-100 text-emerald-600">
             <CheckCircle2 className="h-6 w-6" />
           </div>
@@ -67,14 +67,14 @@ function VerifyEmailContent() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-bg px-5 py-12">
-      <div className="w-full max-w-md">
-        <Link href="/" className="mx-auto mb-8 flex w-fit items-center rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue">
+    <main className="auth-shell">
+      <div className="auth-card">
+        <Link href="/" className="mx-auto mb-6 mt-6 flex w-fit items-center rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue">
           <Image src="/vendari-logo-png.png" alt="Vendari" width={180} height={180} className="h-14 w-auto object-contain" />
         </Link>
-        <section className="relative overflow-hidden rounded-xl border border-border bg-surface p-6 shadow-xl shadow-ink/5 sm:p-8">
+        <section className="relative overflow-hidden border-t border-border bg-surface">
           <div className="absolute right-0 top-0 h-24 w-24 rounded-bl-full bg-violet/5" />
-          <div className="relative">
+          <div className="auth-inner">
             <div className="mb-6 flex h-11 w-11 items-center justify-center rounded-lg bg-blue/10 text-blue">
               <MailCheck className="h-5 w-5" />
             </div>

@@ -2,9 +2,23 @@
 @tailwind components;
 @tailwind utilities;
 
+html {
+  -webkit-tap-highlight-color: transparent;
+}
+
 body {
+  min-height: 100vh;
   font-family: var(--font-body), sans-serif;
   line-height: 1.5;
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+@supports (padding: max(0px)) {
+  body {
+    padding-top: max(env(safe-area-inset-top), 0px);
+    padding-bottom: max(env(safe-area-inset-bottom), 0px);
+  }
 }
 
 @layer utilities {
@@ -76,6 +90,29 @@ body {
     color: white;
   }
 
+  .auth-shell {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(180deg, #f7f9fc 0%, #eef4ff 100%);
+    padding: 1rem;
+  }
+
+  .auth-card {
+    width: min(100%, 28rem);
+    border: 1px solid var(--border);
+    border-radius: 1.25rem;
+    background: var(--surface);
+    box-shadow: 0 18px 45px rgba(6, 18, 43, 0.08);
+    overflow: hidden;
+  }
+
+  .auth-inner {
+    position: relative;
+    padding: 1.25rem;
+  }
+
   .loading-spinner {
     position: relative;
     display: inline-block;
@@ -130,6 +167,54 @@ body {
       opacity: 1;
       transform: scale(1);
     }
+  }
+}
+
+@media (max-width: 767px) {
+  body {
+    padding-bottom: calc(env(safe-area-inset-bottom) + 0.75rem);
+  }
+
+  .dashboard-page {
+    padding: 0.9rem 0.9rem 6rem !important;
+  }
+
+  .dashboard-page main,
+  .dashboard-page > main,
+  .dashboard-page > div {
+    max-width: none !important;
+  }
+
+  .dashboard-page .max-w-7xl,
+  .dashboard-page .max-w-4xl,
+  .dashboard-page .max-w-2xl {
+    max-width: none !important;
+  }
+
+  .dashboard-page .rounded-xl,
+  .dashboard-page .rounded-2xl,
+  .dashboard-panel {
+    border-radius: 1rem !important;
+  }
+
+  .dashboard-page .p-6,
+  .dashboard-page .p-5,
+  .dashboard-page .p-8,
+  .dashboard-page .sm\:p-6,
+  .dashboard-page .sm\:p-8 {
+    padding: 1rem !important;
+  }
+
+  .auth-shell {
+    padding: 1rem 0.75rem 4rem;
+  }
+
+  .auth-inner {
+    padding: 1rem;
+  }
+
+  .auth-card {
+    border-radius: 1rem;
   }
 }
 
