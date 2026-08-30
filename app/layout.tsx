@@ -1,26 +1,10 @@
 import React from "react"
 import type { Metadata } from 'next'
 import type { Viewport } from 'next'
-import { IBM_Plex_Mono, Inter, Space_Grotesk } from 'next/font/google'
 
 import { Toaster } from '@/components/ui/sonner'
+import { AppInstallPrompt } from '@/components/ui/app-install-prompt'
 import './globals.css'
-
-const displayFont = Space_Grotesk({
-  subsets: ['latin'],
-  variable: '--font-display',
-  weight: ['500', '600', '700'],
-})
-const bodyFont = Inter({
-  subsets: ['latin'],
-  variable: '--font-body',
-  weight: ['400', '500', '600'],
-})
-const monoFont = IBM_Plex_Mono({
-  subsets: ['latin'],
-  variable: '--font-mono',
-  weight: ['400', '500'],
-})
 
 export const metadata: Metadata = {
   title: 'Vendari - Business Management Software',
@@ -68,8 +52,9 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-title" content="Vendari" />
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
       </head>
-      <body className={`${displayFont.variable} ${bodyFont.variable} ${monoFont.variable} font-body antialiased`}>
+      <body className="font-body antialiased">
         {children}
+        <AppInstallPrompt />
         <Toaster richColors closeButton position="top-right" />
         <script
           dangerouslySetInnerHTML={{

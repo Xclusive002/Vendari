@@ -124,7 +124,7 @@ REST_FRAMEWORK = {
 }
 
 RESEND_API_KEY = env('RESEND_API_KEY', default='')
-DEFAULT_FROM_EMAIL = env('DEFAULT_FROM_EMAIL', default='noreply@yourdomain.com')
+DEFAULT_FROM_EMAIL = env('DEFAULT_FROM_EMAIL', default='onboarding@resend.dev')
 EMAIL_BACKEND = env('EMAIL_BACKEND', default='vendari_api.resend_backend.ResendBackend')
 EMAIL_HOST = env('EMAIL_HOST', default='')
 EMAIL_PORT = env.int('EMAIL_PORT', default=0)

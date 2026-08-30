@@ -20,6 +20,10 @@ logger = logging.getLogger(__name__)
 
 
 def send_verification_email(user_email, code):
+    default_from = getattr(settings, 'DEFAULT_FROM_EMAIL', 'onboarding@resend.dev').strip() or 'onboarding@resend.dev'
+    if default_from.lower().endswith('@gmail.com'):
+        default_from = 'onboarding@resend.dev'
+
     subject = 'Verify your Vendari email'
     html_content = f'''
 <!DOCTYPE html>
@@ -48,7 +52,7 @@ This code expires soon. If you did not create this account, you can ignore this 
     message = EmailMultiAlternatives(
         subject=subject,
         body=text_content,
-        from_email=getattr(settings, 'DEFAULT_FROM_EMAIL', 'hello@vendari.name.ng'),
+        from_email=default_from,
         to=[user_email],
     )
     message.attach_alternative(html_content, 'text/html')
@@ -68,7 +72,9 @@ def send_welcome_email(user_email, business_name):
     """
     logger.info(f'[WELCOME_EMAIL] Starting immediate send for user={user_email}, business={business_name}')
     try:
-        from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', '').strip()
+        from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', '').strip() or 'onboarding@resend.dev'
+        if from_email.lower().endswith('@gmail.com'):
+            from_email = 'onboarding@resend.dev'
         logger.info(
             '[WELCOME_EMAIL] Configuration: from_email=%s, resend_api_key_set=%s, backend=%s',
             from_email,
@@ -76,8 +82,6 @@ def send_welcome_email(user_email, business_name):
             getattr(settings, 'EMAIL_BACKEND', ''),
         )
 
-        if not from_email:
-            raise ValueError('DEFAULT_FROM_EMAIL is not configured.')
         if not getattr(settings, 'RESEND_API_KEY', ''):
             raise ValueError('RESEND_API_KEY is not configured.')
 
