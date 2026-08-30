@@ -5,26 +5,92 @@ import html2canvas from 'html2canvas'
 import { jsPDF } from 'jspdf'
 import { Download, ImageDown, Loader2 } from 'lucide-react'
 
+const EXPORT_TIMEOUT_MS = 25000
+
 export default function ReceiptExportActions({ documentRef, documentNumber }: { documentRef: React.RefObject<HTMLDivElement | null>; documentNumber: string }) {
   const [exporting, setExporting] = useState(false)
 
+  const withTimeout = async <T,>(promise: Promise<T>, message: string) => {
+    return await new Promise<T>((resolve, reject) => {
+      const timeoutId = window.setTimeout(() => {
+        reject(new Error(message))
+      }, EXPORT_TIMEOUT_MS)
+
+      promise
+        .then((value) => {
+          window.clearTimeout(timeoutId)
+          resolve(value)
+        })
+        .catch((error) => {
+          window.clearTimeout(timeoutId)
+          reject(error)
+        })
+    })
+  }
+
+  const waitForImages = async (root: HTMLElement) => {
+    const images = Array.from(root.querySelectorAll('img')) as HTMLImageElement[]
+
+    await Promise.all(
+      images.map(
+        (image) =>
+          new Promise<void>((resolve) => {
+            if (image.complete) {
+              resolve()
+              return
+            }
+
+            const done = () => {
+              image.removeEventListener('load', done)
+              image.removeEventListener('error', done)
+              resolve()
+            }
+
+            image.addEventListener('load', done, { once: true })
+            image.addEventListener('error', done, { once: true })
+          }),
+      ),
+    )
+  }
+
   const renderCanvas = async () => {
     if (!documentRef.current) throw new Error('Receipt document is not ready.')
-    const noPrintElements = documentRef.current.querySelectorAll('.no-print')
+
+    const source = documentRef.current
+    const clone = source.cloneNode(true) as HTMLElement
+    clone.style.position = 'fixed'
+    clone.style.left = '-9999px'
+    clone.style.top = '0'
+    clone.style.width = '210mm'
+    clone.style.maxWidth = '210mm'
+    clone.style.background = '#ffffff'
+    clone.style.boxShadow = 'none'
+    clone.style.pointerEvents = 'none'
+    clone.style.zIndex = '-1'
+    clone.style.opacity = '1'
+    document.body.appendChild(clone)
+
+    const noPrintElements = Array.from(clone.querySelectorAll('.no-print')) as HTMLElement[]
     noPrintElements.forEach((element) => {
-      ;(element as HTMLElement).style.display = 'none'
+      element.style.display = 'none'
     })
 
     try {
-      return await html2canvas(documentRef.current, {
-        scale: 2,
-        useCORS: true,
-        backgroundColor: '#ffffff',
-      })
+      await waitForImages(clone)
+
+      return await withTimeout(
+        html2canvas(clone, {
+          backgroundColor: '#ffffff',
+          scale: Math.min(window.devicePixelRatio || 2, 2),
+          useCORS: true,
+          logging: false,
+          ignoreElements: (element) => element instanceof HTMLElement && element.classList.contains('no-print'),
+          foreignObjectRendering: false,
+        }),
+        'Receipt export timed out. Please try again.',
+      )
     } finally {
-      noPrintElements.forEach((element) => {
-        ;(element as HTMLElement).style.display = ''
-      })
+      clone.remove()
     }
   }
 
@@ -38,7 +104,7 @@ export default function ReceiptExportActions({ documentRef, documentNumber }: { 
       link.click()
     } catch (error) {
       console.error('Failed to download image:', error)
-      alert('Failed to generate image. Please try again.')
+      alert(error instanceof Error ? error.message : 'Failed to generate image. Please try again.')
     } finally {
       setExporting(false)
     }
@@ -48,14 +114,14 @@ export default function ReceiptExportActions({ documentRef, documentNumber }: { 
     setExporting(true)
     try {
       const canvas = await renderCanvas()
-      const width = 210
-      const height = (canvas.height * width) / canvas.width
-      const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: [width, height] })
-      pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, width, height)
+      const pageWidth = 210
+      const pageHeight = (canvas.height * pageWidth) / canvas.width
+      const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: [pageWidth, pageHeight] })
+      pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, pageWidth, pageHeight)
       pdf.save(`${documentNumber || 'receipt'}.pdf`)
     } catch (error) {
       console.error('Failed to download PDF:', error)
-      alert('Failed to generate PDF. Please try again.')
+      alert(error instanceof Error ? error.message : 'Failed to generate PDF. Please try again.')
     } finally {
       setExporting(false)
     }
