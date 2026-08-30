@@ -38,28 +38,39 @@ export default function LoginPage() {
     setError('')
 
     const trimmedEmail = email.trim()
-    if (!trimmedEmail) return setError('Enter the email address on your Vendari account.')
-    if (!password) return setError('Enter your password to continue.')
+    if (!trimmedEmail) {
+      setError('Enter the email address on your Vendari account.')
+      return
+    }
+    if (!password) {
+      setError('Enter your password to continue.')
+      return
+    }
 
     setLoading(true)
-    const result = await login(trimmedEmail, password)
 
-    if (result.success) {
-      if (typeof window !== 'undefined') {
-        window.location.replace('/dashboard')
+    try {
+      const result = await login(trimmedEmail, password)
+
+      if (result.success) {
+        if (typeof window !== 'undefined') {
+          window.location.replace('/dashboard')
+          return
+        }
+        router.replace('/dashboard')
         return
       }
-      router.replace('/dashboard')
-      return
-    }
 
-    setLoading(false)
-    if (result.error?.includes('verify your email')) {
-      toast.error('Please verify your email before logging in.')
-      router.push(`/verify-email?email=${encodeURIComponent(trimmedEmail)}`)
-      return
+      if (result.error?.includes('verify your email')) {
+        toast.error('Please verify your email before logging in.')
+        router.push(`/verify-email?email=${encodeURIComponent(trimmedEmail)}`)
+        return
+      }
+
+      setError(result.error || 'Check your email and password, then try again.')
+    } finally {
+      setLoading(false)
     }
-    setError(result.error || 'Check your email and password, then try again.')
   }
 
   return (

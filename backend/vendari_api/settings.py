@@ -21,7 +21,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 env = environ.Env(
     DEBUG=(bool, False),
     ALLOWED_HOSTS=(list, ['localhost', '127.0.0.1']),
-    CORS_ALLOWED_ORIGINS=(list, ['http://localhost:3000']),
+    CORS_ALLOWED_ORIGINS=(list, ['http://localhost:3000', 'http://localhost:3002', 'http://127.0.0.1:3000', 'http://127.0.0.1:3002']),
 )
 environ.Env.read_env(BASE_DIR / '.env')
 
@@ -37,8 +37,11 @@ if not SECRET_KEY:
         SECRET_KEY = 'dev-only-secret-key'
     else:
         raise ImproperlyConfigured('SECRET_KEY must be set when DEBUG is False')
-ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=['localhost', '127.0.0.1'])
-CORS_ALLOWED_ORIGINS = env.list('CORS_ALLOWED_ORIGINS', default=['http://localhost:3000'])
+ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=['localhost', '127.0.0.1', '0.0.0.0'])
+CORS_ALLOWED_ORIGINS = env.list(
+    'CORS_ALLOWED_ORIGINS',
+    default=['http://localhost:3000', 'http://localhost:3002', 'http://127.0.0.1:3000', 'http://127.0.0.1:3002'],
+)
 PAYSTACK_SECRET_KEY = env('PAYSTACK_SECRET_KEY', default='')
 GEMINI_API_KEY = env('GEMINI_API_KEY', default='')
 GEMINI_MODEL = env('GEMINI_MODEL', default='gemini-2.5-flash')

@@ -4,10 +4,28 @@ import { cookies, headers } from 'next/headers'
 
 type ApiOptions = RequestInit & { skipRefresh?: boolean }
 
+const DEFAULT_API_TIMEOUT_MS = 15000
+
 function apiUrl(path: string) {
   const baseUrl = process.env.NEXT_PUBLIC_API_URL?.trim().replace(/\/+$/, '')
   if (!baseUrl) throw new Error('NEXT_PUBLIC_API_URL is not configured')
   return `${baseUrl}${path}`
+}
+
+async function fetchWithTimeout(url: string, options: RequestInit = {}, timeoutMs = DEFAULT_API_TIMEOUT_MS) {
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs)
+
+  try {
+    return await fetch(url, { ...options, signal: controller.signal, cache: 'no-store' })
+  } catch (error) {
+    if (error instanceof Error && error.name === 'AbortError') {
+      throw new Error('The server is taking too long to respond. Please try again.')
+    }
+    throw error
+  } finally {
+    clearTimeout(timeoutId)
+  }
 }
 
   function isPublicAuthRequest(path: string) {
@@ -33,12 +51,24 @@ export async function apiFetch(path: string, options: ApiOptions = {}): Promise<
   if (access && !isPublicAuthRequest(path)) requestHeaders.set('Authorization', `Bearer ${access}`)
   if (!(requestOptions.body instanceof FormData)) requestHeaders.set('Content-Type', 'application/json')
   const fullUrl = apiUrl(path)
-  const response = await fetch(fullUrl, { ...requestOptions, headers: requestHeaders, cache: 'no-store' })
-  if (response.status === 401 && !skipRefresh && await refreshSession()) {
-    return apiFetch(path, { ...options, skipRefresh: true })
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => controller.abort(), 15000)
+
+  try {
+    const response = await fetch(fullUrl, { ...requestOptions, headers: requestHeaders, cache: 'no-store', signal: controller.signal })
+    if (response.status === 401 && !skipRefresh && await refreshSession()) {
+      return apiFetch(path, { ...options, skipRefresh: true })
+    }
+    if (response.status === 401 && !isPublicAuthRequest(path)) await clearAuthCookies()
+    return response
+  } catch (error) {
+    if (error instanceof Error && error.name === 'AbortError') {
+      throw new Error('The Vendari server is not responding. Please try again in a moment.')
+    }
+    throw error
+  } finally {
+    clearTimeout(timeoutId)
   }
-  if (response.status === 401 && !isPublicAuthRequest(path)) await clearAuthCookies()
-  return response
 }
 
 async function refreshSession() {
