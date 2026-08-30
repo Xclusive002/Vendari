@@ -139,13 +139,20 @@ export default function DashboardPage() {
     { label: 'Get Support', href: '/concierge-inquiry', icon: Sparkles },
   ]
 
+  const getGreeting = () => {
+    const hour = new Date().getHours()
+    if (hour < 12) return 'Good morning'
+    if (hour < 17) return 'Good afternoon'
+    return 'Good evening'
+  }
+
   return (
     <>
       {showWelcome && <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/60 px-5 py-8" role="dialog" aria-modal="true" aria-labelledby="welcome-title"><div className="welcome-modal relative w-full max-w-md overflow-hidden rounded-xl border border-border bg-surface p-6 shadow-2xl sm:p-8"><div className="absolute right-0 top-0 h-24 w-24 rounded-bl-full bg-blue/10" /><div className="relative"><p className="text-sm font-semibold text-blue">A clear start</p><h2 id="welcome-title" className="mt-2 font-display text-2xl font-semibold text-ink">Welcome to Vendari, {business?.business_name}.</h2><p className="mt-3 text-sm leading-6 text-text-secondary">Add your first inventory item, then record a sale when you are ready. Vendari will keep the important numbers in view as your business gets moving.</p><LoadingButton type="button" onClick={async () => { await markWelcomeSeen(); setShowWelcome(false) }} className="dashboard-primary mt-6 w-full rounded-lg px-4 py-3 text-sm font-semibold shadow-lg shadow-blue/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue">Let&apos;s get started</LoadingButton></div></div></div>}
 
       <div className="hidden md:block">
         <main className="min-h-screen bg-bg px-5 pb-12 pt-20 sm:px-8 md:pt-8">
-          <div className="mx-auto max-w-7xl"><p className="text-sm text-text-muted">{new Intl.DateTimeFormat('en-US', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).format(new Date())}</p><h1 className="mt-1 font-display text-3xl font-semibold text-ink">Good morning{business?.business_name ? `, ${business.business_name}` : ''}.</h1><p className="mt-2 text-sm text-text-secondary">Here is what is happening across your business today.</p></div>
+          <div className="mx-auto max-w-7xl"><p className="text-sm text-text-muted">{new Intl.DateTimeFormat('en-US', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).format(new Date())}</p><h1 className="mt-1 font-display text-3xl font-semibold text-ink">{getGreeting()}{business?.business_name ? `, ${business.business_name}` : ''}.</h1><p className="mt-2 text-sm text-text-secondary">Here is what is happening across your business today.</p></div>
 
           <section className="mx-auto mt-8 max-w-7xl" aria-labelledby="overview-heading"><h2 id="overview-heading" className="sr-only">Business overview</h2><div className="grid gap-4 md:grid-cols-3"><StatCard label="Total Sales" value={totalSales} prefix="₦" icon={CircleDollarSign} /><StatCard label="Orders" value={orders} icon={ShoppingCart} /><StatCard label="Profit" value={profit} prefix="₦" icon={Wallet} /></div></section>
 
@@ -173,7 +180,7 @@ export default function DashboardPage() {
           <div className="mx-auto max-w-sm">
             <header className="mb-4 pt-2">
               <p className="text-[11px] font-medium uppercase tracking-[0.2em] text-text-muted">{new Intl.DateTimeFormat('en-US', { weekday: 'short', month: 'short', day: 'numeric' }).format(new Date())}</p>
-              <h1 className="mt-2 font-display text-3xl font-semibold text-ink">Good morning{business?.business_name ? `, ${business.business_name}` : ''}.</h1>
+              <h1 className="mt-2 font-display text-3xl font-semibold text-ink">{getGreeting()}{business?.business_name ? `, ${business.business_name}` : ''}.</h1>
             </header>
 
             <section className="grid grid-cols-2 gap-3">
