@@ -1,5 +1,7 @@
 import Link from 'next/link'
 import Image from 'next/image'
+import { cookies } from 'next/headers'
+import { redirect } from 'next/navigation'
 import { HeroMotion, ScrollReveal } from '@/components/landing-motion'
 import { ConciergeOverview } from '@/components/concierge-content'
 import {
@@ -110,7 +112,13 @@ function InsightCard() {
   return <div className="relative overflow-hidden rounded-xl bg-ink p-5 text-white shadow-xl shadow-ink/20 sm:p-7"><div className="absolute right-[-30px] top-[-40px] h-36 w-36 rounded-full border border-blue/30" /><div className="absolute right-[-8px] top-[-18px] h-24 w-24 rounded-full border border-violet/30" /><div className="relative flex items-center gap-2 text-blue"><Sparkles className="h-4 w-4" /><span className="text-xs font-semibold uppercase tracking-[0.16em]">Vendari insight</span></div><p className="relative mt-6 max-w-md font-display text-xl font-semibold leading-snug sm:text-2xl">“You&apos;re selling out of Premium Ankara every 9 days, but reordering every 14.”</p><div className="relative mt-6 grid gap-3 border-t border-white/10 pt-4 text-xs sm:grid-cols-2"><div><p className="text-white/45">Computed from your real numbers</p><p className="mt-1 font-mono text-white/80">Sales + stock + purchases</p></div><div><p className="text-white/45">AI explanation</p><p className="mt-1 text-white/80">Your current reorder cycle leaves 5 days exposed.</p></div></div></div>
 }
 
-export default function Home() {
+export default async function Home() {
+  const accessToken = (await cookies()).get('vendari_access')?.value
+
+  if (accessToken) {
+    redirect('/dashboard')
+  }
+
   return (
     <main className="min-h-screen overflow-hidden bg-bg text-text-primary">
       <nav className="border-b border-border bg-surface/90" aria-label="Main navigation"><div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4 sm:px-8"><Link href="/" className="flex items-center rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue focus-visible:ring-offset-2"><Image src="/vendari-logo-png.png" alt="Vendari" width={144} height={144} className="h-10 w-auto object-contain" /></Link><div className="hidden items-center gap-7 text-sm font-medium text-text-secondary md:flex"><a href="#how-it-works" className="rounded-md transition-colors hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue">How it works</a><a href="#features" className="rounded-md transition-colors hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue">Features</a><a href="#businesses" className="rounded-md transition-colors hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue">For every business</a></div><div className="flex items-center gap-3"><Link href="/login" className="hidden rounded-md px-3 py-2 text-sm font-semibold text-ink hover:bg-bg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue sm:inline-flex">Sign in</Link><Link href="/register" className="motion-hover inline-flex items-center gap-2 rounded-md bg-brand-gradient px-3.5 py-2 text-xs font-semibold text-white shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue focus-visible:ring-offset-2 sm:text-sm">Start free <ArrowRight className="h-3.5 w-3.5" /></Link></div></div></nav>

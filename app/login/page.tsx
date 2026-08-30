@@ -6,7 +6,7 @@ import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { ArrowRight, LockKeyhole } from 'lucide-react'
 import { toast } from 'sonner'
-import { login } from '@/app/actions/auth'
+import { getCurrentUser, login } from '@/app/actions/auth'
 import { LoadingButton } from '@/components/ui/loading-button'
 import LoadingSpinner from '@/components/ui/loading-spinner'
 
@@ -15,6 +15,17 @@ export default function LoginPage() {
 
   useEffect(() => {
     router.prefetch('/dashboard')
+    let isMounted = true
+
+    getCurrentUser().then((currentUser) => {
+      if (isMounted && currentUser) {
+        router.replace('/dashboard')
+      }
+    })
+
+    return () => {
+      isMounted = false
+    }
   }, [router])
 
   const [email, setEmail] = useState('')
