@@ -81,7 +81,6 @@ export default function SettingsPage() {
       <div className="mx-auto max-w-4xl">
       <div className="grid grid-cols-1 gap-8">
         <div><h1 className="font-display text-3xl font-semibold text-ink">Settings</h1><p className="mt-2 text-text-secondary">Keep your business details and account access up to date.</p></div>
-        <Link href="/dashboard/settings/billing" className="w-fit rounded-md text-sm font-semibold text-blue hover:text-violet focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue">Manage billing</Link>
         {/* Business Settings */}
         <Card className="dashboard-panel">
           <CardHeader>
