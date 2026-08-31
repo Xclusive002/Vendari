@@ -389,101 +389,151 @@ export default function ReportsPage() {
 
   return (
     <div className="dashboard-page md:pl-8">
-      <main className="mx-auto max-w-7xl">
-        <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+      <main className="mx-auto max-w-6xl px-3 pb-8 pt-4 md:px-0 md:pb-10 md:pt-6">
+        <div className="mb-6 flex flex-col gap-4 md:mb-8 md:flex-row md:items-end md:justify-between">
           <div>
             <p className="text-xs font-medium uppercase tracking-[0.2em] text-text-muted">Business overview</p>
-            <h1 className="mt-2 font-display text-3xl font-semibold text-ink">Profit & loss report</h1>
+            <h1 className="mt-2 font-display text-3xl font-semibold text-ink md:text-4xl">Profit & loss report</h1>
             <p className="mt-2 text-text-secondary">
               {business?.name || business?.business_name || 'Your business'} · {dateRange.start} to {dateRange.end}
             </p>
           </div>
 
-          <Button onClick={handleDownloadPdf} className="dashboard-primary self-start md:self-auto">
+          <Button onClick={handleDownloadPdf} className="dashboard-primary self-start md:self-auto md:px-5">
             <Download className="mr-2 h-4 w-4" />
             Download PDF report
           </Button>
         </div>
 
-        <Card className="dashboard-panel mb-8">
+        <Card className="mb-8 border border-slate-200 bg-[#f8faf9] shadow-sm">
           <CardContent className="p-5 md:p-6">
             <div className="grid gap-4 md:grid-cols-2">
               <div>
-                <Label className="text-text-secondary text-sm">From date</Label>
+                <Label className="text-sm text-slate-600">From date</Label>
                 <Input
                   type="date"
                   value={dateRange.start}
                   onChange={(e) => setDateRange({ ...dateRange, start: e.target.value })}
-                  className="dashboard-input mt-1"
+                  className="mt-1 border-slate-200 bg-white text-slate-900 shadow-none"
                 />
               </div>
               <div>
-                <Label className="text-text-secondary text-sm">To date</Label>
+                <Label className="text-sm text-slate-600">To date</Label>
                 <Input
                   type="date"
                   value={dateRange.end}
                   onChange={(e) => setDateRange({ ...dateRange, end: e.target.value })}
-                  className="dashboard-input mt-1"
+                  className="mt-1 border-slate-200 bg-white text-slate-900 shadow-none"
                 />
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          <Card className="border-emerald-500/30 bg-gradient-to-br from-emerald-500/15 to-slate-950 text-slate-50 shadow-lg shadow-emerald-950/20">
-            <CardContent className="p-5">
-              <div className="mb-3 flex items-center justify-between">
-                <p className="text-sm text-emerald-300">Total revenue</p>
-                <TrendingUp className="h-4 w-4 text-emerald-300" />
-              </div>
-              <p className="text-2xl font-bold text-white">{formatCurrency(totalSales)}</p>
-              <p className="mt-2 text-xs text-slate-300">{totalOrders} sales recorded</p>
-            </CardContent>
-          </Card>
+        <div className="mb-8 rounded-[28px] border border-slate-200 bg-[#f3f5f3] p-3 shadow-sm md:p-6">
+          <div className="mb-4 flex items-center justify-between md:mb-5">
+            <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-[0.18em] text-slate-500">
+              <span className="inline-block h-2 w-2 rounded-full bg-emerald-500" />
+              Analytics
+            </div>
+            <Button variant="ghost" className="hidden h-8 px-2 text-sm text-slate-600 md:inline-flex">
+              This week
+            </Button>
+          </div>
 
-          <Card className="border-red-500/30 bg-gradient-to-br from-red-500/15 to-slate-950 text-slate-50 shadow-lg shadow-red-950/20">
-            <CardContent className="p-5">
-              <div className="mb-3 flex items-center justify-between">
-                <p className="text-sm text-red-300">Total expenses</p>
-                <TrendingDown className="h-4 w-4 text-red-300" />
-              </div>
-              <p className="text-2xl font-bold text-white">{formatCurrency(totalExpenses)}</p>
-              <p className="mt-2 text-xs text-slate-300">{expenseByCategory.length} categories</p>
-            </CardContent>
-          </Card>
+          <div className="mb-4 flex rounded-2xl border border-slate-200 bg-white p-1 shadow-sm md:mb-5">
+            {['Sales', 'Products', 'Customers'].map((tab, index) => (
+              <button
+                key={tab}
+                type="button"
+                className={`flex-1 rounded-xl px-3 py-2 text-sm font-medium transition md:px-4 ${
+                  index === 0
+                    ? 'bg-[#eaf4ee] text-slate-900 shadow-sm'
+                    : 'text-slate-600 hover:bg-slate-100'
+                }`}
+              >
+                {tab}
+              </button>
+            ))}
+          </div>
 
-          <Card className="border-blue-500/30 bg-gradient-to-br from-blue-500/15 to-slate-950 text-slate-50 shadow-lg shadow-blue-950/20">
-            <CardContent className="p-5">
-              <div className="mb-3 flex items-center justify-between">
-                <p className="text-sm text-blue-300">Net profit</p>
-                <Wallet className="h-4 w-4 text-blue-300" />
+          <div className="mb-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+            <p className="text-sm font-medium text-slate-500">Overview</p>
+            <div className="mt-3 grid grid-cols-2 gap-3">
+              <div className="rounded-xl border border-slate-200 bg-[#f8fafc] px-3 py-2 text-left">
+                <p className="text-xs text-slate-500">{dateRange.start} - {dateRange.end}</p>
               </div>
-              <p className="text-2xl font-bold text-white">{formatCurrency(profit)}</p>
-              <p className={`mt-2 text-xs ${profit >= 0 ? 'text-emerald-300' : 'text-red-300'}`}>
-                {profitMargin >= 0 ? '+' : ''}{profitMargin.toFixed(1)}% margin
-              </p>
-            </CardContent>
-          </Card>
+              <div className="rounded-xl border border-slate-200 bg-[#f8fafc] px-3 py-2 text-left">
+                <p className="text-xs text-slate-500">This week</p>
+              </div>
+            </div>
+          </div>
 
-          <Card className="border-amber-500/30 bg-gradient-to-br from-amber-500/15 to-slate-950 text-slate-50 shadow-lg shadow-amber-950/20">
-            <CardContent className="p-5">
-              <div className="mb-3 flex items-center justify-between">
-                <p className="text-sm text-amber-300">Average order</p>
-                <BarChart3 className="h-4 w-4 text-amber-300" />
-              </div>
-              <p className="text-2xl font-bold text-white">{formatCurrency(averageOrderValue)}</p>
-              <p className="mt-2 text-xs text-slate-300">{topExpenseCategory ? `${topExpenseCategory.category} is highest cost` : 'No expense category yet'}</p>
-            </CardContent>
-          </Card>
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-5">
+            <Card className="border border-slate-200 bg-white text-slate-900 shadow-sm">
+              <CardContent className="p-4 md:p-5">
+                <div className="mb-3 flex items-center justify-between">
+                  <p className="text-sm font-medium text-slate-700">Total Sales</p>
+                  <TrendingUp className="h-4 w-4 text-emerald-600" />
+                </div>
+                <p className="text-[1.7rem] font-bold leading-none text-slate-900">{formatCurrency(totalSales)}</p>
+                <p className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-emerald-600">
+                  <span>↗</span>
+                  3.5% from last week
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="border border-slate-200 bg-white text-slate-900 shadow-sm">
+              <CardContent className="p-4 md:p-5">
+                <div className="mb-3 flex items-center justify-between">
+                  <p className="text-sm font-medium text-slate-700">Gross Profit</p>
+                  <TrendingUp className="h-4 w-4 text-emerald-600" />
+                </div>
+                <p className="text-[1.7rem] font-bold leading-none text-slate-900">{formatCurrency(totalSales - totalExpenses)}</p>
+                <p className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-emerald-600">
+                  <span>↗</span>
+                  1.5% from last week
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="border border-slate-200 bg-white text-slate-900 shadow-sm">
+              <CardContent className="p-4 md:p-5">
+                <div className="mb-3 flex items-center justify-between">
+                  <p className="text-sm font-medium text-slate-700">Net Profit</p>
+                  <Wallet className="h-4 w-4 text-sky-600" />
+                </div>
+                <p className="text-[1.7rem] font-bold leading-none text-slate-900">{formatCurrency(profit)}</p>
+                <p className={`mt-3 inline-flex items-center gap-1 text-xs font-medium ${profit >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                  <span>{profit >= 0 ? '↗' : '↘'}</span>
+                  {profitMargin >= 0 ? '+' : ''}{profitMargin.toFixed(1)}% from last week
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="border border-slate-200 bg-white text-slate-900 shadow-sm">
+              <CardContent className="p-4 md:p-5">
+                <div className="mb-3 flex items-center justify-between">
+                  <p className="text-sm font-medium text-slate-700">Shipping Spend</p>
+                  <TrendingDown className="h-4 w-4 text-red-600" />
+                </div>
+                <p className="text-[1.7rem] font-bold leading-none text-slate-900">{formatCurrency(totalExpenses)}</p>
+                <p className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-red-600">
+                  <span>↘</span>
+                  1.5% from last week
+                </p>
+              </CardContent>
+            </Card>
+          </div>
         </div>
 
-        <div className="mb-8 grid gap-6 lg:grid-cols-2">
-          <Card className="dashboard-panel">
-            <CardHeader>
-              <CardTitle className="font-display text-ink">Revenue vs expenses trend</CardTitle>
+        <div className="mb-8 grid gap-6 lg:grid-cols-2 lg:gap-7">
+          <Card className="border border-slate-200 bg-white shadow-sm">
+            <CardHeader className="border-b border-slate-100 pb-4">
+              <CardTitle className="font-display text-slate-900">Revenue vs expenses trend</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="pt-5">
               {dailyData.length > 0 ? (
                 <ResponsiveContainer width="100%" height={300}>
                   <LineChart data={dailyData}>
@@ -509,11 +559,11 @@ export default function ReportsPage() {
             </CardContent>
           </Card>
 
-          <Card className="dashboard-panel">
-            <CardHeader>
-              <CardTitle className="font-display text-ink">Expense breakdown</CardTitle>
+          <Card className="border border-slate-200 bg-white shadow-sm">
+            <CardHeader className="border-b border-slate-100 pb-4">
+              <CardTitle className="font-display text-slate-900">Expense breakdown</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="pt-5">
               {expenseByCategory.length > 0 ? (
                 <ResponsiveContainer width="100%" height={300}>
                   <BarChart data={expenseByCategory}>
@@ -538,12 +588,12 @@ export default function ReportsPage() {
           </Card>
         </div>
 
-        <div className="mb-8 grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
-          <Card className="dashboard-panel">
-            <CardHeader>
-              <CardTitle className="font-display text-ink">Top revenue products</CardTitle>
+        <div className="mb-8 grid gap-6 lg:grid-cols-[1.2fr_0.8fr] lg:gap-7">
+          <Card className="border border-slate-200 bg-white shadow-sm">
+            <CardHeader className="border-b border-slate-100 pb-4">
+              <CardTitle className="font-display text-slate-900">Top revenue products</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="pt-5">
               {revenueByProduct.length > 0 ? (
                 <div className="space-y-3">
                   {revenueByProduct.map((item, index) => (
@@ -570,11 +620,11 @@ export default function ReportsPage() {
             </CardContent>
           </Card>
 
-          <Card className="dashboard-panel">
-            <CardHeader>
-              <CardTitle className="font-display text-ink">Expense detail</CardTitle>
+          <Card className="border border-slate-200 bg-white shadow-sm">
+            <CardHeader className="border-b border-slate-100 pb-4">
+              <CardTitle className="font-display text-slate-900">Expense detail</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="pt-5">
               {expenseByCategory.length > 0 ? (
                 <div className="space-y-3">
                   {expenseByCategory.map((item) => (
@@ -594,22 +644,22 @@ export default function ReportsPage() {
           </Card>
         </div>
 
-        <Card className="dashboard-panel">
-          <CardHeader>
-            <CardTitle className="font-display text-ink">Quick notes</CardTitle>
+        <Card className="border border-slate-200 bg-white shadow-sm">
+          <CardHeader className="border-b border-slate-100 pb-4">
+            <CardTitle className="font-display text-slate-900">Quick notes</CardTitle>
           </CardHeader>
-          <CardContent className="grid gap-4 md:grid-cols-3">
-            <div className="rounded-xl border border-border bg-surface/60 p-4">
-              <p className="text-sm text-text-muted">Revenue generated</p>
-              <p className="mt-2 text-2xl font-bold text-ink">{formatCurrency(totalSales)}</p>
+          <CardContent className="grid gap-4 p-4 md:grid-cols-3 md:p-6">
+            <div className="rounded-xl border border-slate-200 bg-[#f8fafc] p-4">
+              <p className="text-sm text-slate-500">Revenue generated</p>
+              <p className="mt-2 text-2xl font-bold text-slate-900">{formatCurrency(totalSales)}</p>
             </div>
-            <div className="rounded-xl border border-border bg-surface/60 p-4">
-              <p className="text-sm text-text-muted">Operating cost</p>
-              <p className="mt-2 text-2xl font-bold text-ink">{formatCurrency(totalExpenses)}</p>
+            <div className="rounded-xl border border-slate-200 bg-[#f8fafc] p-4">
+              <p className="text-sm text-slate-500">Operating cost</p>
+              <p className="mt-2 text-2xl font-bold text-slate-900">{formatCurrency(totalExpenses)}</p>
             </div>
-            <div className="rounded-xl border border-border bg-surface/60 p-4">
-              <p className="text-sm text-text-muted">Business health</p>
-              <p className={`mt-2 text-2xl font-bold ${profit >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+            <div className="rounded-xl border border-slate-200 bg-[#f8fafc] p-4">
+              <p className="text-sm text-slate-500">Business health</p>
+              <p className={`mt-2 text-2xl font-bold ${profit >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
                 {profit >= 0 ? 'Profitable' : 'Needs attention'}
               </p>
             </div>
