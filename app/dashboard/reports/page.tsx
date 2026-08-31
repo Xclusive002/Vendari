@@ -210,84 +210,173 @@ export default function ReportsPage() {
 
     const doc = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' })
     const pageWidth = doc.internal.pageSize.getWidth()
-    const margin = 16
-    const colWidth = (pageWidth - margin * 2 - 8) / 2
+    const pageHeight = doc.internal.pageSize.getHeight()
+    const margin = 14
+    const innerWidth = pageWidth - margin * 2
+    const primary = [15, 23, 42]
+    const accent = [59, 130, 246]
+    const emerald = [16, 185, 129]
+    const red = [239, 68, 68]
+    const amber = [245, 158, 11]
+    const slate = [148, 163, 184]
+    const paper = [248, 250, 252]
+    const soft = [241, 245, 249]
 
-    doc.setFillColor(15, 23, 42)
-    doc.rect(0, 0, pageWidth, 40, 'F')
+    const businessName = String(business.name || business.business_name || 'Business Report')
+    const fileName = `${businessName.replace(/\s+/g, '-').toLowerCase()}-profit-loss-report.pdf`
+
+    doc.setFillColor(paper[0], paper[1], paper[2])
+    doc.rect(0, 0, pageWidth, pageHeight, 'F')
+
+    doc.setFillColor(primary[0], primary[1], primary[2])
+    doc.rect(0, 0, pageWidth, 44, 'F')
     doc.setTextColor(255, 255, 255)
-    doc.setFontSize(20)
     doc.setFont('helvetica', 'bold')
-    doc.text(String(business.name || business.business_name || 'Business Report'), margin, 18)
-    doc.setFontSize(10)
+    doc.setFontSize(18)
+    doc.text(businessName, margin, 19)
     doc.setFont('helvetica', 'normal')
-    doc.text('Profit & Loss Report', margin, 26)
-    doc.text(`${dateRange.start || '—'} to ${dateRange.end || '—'}`, margin, 32)
+    doc.setFontSize(9)
+    doc.text('Profit & Loss Report', margin, 28)
+    doc.text(`${dateRange.start || '—'} to ${dateRange.end || '—'}`, margin, 35)
 
-    const metricRows = [
-      { label: 'Revenue', value: formatCurrency(totalSales) },
-      { label: 'Expenses', value: formatCurrency(totalExpenses) },
-      { label: 'Net Profit', value: formatCurrency(profit) },
-      { label: 'Profit Margin', value: `${profitMargin.toFixed(1)}%` },
+    const badgeX = pageWidth - margin - 44
+    doc.setFillColor(59, 130, 246)
+    doc.roundedRect(badgeX, 14, 38, 14, 3, 3, 'F')
+    doc.setTextColor(255, 255, 255)
+    doc.setFont('helvetica', 'bold')
+    doc.setFontSize(8)
+    doc.text('LIVE', badgeX + 11, 23)
+
+    const metrics = [
+      { label: 'Revenue', value: formatCurrency(totalSales), color: emerald, fill: [220, 252, 231] },
+      { label: 'Expenses', value: formatCurrency(totalExpenses), color: red, fill: [254, 226, 226] },
+      { label: 'Net Profit', value: formatCurrency(profit), color: accent, fill: [219, 234, 254] },
+      { label: 'Margin', value: `${profitMargin.toFixed(1)}%`, color: amber, fill: [254, 243, 199] },
     ]
 
-    metricRows.forEach((row, index) => {
-      const x = margin + (index % 2) * (colWidth + 8)
-      const y = 52 + Math.floor(index / 2) * 24
-      doc.setFillColor(index % 2 === 0 ? 239 : 248, index % 2 === 0 ? 246 : 250, index % 2 === 0 ? 255 : 252)
-      doc.roundedRect(x, y, colWidth, 18, 3, 3, 'F')
-      doc.setTextColor(15, 23, 42)
-      doc.setFontSize(9)
+    metrics.forEach((metric, index) => {
+      const col = index % 2
+      const row = Math.floor(index / 2)
+      const x = margin + col * (innerWidth / 2 + 4)
+      const y = 52 + row * 24
+      const boxWidth = innerWidth / 2 - 2
+
+      doc.setFillColor(metric.fill[0], metric.fill[1], metric.fill[2])
+      doc.roundedRect(x, y, boxWidth, 18, 2.5, 2.5, 'F')
+      doc.setDrawColor(metric.color[0], metric.color[1], metric.color[2])
+      doc.setLineWidth(0.3)
+      doc.roundedRect(x, y, boxWidth, 18, 2.5, 2.5, 'S')
+      doc.setTextColor(metric.color[0], metric.color[1], metric.color[2])
       doc.setFont('helvetica', 'normal')
-      doc.text(row.label, x + 5, y + 7)
+      doc.setFontSize(8)
+      doc.text(metric.label, x + 5, y + 7)
       doc.setFont('helvetica', 'bold')
-      doc.setFontSize(12)
-      doc.text(row.value, x + 5, y + 15)
+      doc.setFontSize(11)
+      doc.text(metric.value, x + 5, y + 14)
     })
 
-    doc.setTextColor(15, 23, 42)
+    let yPosition = 105
+
+    doc.setFillColor(255, 255, 255)
+    doc.roundedRect(margin, yPosition, innerWidth, 42, 3, 3, 'F')
+    doc.setTextColor(primary[0], primary[1], primary[2])
     doc.setFont('helvetica', 'bold')
-    doc.setFontSize(12)
-    doc.text('Business details', margin, 120)
+    doc.setFontSize(11)
+    doc.text('Business details', margin + 6, yPosition + 8)
+    doc.setTextColor(...slate)
     doc.setFont('helvetica', 'normal')
-    doc.setFontSize(10)
-    const details = [
-      `Business name: ${business.name || business.business_name || 'N/A'}`,
-      `Email: ${business.email || business.business_email || 'N/A'}`,
-      `Phone: ${business.phone || business.business_phone || 'N/A'}`,
-      `Address: ${business.address || business.business_address || 'N/A'}`,
+    doc.setFontSize(8)
+    const detailLines = [
+      `Business: ${businessName}`,
+      `Email: ${business.email || business.business_email || 'Not available'}`,
+      `Phone: ${business.phone || business.business_phone || 'Not available'}`,
+      `Address: ${business.address || business.business_address || 'Not available'}`,
     ]
-    details.forEach((line, index) => doc.text(line, margin, 128 + index * 7))
-
-    let yPosition = 175
-    doc.setFont('helvetica', 'bold')
-    doc.setFontSize(12)
-    doc.text('Top expense categories', margin, yPosition)
-    yPosition += 8
-    doc.setFont('helvetica', 'normal')
-    doc.setFontSize(10)
-    expenseByCategory.slice(0, 4).forEach((item) => {
-      doc.text(`${item.category}: ${formatCurrency(item.amount)}`, margin, yPosition)
-      yPosition += 7
+    detailLines.forEach((line, index) => {
+      doc.text(line, margin + 6, yPosition + 16 + index * 7)
     })
 
-    if (yPosition > 250) {
+    yPosition = 156
+    doc.setFillColor(255, 255, 255)
+    doc.roundedRect(margin, yPosition, innerWidth, 52, 3, 3, 'F')
+    doc.setTextColor(primary[0], primary[1], primary[2])
+    doc.setFont('helvetica', 'bold')
+    doc.setFontSize(11)
+    doc.text('Expense categories', margin + 6, yPosition + 8)
+
+    const categoryTotal = expenseByCategory.reduce((sum, item) => sum + item.amount, 0) || 1
+    doc.setTextColor(slate[0], slate[1], slate[2])
+    doc.setFont('helvetica', 'normal')
+    doc.setFontSize(8)
+    expenseByCategory.slice(0, 4).forEach((item, index) => {
+      const rowY = yPosition + 15 + index * 10
+      const width = (item.amount / categoryTotal) * 90
+      doc.setFillColor(amber[0], amber[1], amber[2])
+      doc.roundedRect(margin + 6, rowY + 2, 90, 4, 1.5, 1.5, 'F')
+      doc.setFillColor(230, 230, 230)
+      doc.roundedRect(margin + 6, rowY + 2, 90, 4, 1.5, 1.5, 'S')
+      doc.setFillColor(amber[0], amber[1], amber[2])
+      doc.roundedRect(margin + 6, rowY + 2, width, 4, 1.5, 1.5, 'F')
+      doc.text(`${item.category}`, margin + 6, rowY - 1)
+      doc.text(formatCurrency(item.amount), pageWidth - margin - 26, rowY - 1)
+    })
+
+    if (doc.internal.pageSize.getHeight() > 0) {
       doc.addPage()
-      yPosition = 24
     }
 
+    const secondPageStart = 18
+    doc.setFillColor(paper[0], paper[1], paper[2])
+    doc.rect(0, 0, pageWidth, pageHeight, 'F')
+    doc.setFillColor(primary[0], primary[1], primary[2])
+    doc.rect(0, 0, pageWidth, 26, 'F')
+    doc.setTextColor(255, 255, 255)
     doc.setFont('helvetica', 'bold')
-    doc.setFontSize(12)
-    doc.text('Top revenue products', margin, yPosition + 14)
-    yPosition += 22
-    doc.setFont('helvetica', 'normal')
-    doc.setFontSize(10)
-    revenueByProduct.forEach((item) => {
-      doc.text(`${item.name}: ${formatCurrency(item.amount)}`, margin, yPosition)
-      yPosition += 7
+    doc.setFontSize(16)
+    doc.text('Business performance', margin, 17)
+
+    doc.setTextColor(...primary)
+    doc.setFont('helvetica', 'bold')
+    doc.setFontSize(11)
+    doc.text('Top revenue products', margin, secondPageStart + 20)
+
+    const productBars = revenueByProduct.length ? revenueByProduct : [{ name: 'No sales yet', amount: 0 }]
+    const maxProductValue = Math.max(...productBars.map((item) => item.amount), 1)
+    productBars.forEach((item, index) => {
+      const rowY = secondPageStart + 28 + index * 18
+      doc.setFillColor(255, 255, 255)
+      doc.roundedRect(margin, rowY, innerWidth, 12, 2, 2, 'F')
+      doc.setDrawColor(226, 232, 240)
+      doc.roundedRect(margin, rowY, innerWidth, 12, 2, 2, 'S')
+      doc.setFillColor(emerald[0], emerald[1], emerald[2])
+      doc.roundedRect(margin + 1, rowY + 2, ((item.amount || 0) / maxProductValue) * (innerWidth - 2), 8, 2, 2, 'F')
+      doc.setTextColor(primary[0], primary[1], primary[2])
+      doc.setFont('helvetica', 'normal')
+      doc.setFontSize(8)
+      doc.text(`${index + 1}. ${item.name}`, margin + 4, rowY + 8)
+      doc.text(formatCurrency(item.amount || 0), pageWidth - margin - 25, rowY + 8)
     })
 
-    doc.save(`${(business.name || business.business_name || 'business').replace(/\s+/g, '-').toLowerCase()}-profit-loss-report.pdf`)
+    const summaryY = secondPageStart + 28 + Math.max(productBars.length, 4) * 18 + 12
+    doc.setFillColor(255, 255, 255)
+    doc.roundedRect(margin, summaryY, innerWidth, 30, 3, 3, 'F')
+    doc.setTextColor(...primary)
+    doc.setFont('helvetica', 'bold')
+    doc.setFontSize(11)
+    doc.text('Summary', margin + 6, summaryY + 8)
+    doc.setFont('helvetica', 'normal')
+    doc.setFontSize(8)
+    doc.text(`Sales recorded: ${totalOrders}`, margin + 6, summaryY + 18)
+    doc.text(`Average order value: ${formatCurrency(averageOrderValue)}`, margin + 6, summaryY + 25)
+    doc.text(`Highest cost area: ${topExpenseCategory ? topExpenseCategory.category : 'N/A'}`, margin + 90, summaryY + 18)
+    doc.text(`Health status: ${profit >= 0 ? 'Profitable' : 'Needs attention'}`, margin + 90, summaryY + 25)
+
+    doc.setTextColor(slate[0], slate[1], slate[2])
+    doc.setFont('helvetica', 'normal')
+    doc.setFontSize(7)
+    doc.text(`Generated on ${new Date().toLocaleDateString()} • ${businessName}`, margin, pageHeight - 10)
+
+    doc.save(fileName)
   }
 
   if (loading) {
@@ -342,49 +431,49 @@ export default function ReportsPage() {
         </Card>
 
         <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          <Card className="border-green-500/25 bg-gradient-to-br from-green-500/12 to-slate-900/50">
+          <Card className="border-emerald-500/30 bg-gradient-to-br from-emerald-500/15 to-slate-950 text-slate-50 shadow-lg shadow-emerald-950/20">
             <CardContent className="p-5">
               <div className="mb-3 flex items-center justify-between">
-                <p className="text-sm text-green-300">Total revenue</p>
-                <TrendingUp className="h-4 w-4 text-green-300" />
+                <p className="text-sm text-emerald-300">Total revenue</p>
+                <TrendingUp className="h-4 w-4 text-emerald-300" />
               </div>
               <p className="text-2xl font-bold text-white">{formatCurrency(totalSales)}</p>
-              <p className="mt-2 text-xs text-text-muted">{totalOrders} sales recorded</p>
+              <p className="mt-2 text-xs text-slate-300">{totalOrders} sales recorded</p>
             </CardContent>
           </Card>
 
-          <Card className="border-red-500/25 bg-gradient-to-br from-red-500/12 to-slate-900/50">
+          <Card className="border-red-500/30 bg-gradient-to-br from-red-500/15 to-slate-950 text-slate-50 shadow-lg shadow-red-950/20">
             <CardContent className="p-5">
               <div className="mb-3 flex items-center justify-between">
                 <p className="text-sm text-red-300">Total expenses</p>
                 <TrendingDown className="h-4 w-4 text-red-300" />
               </div>
               <p className="text-2xl font-bold text-white">{formatCurrency(totalExpenses)}</p>
-              <p className="mt-2 text-xs text-text-muted">{expenseByCategory.length} categories</p>
+              <p className="mt-2 text-xs text-slate-300">{expenseByCategory.length} categories</p>
             </CardContent>
           </Card>
 
-          <Card className="border-blue-500/25 bg-gradient-to-br from-blue-500/12 to-slate-900/50">
+          <Card className="border-blue-500/30 bg-gradient-to-br from-blue-500/15 to-slate-950 text-slate-50 shadow-lg shadow-blue-950/20">
             <CardContent className="p-5">
               <div className="mb-3 flex items-center justify-between">
                 <p className="text-sm text-blue-300">Net profit</p>
                 <Wallet className="h-4 w-4 text-blue-300" />
               </div>
               <p className="text-2xl font-bold text-white">{formatCurrency(profit)}</p>
-              <p className={`mt-2 text-xs ${profit >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+              <p className={`mt-2 text-xs ${profit >= 0 ? 'text-emerald-300' : 'text-red-300'}`}>
                 {profitMargin >= 0 ? '+' : ''}{profitMargin.toFixed(1)}% margin
               </p>
             </CardContent>
           </Card>
 
-          <Card className="border-amber-500/25 bg-gradient-to-br from-amber-500/12 to-slate-900/50">
+          <Card className="border-amber-500/30 bg-gradient-to-br from-amber-500/15 to-slate-950 text-slate-50 shadow-lg shadow-amber-950/20">
             <CardContent className="p-5">
               <div className="mb-3 flex items-center justify-between">
                 <p className="text-sm text-amber-300">Average order</p>
                 <BarChart3 className="h-4 w-4 text-amber-300" />
               </div>
               <p className="text-2xl font-bold text-white">{formatCurrency(averageOrderValue)}</p>
-              <p className="mt-2 text-xs text-text-muted">{topExpenseCategory ? `${topExpenseCategory.category} is highest cost` : 'No expense category yet'}</p>
+              <p className="mt-2 text-xs text-slate-300">{topExpenseCategory ? `${topExpenseCategory.category} is highest cost` : 'No expense category yet'}</p>
             </CardContent>
           </Card>
         </div>

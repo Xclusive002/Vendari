@@ -1,23 +1,10 @@
 import React from "react"
 import type { Metadata } from 'next'
 import type { Viewport } from 'next'
-import { Inter, Space_Grotesk } from 'next/font/google'
 
 import { Toaster } from '@/components/ui/sonner'
 import { AppInstallPrompt } from '@/components/ui/app-install-prompt'
 import './globals.css'
-
-const inter = Inter({
-  subsets: ['latin'],
-  variable: '--font-body',
-  display: 'swap',
-})
-
-const spaceGrotesk = Space_Grotesk({
-  subsets: ['latin'],
-  variable: '--font-display',
-  display: 'swap',
-})
 
 export const metadata: Metadata = {
   title: 'Vendari - Business Management Software',
@@ -59,7 +46,7 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" className={`${inter.variable} ${spaceGrotesk.variable}`}>
+    <html lang="en">
       <head>
         <meta name="theme-color" content="#06122B" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
