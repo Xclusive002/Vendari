@@ -166,6 +166,30 @@ export default function DashboardPage() {
             <article className="rounded-xl bg-ink p-5 text-white shadow-sm sm:p-6"><div className="flex items-center gap-2 text-blue"><Lightbulb className="h-4 w-4" /><h2 className="font-display text-lg font-semibold">AI insights</h2></div>{insight ? <><p className="mt-5 font-display text-xl font-semibold leading-snug">{insight.summary_text}</p><div className="mt-6 grid gap-4 border-t border-white/10 pt-4 text-xs sm:grid-cols-2"><div><p className="text-white/45">Computed from your real numbers</p><p className="mt-1 font-mono text-white/80">Sales + stock + purchases</p></div><div><p className="text-white/45">AI explanation</p><p className="mt-1 text-white/75">This explanation is based on your latest business data.</p></div></div></> : <p className="mt-5 font-display text-xl font-semibold leading-snug">Insights appear here once you&apos;ve recorded a few days of sales and inventory activity — check back soon.</p>}</article>
           </section>
 
+          <section className="mx-auto mt-6 max-w-7xl rounded-xl border border-blue/20 bg-surface p-5 shadow-sm sm:p-6" aria-label="AI business health actions">
+            <div className="flex items-center gap-2 text-blue">
+              <Sparkles className="h-4 w-4" />
+              <h2 className="font-display text-xl font-semibold text-ink">Business health assistant</h2>
+            </div>
+            <div className="mt-5 grid gap-4 md:grid-cols-3">
+              <Link href="/dashboard/sales" className="rounded-2xl border border-border bg-bg p-4 transition hover:border-blue-200 hover:bg-blue-50/40">
+                <p className="text-xs font-medium uppercase tracking-[0.16em] text-text-muted">Action</p>
+                <p className="mt-2 text-lg font-semibold text-ink">Review sales pulse</p>
+                <p className="mt-2 text-sm text-text-secondary">See what is driving revenue and which products are leading this week.</p>
+              </Link>
+              <Link href="/dashboard/inventory" className="rounded-2xl border border-border bg-bg p-4 transition hover:border-amber-200 hover:bg-amber-50/40">
+                <p className="text-xs font-medium uppercase tracking-[0.16em] text-text-muted">Action</p>
+                <p className="mt-2 text-lg font-semibold text-ink">Reorder stock</p>
+                <p className="mt-2 text-sm text-text-secondary">Prioritize items close to reorder level before they become missed sales.</p>
+              </Link>
+              <Link href="/dashboard/ask" className="rounded-2xl border border-border bg-bg p-4 transition hover:border-violet-200 hover:bg-violet-50/40">
+                <p className="text-xs font-medium uppercase tracking-[0.16em] text-text-muted">AI</p>
+                <p className="mt-2 text-lg font-semibold text-ink">Ask Vendari</p>
+                <p className="mt-2 text-sm text-text-secondary">Ask for a business summary, repeat buyers, or cash-flow guidance in plain English.</p>
+              </Link>
+            </div>
+          </section>
+
           <section className="mx-auto mt-6 max-w-7xl rounded-xl border border-blue/20 bg-surface p-5 shadow-sm sm:p-6" aria-labelledby="concierge-promo-heading">
             <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
               <div className="max-w-2xl"><p className="text-xs font-semibold uppercase tracking-[0.18em] text-blue">VENDARI CONCIERGE</p><h2 id="concierge-promo-heading" className="mt-3 font-display text-2xl font-semibold text-ink">Ready for more customers to find you?</h2><p className="mt-3 text-sm leading-6 text-text-secondary">Vendari Concierge pairs you with a dedicated growth officer who builds your website, sets up your Google listing, and runs your ads — using your real sales data to know what to promote. You keep ownership of everything; your officer just runs it.</p></div>
@@ -271,6 +295,27 @@ export default function DashboardPage() {
               ) : (
                 <p className="mt-3 text-sm text-white/70">Insights will appear as more business data is tracked.</p>
               )}
+            </section>
+
+            <section className="mt-5 rounded-2xl border border-border bg-surface p-3 shadow-sm">
+              <div className="mb-3 flex items-center gap-2 text-blue">
+                <Sparkles className="h-4 w-4" />
+                <h2 className="font-display text-lg font-semibold text-ink">Business health assistant</h2>
+              </div>
+              <div className="space-y-2">
+                <Link href="/dashboard/sales" className="flex items-center justify-between rounded-xl border border-border bg-bg px-3 py-2 text-sm text-ink">
+                  <span>Review sales pulse</span>
+                  <ArrowRight className="h-4 w-4 text-text-muted" />
+                </Link>
+                <Link href="/dashboard/inventory" className="flex items-center justify-between rounded-xl border border-border bg-bg px-3 py-2 text-sm text-ink">
+                  <span>Reorder stock</span>
+                  <ArrowRight className="h-4 w-4 text-text-muted" />
+                </Link>
+                <Link href="/dashboard/ask" className="flex items-center justify-between rounded-xl border border-border bg-bg px-3 py-2 text-sm text-ink">
+                  <span>Ask Vendari</span>
+                  <ArrowRight className="h-4 w-4 text-text-muted" />
+                </Link>
+              </div>
             </section>
           </div>
         </main>
