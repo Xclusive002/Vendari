@@ -4,21 +4,22 @@
   "description": "Track sales, inventory, and expenses. Made for business owners who want clarity, not complexity.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#1d4ed8",
+  "display_override": ["window-controls-overlay", "standalone"],
+  "background_color": "#06122B",
+  "theme_color": "#06122B",
   "orientation": "portrait-primary",
   "scope": "/",
   "icons": [
     {
-      "src": "/vendari-app-logo.jpeg",
+      "src": "/icon-192.png",
       "sizes": "192x192",
-      "type": "image/jpeg",
+      "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/vendari-app-logo.jpeg",
+      "src": "/icon-512.png",
       "sizes": "512x512",
-      "type": "image/jpeg",
+      "type": "image/png",
       "purpose": "any"
     },
     {

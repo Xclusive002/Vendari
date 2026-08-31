@@ -16,8 +16,8 @@ export default async function DashboardLayout({
   return (
     <div className="min-h-screen bg-bg">
       <DashboardNav />
-      <div className="min-h-screen md:pl-64">
-        <header className="flex h-20 items-center justify-end gap-2 border-b border-border bg-surface px-4 sm:gap-3 sm:px-8">
+      <div className="min-h-screen pb-[calc(5.25rem+env(safe-area-inset-bottom))] md:pl-64 md:pb-0">
+        <header className="sticky top-0 z-30 flex h-20 items-center justify-end gap-2 border-b border-border bg-surface/95 px-4 pt-[max(env(safe-area-inset-top),0.5rem)] backdrop-blur supports-[backdrop-filter]:bg-surface/85 sm:gap-3 sm:px-8">
           <NotificationBell />
           <AccountMenu />
         </header>

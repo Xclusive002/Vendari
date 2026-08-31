@@ -33,6 +33,9 @@ async function fetchWithTimeout(url: string, options: RequestInit = {}, timeoutM
     return pathname === '/auth/login' || pathname === '/auth/register' || pathname === '/auth/token/refresh'
   }
 
+  const ACCESS_TOKEN_MAX_AGE = 15 * 60
+  const REFRESH_TOKEN_MAX_AGE = 30 * 24 * 60 * 60
+
   async function clearAuthCookies() {
     const cookieStore = await cookies()
     cookieStore.delete('vendari_access')
@@ -83,9 +86,15 @@ async function refreshSession() {
     return false
   }
   const tokens = await response.json()
-  ;(await cookies()).set('vendari_access', tokens.access, {
-    httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', path: '/', maxAge: 15 * 60,
+  const cookieStore = await cookies()
+  cookieStore.set('vendari_access', tokens.access, {
+    httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', path: '/', maxAge: ACCESS_TOKEN_MAX_AGE,
   })
+  if (tokens.refresh) {
+    cookieStore.set('vendari_refresh', tokens.refresh, {
+      httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', path: '/', maxAge: REFRESH_TOKEN_MAX_AGE,
+    })
+  }
   return true
 }
 

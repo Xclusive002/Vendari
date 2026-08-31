@@ -43,14 +43,14 @@ export function DashboardNav() {
         {primaryNavItems.map(({ href, label, icon: Icon }) => {
           const active = pathname === href || (href !== '/dashboard' && pathname.startsWith(`${href}/`))
           return (
-            <Link key={href} href={href} className={`flex min-h-[52px] flex-col items-center justify-center gap-1 rounded-xl px-2 py-2 text-[11px] font-medium transition-colors ${active ? 'bg-brand-gradient text-white shadow-sm' : 'text-text-secondary hover:bg-bg'}`}>
+            <Link key={href} href={href} className={`mobile-tap-target flex min-h-[52px] flex-col items-center justify-center gap-1 rounded-xl px-2 py-2 text-[11px] font-medium transition-colors ${active ? 'bg-brand-gradient text-white shadow-sm' : 'text-text-secondary hover:bg-bg'}`}>
               <Icon className="h-4 w-4" />
               <span className="max-w-full truncate">{label}</span>
             </Link>
           )
         })}
 
-        <button type="button" onClick={() => setShowMore(true)} className={`flex min-h-[52px] flex-col items-center justify-center gap-1 rounded-xl px-2 py-2 text-[11px] font-medium transition-colors ${showMore || pathname.startsWith('/dashboard/') && !primaryNavItems.some(({ href }) => pathname === href || (href !== '/dashboard' && pathname.startsWith(`${href}/`))) ? 'bg-brand-gradient text-white shadow-sm' : 'text-text-secondary hover:bg-bg'}`}>
+        <button type="button" onClick={() => setShowMore(true)} className={`mobile-tap-target flex min-h-[52px] flex-col items-center justify-center gap-1 rounded-xl px-2 py-2 text-[11px] font-medium transition-colors ${showMore || pathname.startsWith('/dashboard/') && !primaryNavItems.some(({ href }) => pathname === href || (href !== '/dashboard' && pathname.startsWith(`${href}/`))) ? 'bg-brand-gradient text-white shadow-sm' : 'text-text-secondary hover:bg-bg'}`}>
           <MoreHorizontal className="h-4 w-4" />
           <span>More</span>
         </button>
@@ -61,11 +61,12 @@ export function DashboardNav() {
       <>
         <button type="button" aria-label="Close more navigation" className="fixed inset-0 z-40 bg-ink/40 backdrop-blur-[1px] md:hidden" onClick={() => setShowMore(false)} />
         <div className="fixed inset-x-0 bottom-[calc(76px+env(safe-area-inset-bottom))] z-50 mx-auto w-[calc(100%-1.5rem)] max-w-md rounded-2xl border border-border bg-surface p-3 shadow-2xl md:hidden">
+          <div className="mx-auto mb-2 h-1.5 w-12 rounded-full bg-border/80" />
           <div className="grid grid-cols-2 gap-2">
             {moreNavItems.map(({ href, label, icon: Icon }) => {
               const active = pathname === href || (href !== '/dashboard' && pathname.startsWith(`${href}/`))
               return (
-                <Link key={href} href={href} onClick={() => setShowMore(false)} className={`flex min-h-[48px] items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium ${active ? 'bg-brand-gradient text-white' : 'bg-bg text-text-secondary hover:text-ink'}`}>
+                <Link key={href} href={href} onClick={() => setShowMore(false)} className={`mobile-tap-target flex min-h-[48px] items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium ${active ? 'bg-brand-gradient text-white' : 'bg-bg text-text-secondary hover:text-ink'}`}>
                   <Icon className="h-4 w-4" />
                   <span className="truncate">{label}</span>
                 </Link>

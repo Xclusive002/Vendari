@@ -1,6 +1,9 @@
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 
+const ACCESS_TOKEN_MAX_AGE = 15 * 60
+const REFRESH_TOKEN_MAX_AGE = 30 * 24 * 60 * 60
+
 export async function POST() {
   const refresh = (await cookies()).get('vendari_refresh')?.value
   const baseUrl = process.env.NEXT_PUBLIC_API_URL?.trim().replace(/\/+$/, '')
@@ -12,7 +15,12 @@ export async function POST() {
   const tokens = await djangoResponse.json()
   const response = NextResponse.json({ success: true })
   response.cookies.set('vendari_access', tokens.access, {
-    httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', path: '/', maxAge: 15 * 60,
+    httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', path: '/', maxAge: ACCESS_TOKEN_MAX_AGE,
   })
+  if (tokens.refresh) {
+    response.cookies.set('vendari_refresh', tokens.refresh, {
+      httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', path: '/', maxAge: REFRESH_TOKEN_MAX_AGE,
+    })
+  }
   return response
 }

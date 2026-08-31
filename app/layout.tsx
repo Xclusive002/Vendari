@@ -1,10 +1,23 @@
 import React from "react"
 import type { Metadata } from 'next'
 import type { Viewport } from 'next'
+import { Inter, Space_Grotesk } from 'next/font/google'
 
 import { Toaster } from '@/components/ui/sonner'
 import { AppInstallPrompt } from '@/components/ui/app-install-prompt'
 import './globals.css'
+
+const inter = Inter({
+  subsets: ['latin'],
+  variable: '--font-body',
+  display: 'swap',
+})
+
+const spaceGrotesk = Space_Grotesk({
+  subsets: ['latin'],
+  variable: '--font-display',
+  display: 'swap',
+})
 
 export const metadata: Metadata = {
   title: 'Vendari - Business Management Software',
@@ -35,6 +48,8 @@ export function generateViewport(): Viewport {
     width: 'device-width',
     initialScale: 1,
     maximumScale: 1,
+    viewportFit: 'cover',
+    themeColor: '#06122B',
   }
 }
 
@@ -44,13 +59,14 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" className={`${inter.variable} ${spaceGrotesk.variable}`}>
       <head>
-        <meta name="theme-color" content="#1d4ed8" />
+        <meta name="theme-color" content="#06122B" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta name="apple-mobile-web-app-title" content="Vendari" />
-        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1" />
+        <meta name="msapplication-TileColor" content="#06122B" />
       </head>
       <body className="font-body antialiased">
         {children}

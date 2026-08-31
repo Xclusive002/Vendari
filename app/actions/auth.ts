@@ -27,13 +27,16 @@ export async function verifyEmail(email: string, code: string) {
   }
 }
 
+const ACCESS_TOKEN_MAX_AGE = 15 * 60
+const REFRESH_TOKEN_MAX_AGE = 30 * 24 * 60 * 60
+
 export async function login(email: string, password: string) {
   try {
     const tokens = await apiJson<{ access: string; refresh: string }>('/auth/login/', { method: 'POST', body: JSON.stringify({ email, password }), skipRefresh: true })
     const cookieStore = await cookies()
     const options = { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax' as const, path: '/' }
-    cookieStore.set('vendari_access', tokens.access, { ...options, maxAge: 15 * 60 })
-    cookieStore.set('vendari_refresh', tokens.refresh, { ...options, maxAge: 7 * 24 * 60 * 60 })
+    cookieStore.set('vendari_access', tokens.access, { ...options, maxAge: ACCESS_TOKEN_MAX_AGE })
+    cookieStore.set('vendari_refresh', tokens.refresh, { ...options, maxAge: REFRESH_TOKEN_MAX_AGE })
     return { success: true }
   } catch (error) {
     const cookieStore = await cookies()

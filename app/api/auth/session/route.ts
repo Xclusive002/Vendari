@@ -1,5 +1,8 @@
 import { NextResponse } from 'next/server'
 
+const ACCESS_TOKEN_MAX_AGE = 15 * 60
+const REFRESH_TOKEN_MAX_AGE = 30 * 24 * 60 * 60
+
 const cookieOptions = {
   httpOnly: true,
   secure: process.env.NODE_ENV === 'production',
@@ -10,8 +13,8 @@ const cookieOptions = {
 export async function POST(request: Request) {
   const { access, refresh } = await request.json()
   const response = NextResponse.json({ success: true })
-  response.cookies.set('vendari_access', access, { ...cookieOptions, maxAge: 15 * 60 })
-  response.cookies.set('vendari_refresh', refresh, { ...cookieOptions, maxAge: 7 * 24 * 60 * 60 })
+  response.cookies.set('vendari_access', access, { ...cookieOptions, maxAge: ACCESS_TOKEN_MAX_AGE })
+  response.cookies.set('vendari_refresh', refresh, { ...cookieOptions, maxAge: REFRESH_TOKEN_MAX_AGE })
   return response
 }
 
