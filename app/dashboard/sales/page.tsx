@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { generateSaleReceipt, getBusiness, getInventory, getSales, addSale } from '@/app/actions/business'
+import { generateSaleReceipt, getBusiness, getInventory, getSales, addSale, updateSaleStatus } from '@/app/actions/business'
 import { ClipboardList, Plus, Receipt, Search, Download } from 'lucide-react'
 import { toast } from 'sonner'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
@@ -36,6 +36,7 @@ export default function SalesPage() {
     item: '',
     quantity: '',
     payment_method: 'cash',
+    status: 'pending',
     notes: '',
   })
 
@@ -97,6 +98,7 @@ export default function SalesPage() {
         item: Number(formData.item),
         quantity,
         payment_method: formData.payment_method,
+        status: formData.status,
       })
 
       if (result.success) {
@@ -106,6 +108,7 @@ export default function SalesPage() {
           item: '',
           quantity: '',
           payment_method: 'cash',
+          status: 'pending',
           notes: '',
         })
         loadData()
@@ -174,8 +177,31 @@ export default function SalesPage() {
   const selectedItem = inventory.find((item) => String(item.id) === formData.item)
   const quantityInput = Number(formData.quantity) || 0
   const estimatedTotal = quantityInput * Number(selectedItem?.selling_price || 0)
+
+  const handleStatusChange = async (saleId: string, status: string) => {
+    const result = await updateSaleStatus(business.id, saleId, status)
+    if (result.success) {
+      toast.success('Order status updated')
+      loadData()
+    } else {
+      toast.error(result.error || 'Could not update order status')
+    }
+  }
   const totalSales = sales.reduce((sum, sale) => sum + Number(sale.total || 0), 0)
   const averageSale = sales.length > 0 ? totalSales / sales.length : 0
+  const lowStockItems = inventory.filter((item) => Number(item.quantity_in_stock || 0) <= Number(item.reorder_level || 10))
+  const totalInventoryValue = inventory.reduce(
+    (sum, item) => sum + Number(item.selling_price || item.unit_cost || 0) * Number(item.quantity_in_stock || 0),
+    0,
+  )
+  const activeProducts = inventory.length
+  const orderStatusCounts = sales.reduce((acc, sale) => {
+    const key = sale.status || 'pending'
+    acc[key] = (acc[key] || 0) + 1
+    return acc
+  }, {} as Record<string, number>)
+  const deliveredOrders = orderStatusCounts.delivered || 0
+  const confirmedOrders = orderStatusCounts.confirmed || 0
 
   // Sales by day for chart
   const salesByDay = sales.reduce(
@@ -208,9 +234,53 @@ export default function SalesPage() {
     <div className="dashboard-page md:pl-8">
       <main className="mx-auto max-w-7xl">
         <div className="mb-8">
-          <h1 className="font-display text-3xl font-semibold text-ink">Sales record</h1>
-          <p className="mt-2 text-text-secondary">Keep every order visible so you know what is actually selling.</p>
+          <h1 className="font-display text-3xl font-semibold text-ink md:text-4xl">Sales record</h1>
+          <p className="mt-2 text-text-secondary">Track what sold, what is left, and what needs restocking before it becomes a problem.</p>
         </div>
+
+        <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-3">
+          <Card className="border border-slate-200 bg-white shadow-sm">
+            <CardContent className="p-5">
+              <p className="text-xs font-medium uppercase tracking-[0.18em] text-slate-500">Sales</p>
+              <p className="mt-3 font-mono text-2xl font-semibold text-slate-900">N{totalSales.toLocaleString()}</p>
+              <p className="mt-2 text-sm text-slate-500">{sales.length} transactions</p>
+            </CardContent>
+          </Card>
+
+          <Card className="border border-slate-200 bg-white shadow-sm">
+            <CardContent className="p-5">
+              <p className="text-xs font-medium uppercase tracking-[0.18em] text-slate-500">Stock value</p>
+              <p className="mt-3 font-mono text-2xl font-semibold text-slate-900">N{totalInventoryValue.toLocaleString()}</p>
+              <p className="mt-2 text-sm text-slate-500">{activeProducts} active products</p>
+            </CardContent>
+          </Card>
+
+          <Card className="border border-amber-200 bg-amber-50 shadow-sm">
+            <CardContent className="p-5">
+              <p className="text-xs font-medium uppercase tracking-[0.18em] text-amber-700">Low stock</p>
+              <p className="mt-3 font-mono text-2xl font-semibold text-amber-800">{lowStockItems.length}</p>
+              <p className="mt-2 text-sm text-amber-700">Needs attention</p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {lowStockItems.length > 0 && (
+          <div className="mb-8 rounded-2xl border border-amber-200 bg-amber-50 p-4 shadow-sm">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-sm font-medium text-amber-800">Inventory watchlist</p>
+                <p className="mt-1 text-sm text-amber-700">These items are at or below their reorder point.</p>
+              </div>
+            </div>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {lowStockItems.slice(0, 5).map((item) => (
+                <span key={item.id} className="rounded-full border border-amber-200 bg-white px-3 py-1.5 text-xs font-medium text-amber-800">
+                  {item.product_name} · {item.quantity_in_stock}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
@@ -356,6 +426,21 @@ export default function SalesPage() {
                   </select>
                 </div>
                 <div>
+                  <Label className="text-slate-300">Order Status</Label>
+                  <select
+                    value={formData.status}
+                    onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                    className="dashboard-input mt-1 w-full px-3 py-2"
+                  >
+                    <option value="pending">Pending</option>
+                    <option value="confirmed">Confirmed</option>
+                    <option value="packed">Packed</option>
+                    <option value="shipped">Shipped</option>
+                    <option value="delivered">Delivered</option>
+                    <option value="cancelled">Cancelled</option>
+                  </select>
+                </div>
+                <div>
                   <Label className="text-slate-300">Notes</Label>
                   <Input
                     value={formData.notes}
@@ -399,6 +484,7 @@ export default function SalesPage() {
                       <th className="text-right py-3 px-4 font-semibold">Unit Price</th>
                       <th className="text-right py-3 px-4 font-semibold">Total</th>
                       <th className="text-left py-3 px-4 font-semibold">Method</th>
+                      <th className="text-left py-3 px-4 font-semibold">Status</th>
                       <th className="text-left py-3 px-4 font-semibold">Receipt</th>
                     </tr>
                   </thead>
@@ -418,6 +504,20 @@ export default function SalesPage() {
                             <span className="rounded bg-blue/10 px-2 py-1 text-blue">
                             {sale.payment_method}
                           </span>
+                        </td>
+                        <td className="py-3 px-4 text-xs">
+                          <select
+                            value={sale.status || 'pending'}
+                            onChange={(event) => handleStatusChange(String(sale.id), event.target.value)}
+                            className="rounded border border-border bg-surface px-2 py-1 text-text-primary focus:outline-none focus:ring-2 focus:ring-blue"
+                          >
+                            <option value="pending">Pending</option>
+                            <option value="confirmed">Confirmed</option>
+                            <option value="packed">Packed</option>
+                            <option value="shipped">Shipped</option>
+                            <option value="delivered">Delivered</option>
+                            <option value="cancelled">Cancelled</option>
+                          </select>
                         </td>
                         <td className="py-3 px-4">
                                   <LoadingButton type="button" onClick={() => handleGenerateReceipt(sale)} size="sm" variant="ghost" className="text-blue-400 hover:bg-blue-500/10" loading={receiptLoadingId === String(sale.id)} aria-label="Generate receipt">

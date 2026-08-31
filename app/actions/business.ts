@@ -155,6 +155,13 @@ export async function addSale(businessId: string, saleData: any) {
   return request(`/businesses/${businessId}/sales/`, { method: 'POST', body: JSON.stringify(saleData) })
 }
 
+export async function updateSaleStatus(businessId: string, saleId: string, status: string) {
+  return request(`/businesses/${businessId}/sales/${saleId}/`, {
+    method: 'PATCH',
+    body: JSON.stringify({ status }),
+  })
+}
+
 export async function getSales(businessId: string, startDate?: string, endDate?: string) {
   const query = new URLSearchParams()
   if (startDate) query.set('date_from', startDate)

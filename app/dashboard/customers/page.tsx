@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { addCustomer, deleteCustomer, getBusiness, getCustomers, updateCustomer } from '@/app/actions/business'
+import { addCustomer, deleteCustomer, getBusiness, getCustomers, getSales, updateCustomer } from '@/app/actions/business'
 import { Edit2, Plus, Users } from 'lucide-react'
 import { toast } from 'sonner'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
@@ -17,6 +17,7 @@ const emptyForm = () => ({ name: '', phone: '', email: '', address: '', notes: '
 export default function CustomersPage() {
   const [business, setBusiness] = useState<any>(null)
   const [customers, setCustomers] = useState<any[]>([])
+  const [sales, setSales] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -36,8 +37,12 @@ export default function CustomersPage() {
         return
       }
       setBusiness(businessData)
-      const result = await getCustomers(businessData.id)
-      setCustomers(result.data || [])
+      const [customerResult, salesResult] = await Promise.all([
+        getCustomers(businessData.id),
+        getSales(businessData.id),
+      ])
+      setCustomers(customerResult.data || [])
+      setSales(salesResult.data || [])
     } catch (error) {
       console.error('[Customers] Error:', error)
       toast.error('Failed to load customers')
@@ -94,6 +99,21 @@ export default function CustomersPage() {
     }
   }
 
+  const customerRows = customers.map((customer) => {
+    const customerSales = sales.filter((sale) => Number(sale.customer) === Number(customer.id) || Number(sale.customer_id) === Number(customer.id))
+    const totalSpend = customerSales.reduce((sum, sale) => sum + Number(sale.total || 0), 0)
+    const orderCount = customerSales.length
+    const lastPurchase = customerSales.length
+      ? new Date(Math.max(...customerSales.map((sale) => new Date(sale.sold_at).getTime()))).toLocaleDateString()
+      : 'No purchase yet'
+    const isRepeatCustomer = orderCount > 1
+
+    return { ...customer, totalSpend, orderCount, lastPurchase, isRepeatCustomer }
+  })
+
+  const repeatCustomers = customerRows.filter((customer) => customer.isRepeatCustomer).length
+  const totalCustomerSpend = customerRows.reduce((sum, customer) => sum + customer.totalSpend, 0)
+
   if (loading) return <PageSkeleton rows={6} />
 
   return (
@@ -116,7 +136,31 @@ export default function CustomersPage() {
           </Dialog>
         </div>
 
-        <Card className="dashboard-panel"><CardHeader><CardTitle className="font-display text-ink">Customer list</CardTitle></CardHeader><CardContent>{customers.length ? <div className="overflow-x-auto"><table className="dashboard-table w-full text-sm text-text-secondary"><thead><tr className="border-b border-border"><th className="px-4 py-3 text-left font-semibold">Name</th><th className="px-4 py-3 text-left font-semibold">Phone</th><th className="px-4 py-3 text-left font-semibold">Email</th><th className="px-4 py-3 text-left font-semibold">Address</th><th className="px-4 py-3 text-left font-semibold">Notes</th><th className="px-4 py-3 text-left font-semibold">Action</th></tr></thead><tbody>{customers.map((customer) => <tr key={customer.id}><td className="px-4 py-3 font-medium text-ink">{customer.name}</td><td className="px-4 py-3">{customer.phone}</td><td className="px-4 py-3">{customer.email || '-'}</td><td className="px-4 py-3">{customer.address || '-'}</td><td className="px-4 py-3">{customer.notes || '-'}</td><td className="px-4 py-3"><div className="flex gap-1"><Button onClick={() => openDialog(customer)} size="sm" variant="ghost" className="text-blue-400 hover:bg-blue-500/10" aria-label="Edit customer"><Edit2 className="h-4 w-4" /></Button><Button onClick={() => handleDelete(customer)} size="sm" variant="ghost" className="text-negative hover:bg-negative/10" aria-label="Delete customer">×</Button></div></td></tr>)}</tbody></table></div> : <div className="dashboard-empty"><Users className="h-8 w-8 text-blue" /><p>No customers yet. Add your first customer to start building your customer list.</p><Button onClick={() => openDialog()} className="dashboard-primary">Add your first customer</Button></div>}</CardContent></Card>
+        <div className="mb-6 grid gap-4 md:grid-cols-3">
+          <Card className="dashboard-panel">
+            <CardContent className="p-5">
+              <p className="text-xs uppercase tracking-[0.18em] text-text-muted">Customers</p>
+              <p className="mt-3 font-mono text-2xl font-semibold text-ink">{customerRows.length}</p>
+              <p className="mt-2 text-sm text-text-secondary">Active profiles</p>
+            </CardContent>
+          </Card>
+          <Card className="dashboard-panel">
+            <CardContent className="p-5">
+              <p className="text-xs uppercase tracking-[0.18em] text-text-muted">Repeat buyers</p>
+              <p className="mt-3 font-mono text-2xl font-semibold text-positive">{repeatCustomers}</p>
+              <p className="mt-2 text-sm text-text-secondary">Bought more than once</p>
+            </CardContent>
+          </Card>
+          <Card className="dashboard-panel">
+            <CardContent className="p-5">
+              <p className="text-xs uppercase tracking-[0.18em] text-text-muted">Customer spend</p>
+              <p className="mt-3 font-mono text-2xl font-semibold text-ink">₦{totalCustomerSpend.toLocaleString()}</p>
+              <p className="mt-2 text-sm text-text-secondary">Across confirmed purchases</p>
+            </CardContent>
+          </Card>
+        </div>
+
+        <Card className="dashboard-panel"><CardHeader><CardTitle className="font-display text-ink">Customer list</CardTitle></CardHeader><CardContent>{customerRows.length ? <div className="overflow-x-auto"><table className="dashboard-table w-full text-sm text-text-secondary"><thead><tr className="border-b border-border"><th className="px-4 py-3 text-left font-semibold">Name</th><th className="px-4 py-3 text-left font-semibold">Phone</th><th className="px-4 py-3 text-left font-semibold">Total spend</th><th className="px-4 py-3 text-left font-semibold">Orders</th><th className="px-4 py-3 text-left font-semibold">Last purchase</th><th className="px-4 py-3 text-left font-semibold">Action</th></tr></thead><tbody>{customerRows.map((customer) => <tr key={customer.id}><td className="px-4 py-3 font-medium text-ink">{customer.name}<div className="mt-1 text-[11px] text-text-muted">{customer.isRepeatCustomer ? 'Repeat buyer' : 'New buyer'}</div></td><td className="px-4 py-3">{customer.phone}</td><td className="px-4 py-3 font-mono text-ink">₦{customer.totalSpend.toLocaleString()}</td><td className="px-4 py-3">{customer.orderCount}</td><td className="px-4 py-3">{customer.lastPurchase}</td><td className="px-4 py-3"><div className="flex gap-1"><Button onClick={() => openDialog(customer)} size="sm" variant="ghost" className="text-blue-400 hover:bg-blue-500/10" aria-label="Edit customer"><Edit2 className="h-4 w-4" /></Button><Button onClick={() => handleDelete(customer)} size="sm" variant="ghost" className="text-negative hover:bg-negative/10" aria-label="Delete customer">×</Button></div></td></tr>)}</tbody></table></div> : <div className="dashboard-empty"><Users className="h-8 w-8 text-blue" /><p>No customers yet. Add your first customer to start building your customer list.</p><Button onClick={() => openDialog()} className="dashboard-primary">Add your first customer</Button></div>}</CardContent></Card>
       </main>
     </div>
   )

@@ -1,6 +1,6 @@
 from datetime import date, timedelta
 
-from django.db.models import Sum
+from django.db.models import Q, Sum
 
 from expenses.models import Expense
 from sales.models import Sale
@@ -35,6 +35,23 @@ def get_top_products(business, n=5):
     }
 
 
+def get_customer_repeat_purchase_summary(business):
+    sales = Sale.objects.filter(business=business).exclude(customer__isnull=True).values('customer_id', 'customer__name').annotate(
+        orders=Sum('quantity'),
+        spend=Sum('total'),
+    )
+    repeat_customers = [row for row in sales if (row['orders'] or 0) > 1]
+    return {
+        'customer_count': sales.count(),
+        'repeat_customer_count': len(repeat_customers),
+        'repeat_customers': [{
+            'customer_name': row['customer__name'],
+            'orders': row['orders'],
+            'spend': float(row['spend'] or 0),
+        } for row in repeat_customers[:10]],
+    }
+
+
 def get_expense_breakdown(business, date_from=None, date_to=None):
     queryset = Expense.objects.filter(business=business)
     if date_from:
@@ -55,6 +72,7 @@ def get_expense_breakdown(business, date_from=None, date_to=None):
 QUERY_TOOLS = {
     'get_sales_total': get_sales_total,
     'get_top_products': get_top_products,
+    'get_customer_repeat_purchase_summary': get_customer_repeat_purchase_summary,
     'get_expense_breakdown': get_expense_breakdown,
 }
 
@@ -73,6 +91,11 @@ QUERY_TOOL_DEFINITIONS = [
         'input_schema': {'type': 'object', 'properties': {
             'n': {'type': 'integer', 'minimum': 1, 'maximum': 20},
         }},
+    },
+    {
+        'name': 'get_customer_repeat_purchase_summary',
+        'description': 'Summarize repeat customers and multi-order spending so the business can see customer lifetime value.',
+        'input_schema': {'type': 'object', 'properties': {}},
     },
     {
         'name': 'get_expense_breakdown',

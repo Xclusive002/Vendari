@@ -7,6 +7,8 @@ from .models import Sale
 
 
 class SaleSerializer(serializers.ModelSerializer):
+    status = serializers.ChoiceField(choices=Sale.STATUS_CHOICES, required=False, default=Sale.STATUS_PENDING)
+
     class Meta:
         model = Sale
         fields = '__all__'

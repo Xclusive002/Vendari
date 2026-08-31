@@ -40,3 +40,17 @@ class SalesApiTests(APITestCase):
         url = f'/api/businesses/{self.business_b.pk}/sales/'
         self.assertEqual(self.client.get(url).status_code, status.HTTP_403_FORBIDDEN)
         self.assertEqual(self.client.post(url, {'item': self.item_a.pk, 'quantity': 1, 'payment_method': 'cash'}).status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_sale_tracks_order_status(self):
+        response = self.client.post(self.url, {'item': self.item_a.pk, 'quantity': 1, 'payment_method': 'cash', 'status': 'confirmed'})
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.data['status'], 'confirmed')
+        self.assertEqual(self.business_a.sales.first().status, 'confirmed')
+
+        patch_response = self.client.patch(
+            f'{self.url}{self.business_a.sales.first().pk}/',
+            {'status': 'shipped'},
+            format='json',
+        )
+        self.assertEqual(patch_response.status_code, status.HTTP_200_OK)
+        self.assertEqual(patch_response.data['status'], 'shipped')

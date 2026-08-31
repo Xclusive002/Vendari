@@ -146,13 +146,17 @@ export default function InventoryPage() {
   }
 
   const lowStockItems = inventory.filter((item) => item.quantity_in_stock <= (item.reorder_level || 10))
+  const inventoryValue = inventory.reduce(
+    (sum, item) => sum + Number(item.selling_price || item.unit_cost || 0) * Number(item.quantity_in_stock || 0),
+    0,
+  )
 
   return (
     <div className="dashboard-page md:pl-8">
       <main className="mx-auto max-w-7xl">
-        <div className="mb-8 flex items-center justify-between">
+        <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>
-            <h1 className="font-display text-3xl font-semibold text-ink">Inventory</h1>
+            <h1 className="font-display text-3xl font-semibold text-ink md:text-4xl">Inventory</h1>
             <p className="mt-2 text-text-secondary">Know what is on the shelf before a customer asks for it.</p>
           </div>
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
