@@ -283,7 +283,7 @@ export default function ReportsPage() {
     doc.setFont('helvetica', 'bold')
     doc.setFontSize(11)
     doc.text('Business details', margin + 6, yPosition + 8)
-    doc.setTextColor(...slate)
+    doc.setTextColor(slate[0], slate[1], slate[2])
     doc.setFont('helvetica', 'normal')
     doc.setFontSize(8)
     const detailLines = [
@@ -335,7 +335,7 @@ export default function ReportsPage() {
     doc.setFontSize(16)
     doc.text('Business performance', margin, 17)
 
-    doc.setTextColor(...primary)
+    doc.setTextColor(primary[0], primary[1], primary[2])
     doc.setFont('helvetica', 'bold')
     doc.setFontSize(11)
     doc.text('Top revenue products', margin, secondPageStart + 20)
@@ -360,7 +360,7 @@ export default function ReportsPage() {
     const summaryY = secondPageStart + 28 + Math.max(productBars.length, 4) * 18 + 12
     doc.setFillColor(255, 255, 255)
     doc.roundedRect(margin, summaryY, innerWidth, 30, 3, 3, 'F')
-    doc.setTextColor(...primary)
+    doc.setTextColor(primary[0], primary[1], primary[2])
     doc.setFont('helvetica', 'bold')
     doc.setFontSize(11)
     doc.text('Summary', margin + 6, summaryY + 8)
