@@ -1,19 +1,45 @@
 'use client'
 
-import React from "react"
-
-import { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
+import { jsPDF } from 'jspdf'
+import { BarChart3, Download, Plus, Receipt, TrendingDown, TrendingUp, Wallet } from 'lucide-react'
+import { toast } from 'sonner'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { getBusiness, getSales, getExpenses, addExpense } from '@/app/actions/business'
-import { BarChart3, Plus, Download, Receipt } from 'lucide-react'
-import { toast } from 'sonner'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar } from 'recharts'
 import { LoadingButton } from '@/components/ui/loading-button'
 import { PageSkeleton } from '@/components/ui/skeleton'
+
+const formatCurrency = (value: number) =>
+  new Intl.NumberFormat('en-NG', {
+    style: 'currency',
+    currency: 'NGN',
+    maximumFractionDigits: 0,
+  }).format(Number.isFinite(value) ? value : 0)
+
+const padNumber = (value: number) => String(value).padStart(2, '0')
+
+function toNumber(value: unknown) {
+  const parsed = Number(value ?? 0)
+  return Number.isFinite(parsed) ? parsed : 0
+}
+
+function parseReportDate(value: unknown) {
+  if (!value) return null
+
+  const raw = String(value)
+  if (raw.includes('T')) {
+    const date = new Date(raw)
+    return Number.isNaN(date.getTime()) ? null : date
+  }
+
+  const date = new Date(`${raw}T00:00:00`)
+  return Number.isNaN(date.getTime()) ? null : date
+}
 
 export default function ReportsPage() {
   const [business, setBusiness] = useState<any>(null)
@@ -87,7 +113,7 @@ export default function ReportsPage() {
           amount: 0,
           payment_method: 'cash',
         })
-        loadData()
+        await loadData()
       } else {
         toast.error(result.error)
       }
@@ -100,64 +126,169 @@ export default function ReportsPage() {
     }
   }
 
-  // Calculate metrics
-  const totalSales = sales.reduce((sum, sale) => sum + sale.total_amount, 0)
-  const totalExpenses = expenses.reduce((sum, expense) => sum + expense.amount, 0)
+  const normalizedSales = useMemo(
+    () =>
+      sales.map((sale) => {
+        const date = parseReportDate(sale.sold_at ?? sale.sale_date ?? sale.date ?? sale.created_at)
+        const amount = toNumber(sale.total ?? sale.total_amount ?? sale.amount ?? 0)
+
+        return {
+          ...sale,
+          saleDate: date,
+          total_amount: amount,
+          sale_date: date ? `${date.getFullYear()}-${padNumber(date.getMonth() + 1)}-${padNumber(date.getDate())}` : '',
+        }
+      }),
+    [sales],
+  )
+
+  const normalizedExpenses = useMemo(
+    () =>
+      expenses.map((expense) => {
+        const date = parseReportDate(expense.date ?? expense.expense_date ?? expense.created_at)
+        const amount = toNumber(expense.amount ?? 0)
+
+        return {
+          ...expense,
+          expenseDate: date,
+          amount,
+          expense_date: date ? `${date.getFullYear()}-${padNumber(date.getMonth() + 1)}-${padNumber(date.getDate())}` : '',
+        }
+      }),
+    [expenses],
+  )
+
+  const totalSales = normalizedSales.reduce((sum, sale) => sum + toNumber(sale.total_amount), 0)
+  const totalExpenses = normalizedExpenses.reduce((sum, expense) => sum + toNumber(expense.amount), 0)
   const profit = totalSales - totalExpenses
-  const profitMargin = totalSales > 0 ? ((profit / totalSales) * 100).toFixed(2) : 0
+  const profitMargin = totalSales > 0 ? (profit / totalSales) * 100 : 0
+  const totalOrders = normalizedSales.length
+  const averageOrderValue = totalOrders > 0 ? totalSales / totalOrders : 0
 
-  // Prepare data for profit & loss chart
-  const dailyData = sales.reduce(
-    (acc, sale) => {
-      const date = new Date(sale.sale_date).toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric',
-      })
-      const existing = acc.find((item: { date: string; revenue: number; expenses: number }) => item.date === date)
-      if (existing) {
-        existing.revenue += sale.total_amount
-      } else {
-        acc.push({ date, revenue: sale.total_amount, expenses: 0 })
-      }
-      return acc
-    },
-    [] as Array<{ date: string; revenue: number; expenses: number }>
-  )
+  const dailyData = useMemo(() => {
+    const map = new Map<string, { date: string; revenue: number; expenses: number }>()
 
-  // Add expenses to daily data
-  expenses.forEach((expense) => {
-    const date = new Date(expense.expense_date).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
+    normalizedSales.forEach((sale) => {
+      const dateValue = sale.saleDate ? sale.saleDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'Unknown'
+      const current = map.get(dateValue) ?? { date: dateValue, revenue: 0, expenses: 0 }
+      current.revenue += toNumber(sale.total_amount)
+      map.set(dateValue, current)
     })
-    const existing = dailyData.find((item: { date: string; revenue: number; expenses: number }) => item.date === date)
-    if (existing) {
-      existing.expenses += expense.amount
-    } else {
-      dailyData.push({ date, revenue: 0, expenses: expense.amount })
+
+    normalizedExpenses.forEach((expense) => {
+      const dateValue = expense.expenseDate ? expense.expenseDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'Unknown'
+      const current = map.get(dateValue) ?? { date: dateValue, revenue: 0, expenses: 0 }
+      current.expenses += toNumber(expense.amount)
+      map.set(dateValue, current)
+    })
+
+    return [...map.values()].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+  }, [normalizedSales, normalizedExpenses])
+
+  const expenseByCategory = useMemo(() => {
+    const map = new Map<string, number>()
+    normalizedExpenses.forEach((expense) => {
+      const key = String(expense.category || 'Other')
+      map.set(key, (map.get(key) ?? 0) + toNumber(expense.amount))
+    })
+    return [...map.entries()].map(([category, amount]) => ({ category, amount })).sort((a, b) => b.amount - a.amount)
+  }, [normalizedExpenses])
+
+  const revenueByProduct = useMemo(() => {
+    const map = new Map<string, number>()
+    normalizedSales.forEach((sale) => {
+      const key = String(sale.product_name || 'Product')
+      map.set(key, (map.get(key) ?? 0) + toNumber(sale.total_amount))
+    })
+    return [...map.entries()].map(([name, amount]) => ({ name, amount })).sort((a, b) => b.amount - a.amount).slice(0, 5)
+  }, [normalizedSales])
+
+  const topExpenseCategory = expenseByCategory[0]
+
+  const handleDownloadPdf = () => {
+    if (!business) return
+
+    const doc = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' })
+    const pageWidth = doc.internal.pageSize.getWidth()
+    const margin = 16
+    const colWidth = (pageWidth - margin * 2 - 8) / 2
+
+    doc.setFillColor(15, 23, 42)
+    doc.rect(0, 0, pageWidth, 40, 'F')
+    doc.setTextColor(255, 255, 255)
+    doc.setFontSize(20)
+    doc.setFont('helvetica', 'bold')
+    doc.text(String(business.name || business.business_name || 'Business Report'), margin, 18)
+    doc.setFontSize(10)
+    doc.setFont('helvetica', 'normal')
+    doc.text('Profit & Loss Report', margin, 26)
+    doc.text(`${dateRange.start || '—'} to ${dateRange.end || '—'}`, margin, 32)
+
+    const metricRows = [
+      { label: 'Revenue', value: formatCurrency(totalSales) },
+      { label: 'Expenses', value: formatCurrency(totalExpenses) },
+      { label: 'Net Profit', value: formatCurrency(profit) },
+      { label: 'Profit Margin', value: `${profitMargin.toFixed(1)}%` },
+    ]
+
+    metricRows.forEach((row, index) => {
+      const x = margin + (index % 2) * (colWidth + 8)
+      const y = 52 + Math.floor(index / 2) * 24
+      doc.setFillColor(index % 2 === 0 ? 239 : 248, index % 2 === 0 ? 246 : 250, index % 2 === 0 ? 255 : 252)
+      doc.roundedRect(x, y, colWidth, 18, 3, 3, 'F')
+      doc.setTextColor(15, 23, 42)
+      doc.setFontSize(9)
+      doc.setFont('helvetica', 'normal')
+      doc.text(row.label, x + 5, y + 7)
+      doc.setFont('helvetica', 'bold')
+      doc.setFontSize(12)
+      doc.text(row.value, x + 5, y + 15)
+    })
+
+    doc.setTextColor(15, 23, 42)
+    doc.setFont('helvetica', 'bold')
+    doc.setFontSize(12)
+    doc.text('Business details', margin, 120)
+    doc.setFont('helvetica', 'normal')
+    doc.setFontSize(10)
+    const details = [
+      `Business name: ${business.name || business.business_name || 'N/A'}`,
+      `Email: ${business.email || business.business_email || 'N/A'}`,
+      `Phone: ${business.phone || business.business_phone || 'N/A'}`,
+      `Address: ${business.address || business.business_address || 'N/A'}`,
+    ]
+    details.forEach((line, index) => doc.text(line, margin, 128 + index * 7))
+
+    let yPosition = 175
+    doc.setFont('helvetica', 'bold')
+    doc.setFontSize(12)
+    doc.text('Top expense categories', margin, yPosition)
+    yPosition += 8
+    doc.setFont('helvetica', 'normal')
+    doc.setFontSize(10)
+    expenseByCategory.slice(0, 4).forEach((item) => {
+      doc.text(`${item.category}: ${formatCurrency(item.amount)}`, margin, yPosition)
+      yPosition += 7
+    })
+
+    if (yPosition > 250) {
+      doc.addPage()
+      yPosition = 24
     }
-  })
 
-  // Sort by date
-  dailyData.sort((a: { date: string; revenue: number; expenses: number }, b: { date: string; revenue: number; expenses: number }) => {
-    const dateA = new Date(a.date)
-    const dateB = new Date(b.date)
-    return dateA.getTime() - dateB.getTime()
-  })
+    doc.setFont('helvetica', 'bold')
+    doc.setFontSize(12)
+    doc.text('Top revenue products', margin, yPosition + 14)
+    yPosition += 22
+    doc.setFont('helvetica', 'normal')
+    doc.setFontSize(10)
+    revenueByProduct.forEach((item) => {
+      doc.text(`${item.name}: ${formatCurrency(item.amount)}`, margin, yPosition)
+      yPosition += 7
+    })
 
-  // Expense breakdown
-  const expenseByCategory = expenses.reduce(
-    (acc, expense) => {
-      const existing = acc.find((item: { category: string; amount: number }) => item.category === expense.category)
-      if (existing) {
-        existing.amount += expense.amount
-      } else {
-        acc.push({ category: expense.category, amount: expense.amount })
-      }
-      return acc
-    },
-    [] as Array<{ category: string; amount: number }>
-  )
+    doc.save(`${(business.name || business.business_name || 'business').replace(/\s+/g, '-').toLowerCase()}-profit-loss-report.pdf`)
+  }
 
   if (loading) {
     return (
@@ -170,16 +301,25 @@ export default function ReportsPage() {
   return (
     <div className="dashboard-page md:pl-8">
       <main className="mx-auto max-w-7xl">
-        <div className="mb-8">
-          <h1 className="font-display text-3xl font-semibold text-ink">Profit & loss</h1>
-          <p className="text-text-secondary mt-2">Turn sales and expense records into decisions you can act on.</p>
+        <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+          <div>
+            <p className="text-xs font-medium uppercase tracking-[0.2em] text-text-muted">Business overview</p>
+            <h1 className="mt-2 font-display text-3xl font-semibold text-ink">Profit & loss report</h1>
+            <p className="mt-2 text-text-secondary">
+              {business?.name || business?.business_name || 'Your business'} · {dateRange.start} to {dateRange.end}
+            </p>
+          </div>
+
+          <Button onClick={handleDownloadPdf} className="dashboard-primary self-start md:self-auto">
+            <Download className="mr-2 h-4 w-4" />
+            Download PDF report
+          </Button>
         </div>
 
-        {/* Date Filter */}
         <Card className="dashboard-panel mb-8">
-          <CardContent className="p-6">
-            <div className="flex gap-4 flex-col sm:flex-row items-end">
-              <div className="flex-1">
+          <CardContent className="p-5 md:p-6">
+            <div className="grid gap-4 md:grid-cols-2">
+              <div>
                 <Label className="text-text-secondary text-sm">From date</Label>
                 <Input
                   type="date"
@@ -188,7 +328,7 @@ export default function ReportsPage() {
                   className="dashboard-input mt-1"
                 />
               </div>
-              <div className="flex-1">
+              <div>
                 <Label className="text-text-secondary text-sm">To date</Label>
                 <Input
                   type="date"
@@ -201,115 +341,58 @@ export default function ReportsPage() {
           </CardContent>
         </Card>
 
-        {/* KPIs */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <Card className="bg-gradient-to-br from-green-900/30 to-slate-800/50 border-green-700/30">
-            <CardContent className="p-6">
-              <p className="text-green-300 text-sm mb-2">Total Revenue</p>
-              <p className="text-2xl font-bold text-green-400">₦{totalSales.toLocaleString()}</p>
-              <p className="text-xs text-text-muted mt-2">{sales.length} sales</p>
+        <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <Card className="border-green-500/25 bg-gradient-to-br from-green-500/12 to-slate-900/50">
+            <CardContent className="p-5">
+              <div className="mb-3 flex items-center justify-between">
+                <p className="text-sm text-green-300">Total revenue</p>
+                <TrendingUp className="h-4 w-4 text-green-300" />
+              </div>
+              <p className="text-2xl font-bold text-white">{formatCurrency(totalSales)}</p>
+              <p className="mt-2 text-xs text-text-muted">{totalOrders} sales recorded</p>
             </CardContent>
           </Card>
-          <Card className="bg-gradient-to-br from-red-900/30 to-slate-800/50 border-red-700/30">
-            <CardContent className="p-6">
-              <p className="text-red-300 text-sm mb-2">Total Expenses</p>
-              <p className="text-2xl font-bold text-red-400">₦{totalExpenses.toLocaleString()}</p>
-              <p className="text-xs text-text-muted mt-2">{expenses.length} entries</p>
+
+          <Card className="border-red-500/25 bg-gradient-to-br from-red-500/12 to-slate-900/50">
+            <CardContent className="p-5">
+              <div className="mb-3 flex items-center justify-between">
+                <p className="text-sm text-red-300">Total expenses</p>
+                <TrendingDown className="h-4 w-4 text-red-300" />
+              </div>
+              <p className="text-2xl font-bold text-white">{formatCurrency(totalExpenses)}</p>
+              <p className="mt-2 text-xs text-text-muted">{expenseByCategory.length} categories</p>
             </CardContent>
           </Card>
-          <Card className="bg-gradient-to-br from-blue-900/30 to-slate-800/50 border-blue-700/30">
-            <CardContent className="p-6">
-              <p className="text-blue-300 text-sm mb-2">Net Profit</p>
-              <p className="text-2xl font-bold text-blue-400">₦{profit.toLocaleString()}</p>
-              <p className={`text-xs mt-2 ${profit >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                {profitMargin}% margin
+
+          <Card className="border-blue-500/25 bg-gradient-to-br from-blue-500/12 to-slate-900/50">
+            <CardContent className="p-5">
+              <div className="mb-3 flex items-center justify-between">
+                <p className="text-sm text-blue-300">Net profit</p>
+                <Wallet className="h-4 w-4 text-blue-300" />
+              </div>
+              <p className="text-2xl font-bold text-white">{formatCurrency(profit)}</p>
+              <p className={`mt-2 text-xs ${profit >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                {profitMargin >= 0 ? '+' : ''}{profitMargin.toFixed(1)}% margin
               </p>
             </CardContent>
           </Card>
-          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-            <DialogTrigger asChild>
-              <Card className="dashboard-panel">
-                <CardContent className="p-6 h-full flex items-center justify-center">
-                  <Button className="dashboard-primary w-full">
-                    <Plus className="w-4 h-4 mr-2" />
-                    Add Expense
-                  </Button>
-                </CardContent>
-              </Card>
-            </DialogTrigger>
-            <DialogContent className="dashboard-panel">
-              <DialogHeader>
-                <DialogTitle className="font-display text-ink">Record an expense</DialogTitle>
-              </DialogHeader>
-              <form onSubmit={handleAddExpense} className="space-y-4">
-                <div>
-                  <Label className="text-text-secondary">Date</Label>
-                  <Input
-                    type="date"
-                    onChange={(e) =>
-                      setFormData({ ...formData, expense_date: e.target.value })
-                    }
-                    className="dashboard-input mt-1"
-                  />
-                </div>
-                <div>
-                  <Label className="text-text-secondary">Category *</Label>
-                  <select
-                    value={formData.category}
-                    onChange={(e) =>
-                      setFormData({ ...formData, category: e.target.value })
-                    }
-                    className="dashboard-input mt-1 w-full px-3 py-2"
-                  >
-                    <option value="Rent">Rent</option>
-                    <option value="Utilities">Utilities</option>
-                    <option value="Salaries">Salaries</option>
-                    <option value="Transportation">Transportation</option>
-                    <option value="Supplies">Supplies</option>
-                    <option value="Marketing">Marketing</option>
-                    <option value="Maintenance">Maintenance</option>
-                    <option value="Insurance">Insurance</option>
-                    <option value="Other">Other</option>
-                  </select>
-                </div>
-                <div>
-                  <Label className="text-text-secondary">Description</Label>
-                  <Input
-                    value={formData.description}
-                    onChange={(e) =>
-                      setFormData({ ...formData, description: e.target.value })
-                    }
-                    className="dashboard-input mt-1"
-                    placeholder="Optional"
-                  />
-                </div>
-                <div>
-                  <Label className="text-text-secondary">Amount (N) *</Label>
-                  <Input
-                    type="number"
-                    step="0.01"
-                    value={formData.amount}
-                    onChange={(e) =>
-                      setFormData({ ...formData, amount: parseFloat(e.target.value) })
-                    }
-                    className="dashboard-input mt-1"
-                    placeholder="0.00"
-                    required
-                  />
-                </div>
-                <LoadingButton type="submit" loading={savingExpense} className="dashboard-primary w-full">
-                  {savingExpense ? 'Saving...' : 'Record Expense'}
-                </LoadingButton>
-              </form>
-            </DialogContent>
-          </Dialog>
+
+          <Card className="border-amber-500/25 bg-gradient-to-br from-amber-500/12 to-slate-900/50">
+            <CardContent className="p-5">
+              <div className="mb-3 flex items-center justify-between">
+                <p className="text-sm text-amber-300">Average order</p>
+                <BarChart3 className="h-4 w-4 text-amber-300" />
+              </div>
+              <p className="text-2xl font-bold text-white">{formatCurrency(averageOrderValue)}</p>
+              <p className="mt-2 text-xs text-text-muted">{topExpenseCategory ? `${topExpenseCategory.category} is highest cost` : 'No expense category yet'}</p>
+            </CardContent>
+          </Card>
         </div>
 
-        {/* Charts */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <div className="mb-8 grid gap-6 lg:grid-cols-2">
           <Card className="dashboard-panel">
             <CardHeader>
-              <CardTitle className="font-display text-ink">Revenue vs expenses</CardTitle>
+              <CardTitle className="font-display text-ink">Revenue vs expenses trend</CardTitle>
             </CardHeader>
             <CardContent>
               {dailyData.length > 0 ? (
@@ -319,23 +402,19 @@ export default function ReportsPage() {
                     <XAxis dataKey="date" stroke="#94a3b8" />
                     <YAxis stroke="#94a3b8" />
                     <Tooltip
-                      contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #475569' }}
+                      formatter={(value: number) => formatCurrency(Number(value))}
+                      contentStyle={{ backgroundColor: '#111827', border: '1px solid #334155', borderRadius: 12 }}
                       labelStyle={{ color: '#fff' }}
                     />
                     <Legend />
-                    <Line
-                      type="monotone"
-                      dataKey="revenue"
-                      stroke="#10b981"
-                      strokeWidth={2}
-                    />
-                    <Line type="monotone" dataKey="expenses" stroke="#ef4444" strokeWidth={2} />
+                    <Line type="monotone" dataKey="revenue" stroke="#34d399" strokeWidth={3} dot={{ r: 3 }} />
+                    <Line type="monotone" dataKey="expenses" stroke="#f87171" strokeWidth={3} dot={{ r: 3 }} />
                   </LineChart>
                 </ResponsiveContainer>
               ) : (
                 <div className="dashboard-empty">
                   <BarChart3 className="h-8 w-8 text-blue" />
-                  No sales or expense data for this period. Adjust the dates or record your first transaction.
+                  No sales or expense data for this period. Adjust the date range or add your first transaction.
                 </div>
               )}
             </CardContent>
@@ -350,45 +429,172 @@ export default function ReportsPage() {
                 <ResponsiveContainer width="100%" height={300}>
                   <BarChart data={expenseByCategory}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
-                    <XAxis dataKey="category" stroke="#94a3b8" angle={-45} textAnchor="end" height={80} />
+                    <XAxis dataKey="category" stroke="#94a3b8" angle={-30} textAnchor="end" height={70} />
                     <YAxis stroke="#94a3b8" />
                     <Tooltip
-                      contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #475569' }}
+                      formatter={(value: number) => formatCurrency(Number(value))}
+                      contentStyle={{ backgroundColor: '#111827', border: '1px solid #334155', borderRadius: 12 }}
                       labelStyle={{ color: '#fff' }}
                     />
-                    <Bar dataKey="amount" fill="#f59e0b" />
+                    <Bar dataKey="amount" fill="#fbbf24" radius={[8, 8, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               ) : (
                 <div className="dashboard-empty">
                   <Receipt className="h-8 w-8 text-blue" />
-                  No expenses in this period. Record an expense to understand where your money is going.
+                  No expense categories yet. Add an expense to see where your money is going.
                 </div>
               )}
             </CardContent>
           </Card>
         </div>
 
-        {/* Expense Details */}
+        <div className="mb-8 grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
+          <Card className="dashboard-panel">
+            <CardHeader>
+              <CardTitle className="font-display text-ink">Top revenue products</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {revenueByProduct.length > 0 ? (
+                <div className="space-y-3">
+                  {revenueByProduct.map((item, index) => (
+                    <div key={item.name} className="rounded-xl border border-border bg-surface/60 p-3">
+                      <div className="mb-2 flex items-center justify-between">
+                        <span className="text-sm text-text-secondary">#{index + 1} {item.name}</span>
+                        <span className="font-semibold text-ink">{formatCurrency(item.amount)}</span>
+                      </div>
+                      <div className="h-2 overflow-hidden rounded-full bg-slate-800">
+                        <div
+                          className="h-full rounded-full bg-gradient-to-r from-emerald-400 to-emerald-500"
+                          style={{ width: `${Math.max(18, (item.amount / (revenueByProduct[0]?.amount || item.amount)) * 100)}%` }}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="dashboard-empty">
+                  <BarChart3 className="h-8 w-8 text-blue" />
+                  No sales have been recorded in this range yet.
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card className="dashboard-panel">
+            <CardHeader>
+              <CardTitle className="font-display text-ink">Expense detail</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {expenseByCategory.length > 0 ? (
+                <div className="space-y-3">
+                  {expenseByCategory.map((item) => (
+                    <div key={item.category} className="flex items-center justify-between rounded-lg border-b border-border pb-3 last:border-b-0 last:pb-0">
+                      <span className="text-text-secondary">{item.category}</span>
+                      <span className="font-semibold text-ink">{formatCurrency(item.amount)}</span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="dashboard-empty">
+                  <Receipt className="h-8 w-8 text-blue" />
+                  Add an expense to see daily cost details.
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
         <Card className="dashboard-panel">
           <CardHeader>
-            <CardTitle className="font-display text-ink">Expense details</CardTitle>
+            <CardTitle className="font-display text-ink">Quick notes</CardTitle>
           </CardHeader>
-          <CardContent>
-            {expenseByCategory.length > 0 ? (
-              <div className="space-y-2">
-                {expenseByCategory.map((item: { category: string; amount: number }) => (
-                  <div key={item.category} className="flex items-center justify-between rounded-lg border-b border-border p-4 hover:bg-blue/5">
-                    <span className="text-text-secondary">{item.category}</span>
-                    <span className="dashboard-number font-semibold text-ink">N{item.amount.toLocaleString()}</span>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="dashboard-empty"><Receipt className="h-8 w-8 text-blue" /><p>No expenses yet. Record your first expense to see the cost of running your business.</p><Button onClick={() => setDialogOpen(true)} className="dashboard-primary">Record your first expense</Button></div>
-            )}
+          <CardContent className="grid gap-4 md:grid-cols-3">
+            <div className="rounded-xl border border-border bg-surface/60 p-4">
+              <p className="text-sm text-text-muted">Revenue generated</p>
+              <p className="mt-2 text-2xl font-bold text-ink">{formatCurrency(totalSales)}</p>
+            </div>
+            <div className="rounded-xl border border-border bg-surface/60 p-4">
+              <p className="text-sm text-text-muted">Operating cost</p>
+              <p className="mt-2 text-2xl font-bold text-ink">{formatCurrency(totalExpenses)}</p>
+            </div>
+            <div className="rounded-xl border border-border bg-surface/60 p-4">
+              <p className="text-sm text-text-muted">Business health</p>
+              <p className={`mt-2 text-2xl font-bold ${profit >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                {profit >= 0 ? 'Profitable' : 'Needs attention'}
+              </p>
+            </div>
           </CardContent>
         </Card>
+
+        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+          <DialogTrigger asChild>
+            <div className="mt-8 flex justify-center md:hidden">
+              <Button className="dashboard-primary w-full max-w-sm">
+                <Plus className="mr-2 h-4 w-4" />
+                Add expense
+              </Button>
+            </div>
+          </DialogTrigger>
+          <DialogContent className="dashboard-panel">
+            <DialogHeader>
+              <DialogTitle className="font-display text-ink">Record an expense</DialogTitle>
+            </DialogHeader>
+            <form onSubmit={handleAddExpense} className="space-y-4">
+              <div>
+                <Label className="text-text-secondary">Date</Label>
+                <Input
+                  type="date"
+                  value={formData.expense_date}
+                  onChange={(e) => setFormData({ ...formData, expense_date: e.target.value })}
+                  className="dashboard-input mt-1"
+                />
+              </div>
+              <div>
+                <Label className="text-text-secondary">Category *</Label>
+                <select
+                  value={formData.category}
+                  onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                  className="dashboard-input mt-1 w-full px-3 py-2"
+                >
+                  <option value="Rent">Rent</option>
+                  <option value="Utilities">Utilities</option>
+                  <option value="Salaries">Salaries</option>
+                  <option value="Transportation">Transportation</option>
+                  <option value="Supplies">Supplies</option>
+                  <option value="Marketing">Marketing</option>
+                  <option value="Maintenance">Maintenance</option>
+                  <option value="Insurance">Insurance</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+              <div>
+                <Label className="text-text-secondary">Description</Label>
+                <Input
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  className="dashboard-input mt-1"
+                  placeholder="Optional"
+                />
+              </div>
+              <div>
+                <Label className="text-text-secondary">Amount (N) *</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={formData.amount}
+                  onChange={(e) => setFormData({ ...formData, amount: parseFloat(e.target.value) || 0 })}
+                  className="dashboard-input mt-1"
+                  placeholder="0.00"
+                  required
+                />
+              </div>
+              <LoadingButton type="submit" loading={savingExpense} className="dashboard-primary w-full">
+                {savingExpense ? 'Saving...' : 'Record Expense'}
+              </LoadingButton>
+            </form>
+          </DialogContent>
+        </Dialog>
       </main>
     </div>
   )
