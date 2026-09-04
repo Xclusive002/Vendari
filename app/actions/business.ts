@@ -42,6 +42,10 @@ type RequestResult<T> =
 type CustomerResult = { id: number }
 type InvoiceResult = { id: number | string }
 
+export type PaystackBank = { name: string; code: string }
+
+let paystackBanksPromise: Promise<RequestResult<PaystackBank[]>> | null = null
+
 function itemFromApi(item: ApiItem) {
   return {
     ...item,
@@ -115,7 +119,10 @@ export async function getDashboardSummary(businessId: string) {
 }
 
 export async function getPaystackBanks() {
-  return request<Array<{ name: string; code: string }>>('/paystack/banks/')
+  if (!paystackBanksPromise) {
+    paystackBanksPromise = request<PaystackBank[]>('/paystack/banks/')
+  }
+  return paystackBanksPromise
 }
 
 export async function verifyBankAccount(businessId: string, bank_code: string, account_number: string) {

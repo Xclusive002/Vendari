@@ -5,9 +5,10 @@ import { useParams } from 'next/navigation'
 import dynamic from 'next/dynamic'
 import { ArrowLeft, Printer, Loader2 } from 'lucide-react'
 import Link from 'next/link'
-import { getBusiness, getInvoice } from '@/app/actions/business'
+import { getBusiness, getInvoice, initializeInvoicePayment } from '@/app/actions/business'
 import ReceiptDocument, { type ReceiptBusiness, type ReceiptInvoice } from '@/components/dashboard/ReceiptDocument'
 import { BackButton } from '@/components/ui/back-button'
+import { LoadingButton } from '@/components/ui/loading-button'
 
 const ReceiptExportActions = dynamic(() => import('@/components/dashboard/ReceiptExportActions'), { ssr: false })
 
@@ -18,6 +19,9 @@ export default function ReceiptPage() {
   const [business, setBusiness] = useState<ReceiptBusiness | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [paymentUrl, setPaymentUrl] = useState('')
+  const [paymentLoading, setPaymentLoading] = useState(false)
+  const [paymentError, setPaymentError] = useState('')
 
   useEffect(() => {
     getBusiness()
@@ -36,8 +40,14 @@ export default function ReceiptPage() {
           address: businessResult.address,
           phone: businessResult.phone,
           logo: businessResult.logo,
+          paystackSubaccountCode: businessResult.paystack_subaccount_code,
         })
-        setInvoice(invoiceResult.data as ReceiptInvoice)
+        const nextInvoice = invoiceResult.data as ReceiptInvoice
+        setInvoice(nextInvoice)
+        if (businessResult.paystack_subaccount_code && nextInvoice.doc_type === 'invoice' && nextInvoice.status === 'unpaid') {
+          const paymentResult = await initializeInvoicePayment(businessResult.id, params.id)
+          if (paymentResult.success) setPaymentUrl(paymentResult.data.authorization_url)
+        }
       })
       .catch(() => setError('This receipt could not be loaded.'))
       .finally(() => setLoading(false))
@@ -45,6 +55,23 @@ export default function ReceiptPage() {
 
   const handlePrint = () => {
     window.print()
+  }
+
+  const handlePayNow = async () => {
+    if (!business?.paystackSubaccountCode || !invoice) return
+    setPaymentLoading(true)
+    setPaymentError('')
+    try {
+      const result = await initializeInvoicePayment(String(invoice.business), String(invoice.id))
+      if (result.success) {
+        setPaymentUrl(result.data.authorization_url)
+        window.location.href = result.data.authorization_url
+      } else {
+        setPaymentError(result.error || 'Unable to open Paystack checkout.')
+      }
+    } finally {
+      setPaymentLoading(false)
+    }
   }
 
   if (loading)
@@ -123,6 +150,13 @@ export default function ReceiptPage() {
             <BackButton fallback="/dashboard/sales">Back to sales</BackButton>
             <div className="flex flex-wrap gap-2">
               <ReceiptExportActions documentRef={documentRef} documentNumber={invoice.doc_number} />
+              {business.paystackSubaccountCode && invoice.doc_type === 'invoice' && invoice.status === 'unpaid' ? (
+                <LoadingButton type="button" onClick={handlePayNow} loading={paymentLoading} className="dashboard-primary inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold">
+                  {paymentLoading ? 'Opening...' : 'Pay Now'}
+                </LoadingButton>
+              ) : invoice.doc_type === 'invoice' && invoice.status === 'unpaid' ? (
+                <span className="inline-flex items-center rounded-lg border border-warning/30 bg-warning/10 px-4 py-2 text-sm font-medium text-warning">Complete Payment Settings to enable Pay Now</span>
+              ) : null}
               <button
                 type="button"
                 onClick={handlePrint}
@@ -132,8 +166,9 @@ export default function ReceiptPage() {
                 Print
               </button>
             </div>
+            {paymentError && <p className="mt-2 text-right text-sm text-negative">{paymentError}</p>}
           </div>
-          <ReceiptDocument invoice={invoice} business={business} documentRef={documentRef} />
+          <ReceiptDocument invoice={invoice} business={business} documentRef={documentRef} paymentUrl={paymentUrl} />
         </div>
       </main>
     </>

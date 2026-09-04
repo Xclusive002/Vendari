@@ -1,12 +1,15 @@
 'use client'
 
 import Image from 'next/image'
+import { useEffect, useState } from 'react'
+import QRCode from 'qrcode'
 
 export type ReceiptBusiness = {
   name: string
   address?: string
   phone?: string
   logo?: string | null
+  paystackSubaccountCode?: string
 }
 
 export type ReceiptInvoice = {
@@ -54,10 +57,23 @@ function getStatusColor(status: string): { bg: string; text: string } {
   }
 }
 
-export default function ReceiptDocument({ invoice, business, documentRef }: { invoice: ReceiptInvoice; business: ReceiptBusiness; documentRef: React.RefObject<HTMLDivElement | null> }) {
+export default function ReceiptDocument({ invoice, business, documentRef, paymentUrl }: { invoice: ReceiptInvoice; business: ReceiptBusiness; documentRef: React.RefObject<HTMLDivElement | null>; paymentUrl?: string }) {
   const isInvoice = invoice.doc_type === 'invoice'
   const statusColors = getStatusColor(invoice.status)
   const hasLineItems = invoice.line_items && invoice.line_items.length > 0
+  const [paymentQrCode, setPaymentQrCode] = useState('')
+
+  useEffect(() => {
+    let active = true
+    if (!paymentUrl) {
+      setPaymentQrCode('')
+      return () => { active = false }
+    }
+    QRCode.toDataURL(paymentUrl, { width: 220, margin: 1, errorCorrectionLevel: 'M' })
+      .then((dataUrl) => { if (active) setPaymentQrCode(dataUrl) })
+      .catch(() => { if (active) setPaymentQrCode('') })
+    return () => { active = false }
+  }, [paymentUrl])
 
   return (
     <article
@@ -433,6 +449,32 @@ export default function ReceiptDocument({ invoice, business, documentRef }: { in
           </span>
         </div>
       </div>
+
+      {paymentUrl && paymentQrCode && (
+        <section
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '24px',
+            border: '1px solid #C9D8F4',
+            borderRadius: '12px',
+            backgroundColor: '#F5F8FF',
+            padding: '20px',
+            marginBottom: '32px',
+          }}
+        >
+          <div>
+            <p style={{ margin: '0 0 6px 0', color: '#173B82', fontWeight: 700, fontSize: '16px' }}>Pay this invoice online</p>
+            <p style={{ margin: '0 0 10px 0', color: '#4B5768', fontSize: '13px' }}>Scan the code or open the payment link below.</p>
+            <p style={{ margin: 0, color: '#173B82', fontSize: '10px', wordBreak: 'break-all' }}>{paymentUrl}</p>
+          </div>
+          <div style={{ flexShrink: 0, textAlign: 'center' }}>
+            <img src={paymentQrCode} alt="Scan to pay" width={120} height={120} style={{ display: 'block', width: '120px', height: '120px', backgroundColor: '#FFFFFF', padding: '6px', borderRadius: '6px' }} />
+            <p style={{ margin: '6px 0 0 0', color: '#173B82', fontSize: '11px', fontWeight: 700 }}>Scan to pay</p>
+          </div>
+        </section>
+      )}
 
       {/* Notes section */}
       {invoice.notes && (
