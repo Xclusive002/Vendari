@@ -6,7 +6,7 @@ import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { ArrowRight, LockKeyhole } from 'lucide-react'
 import { toast } from 'sonner'
-import { getCurrentUser, login } from '@/app/actions/auth'
+import { getCurrentUser } from '@/app/actions/auth'
 import { LoadingButton } from '@/components/ui/loading-button'
 import LoadingSpinner from '@/components/ui/loading-spinner'
 
@@ -50,9 +50,14 @@ export default function LoginPage() {
     setLoading(true)
 
     try {
-      const result = await login(trimmedEmail, password)
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: trimmedEmail, password }),
+      })
+      const result = await response.json().catch(() => ({ success: false, error: 'Login failed' }))
 
-      if (result.success) {
+      if (response.ok && result.success) {
         if (typeof window !== 'undefined') {
           window.location.replace('/dashboard')
           return
