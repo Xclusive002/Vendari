@@ -26,20 +26,29 @@ logger = logging.getLogger(__name__)
 
 
 def paystack_request(endpoint, payload=None, method='GET'):
+    secret_key = settings.PAYSTACK_SECRET_KEY.strip()
     body = json.dumps(payload).encode() if payload is not None else None
     request = urllib.request.Request(
         f'https://api.paystack.co/{endpoint}', data=body,
-        headers={'Authorization': f'Bearer {settings.PAYSTACK_SECRET_KEY}', 'Content-Type': 'application/json'},
+        headers={'Authorization': f'Bearer {secret_key}', 'Content-Type': 'application/json'},
         method=method,
     )
     try:
         with urllib.request.urlopen(request, timeout=15) as response:
-            return json.loads(response.read())
+            data = json.loads(response.read())
+            if not data.get('status'):
+                logger.error('Paystack request rejected: endpoint=%s message=%s', endpoint, data.get('message', 'unknown'))
+            return data
     except urllib.error.HTTPError as error:
-        logger.error('Paystack request failed: endpoint=%s status=%s', endpoint, error.code)
+        response_message = ''
+        try:
+            response_message = json.loads(error.read()).get('message', '')
+        except (json.JSONDecodeError, UnicodeDecodeError):
+            pass
+        logger.error('Paystack request failed: endpoint=%s status=%s message=%s', endpoint, error.code, response_message or 'unknown')
         return None
-    except urllib.error.URLError:
-        logger.error('Paystack request failed: endpoint=%s network_error=true', endpoint)
+    except urllib.error.URLError as error:
+        logger.error('Paystack request failed: endpoint=%s network_error=%s', endpoint, error.reason)
         return None
     except json.JSONDecodeError:
         logger.error('Paystack request failed: endpoint=%s invalid_json=true', endpoint)
@@ -48,9 +57,13 @@ def paystack_request(endpoint, payload=None, method='GET'):
 
 class PaystackBanksView(APIView):
     def get(self, request):
-        if not settings.PAYSTACK_SECRET_KEY or settings.PAYSTACK_SECRET_KEY.startswith('your_'):
+        secret_key = settings.PAYSTACK_SECRET_KEY.strip()
+        if not secret_key or secret_key.startswith('your_'):
             return Response({'detail': 'We could not load the bank list. Please try again.'}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
-        data = paystack_request('bank?country=nigeria')
+        if not secret_key.startswith(('sk_test_', 'sk_live_')):
+            logger.error('Paystack key has an unsupported format: prefix=%s length=%s', secret_key[:3], len(secret_key))
+            return Response({'detail': 'We could not load the bank list. Please try again.'}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+        data = paystack_request('bank?country=nigeria&currency=NGN')
         if not data or not data.get('status'):
             return Response({'detail': 'We could not load the bank list. Please try again.'}, status=status.HTTP_502_BAD_GATEWAY)
         return Response(data.get('data', []))
