@@ -38,9 +38,11 @@ def paystack_request(endpoint, payload=None, method='GET'):
 
 class PaystackBanksView(APIView):
     def get(self, request):
+        if not settings.PAYSTACK_SECRET_KEY:
+            return Response({'detail': 'Paystack is not configured on the backend service.'}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
         data = paystack_request('bank?country=nigeria')
         if not data or not data.get('status'):
-            return Response({'error': 'Unable to load Nigerian banks.'}, status=status.HTTP_502_BAD_GATEWAY)
+            return Response({'detail': 'Paystack could not load Nigerian banks. Check the backend Paystack configuration.'}, status=status.HTTP_502_BAD_GATEWAY)
         return Response(data.get('data', []))
 
 

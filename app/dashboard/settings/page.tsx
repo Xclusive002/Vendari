@@ -25,6 +25,8 @@ export default function SettingsPage() {
   const savingRef = useRef(false)
   const [loadingProfile, setLoadingProfile] = useState(true)
   const [banks, setBanks] = useState<PaystackBank[]>([])
+  const [loadingBanks, setLoadingBanks] = useState(true)
+  const [bankLoadError, setBankLoadError] = useState('')
   const [bankCode, setBankCode] = useState('')
   const [accountNumber, setAccountNumber] = useState('')
   const [accountName, setAccountName] = useState('')
@@ -46,10 +48,20 @@ export default function SettingsPage() {
         setLinkedPayment({ bankCode: business.bank_code || '', accountNumber: business.bank_account_number || '', accountName: business.bank_account_name || '', subaccountCode: business.paystack_subaccount_code || '' })
       }
     }).finally(() => setLoadingProfile(false))
-    getPaystackBanks().then((result) => {
-      if (result.success) setBanks(result.data)
-    })
+    loadBanks()
   }, [])
+
+  const loadBanks = async () => {
+    setLoadingBanks(true)
+    setBankLoadError('')
+    const result = await getPaystackBanks()
+    if (result.success) {
+      setBanks(result.data)
+    } else {
+      setBankLoadError(result.error || 'Bank names could not be loaded.')
+    }
+    setLoadingBanks(false)
+  }
 
   useEffect(() => {
     if (!businessId || !bankCode || accountNumber.length !== 10 || accountNumber === linkedPayment.accountNumber) return
@@ -239,10 +251,20 @@ export default function SettingsPage() {
               </div>
             ) : (
               <div className="space-y-4">
+                {bankLoadError && (
+                  <div className="flex items-start justify-between gap-3 rounded-xl border border-negative/20 bg-negative/5 p-4">
+                    <div>
+                      <p className="font-medium text-negative">Bank list unavailable</p>
+                      <p className="mt-1 text-sm text-text-secondary">{bankLoadError}</p>
+                      <p className="mt-2 text-xs text-text-muted">The Paystack secret key must be configured on the backend service, not only Vercel.</p>
+                    </div>
+                    <Button type="button" variant="outline" onClick={loadBanks}>Retry</Button>
+                  </div>
+                )}
                 <div>
                   <Label htmlFor="paymentBank" className="text-text-secondary">Bank</Label>
-                  <select id="paymentBank" value={bankCode} onChange={(event) => setBankCode(event.target.value)} className="dashboard-input mt-2 w-full px-3 py-2">
-                    <option value="">Select your bank</option>
+                  <select id="paymentBank" value={bankCode} onChange={(event) => setBankCode(event.target.value)} disabled={loadingBanks || banks.length === 0} className="dashboard-input mt-2 w-full px-3 py-2 disabled:cursor-not-allowed disabled:opacity-60">
+                    <option value="">{loadingBanks ? 'Loading Nigerian banks...' : banks.length ? 'Select your bank' : 'Bank list unavailable'}</option>
                     {banks.map((bank) => <option key={bank.code} value={bank.code}>{bank.name}</option>)}
                   </select>
                 </div>

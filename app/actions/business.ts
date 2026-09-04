@@ -122,7 +122,9 @@ export async function getPaystackBanks() {
   if (!paystackBanksPromise) {
     paystackBanksPromise = request<PaystackBank[]>('/paystack/banks/')
   }
-  return paystackBanksPromise
+  const result = await paystackBanksPromise
+  if (!result.success) paystackBanksPromise = null
+  return result
 }
 
 export async function verifyBankAccount(businessId: string, bank_code: string, account_number: string) {
