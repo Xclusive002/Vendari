@@ -387,6 +387,7 @@ export default function ReceiptDocument({ invoice, business, documentRef, paymen
         }}
       >
         <div
+          className="receipt-header"
           style={{
             display: 'flex',
             justifyContent: 'space-between',
@@ -408,6 +409,7 @@ export default function ReceiptDocument({ invoice, business, documentRef, paymen
           </span>
         </div>
         <div
+          className="receipt-billing"
           style={{
             display: 'flex',
             justifyContent: 'space-between',
@@ -452,6 +454,7 @@ export default function ReceiptDocument({ invoice, business, documentRef, paymen
 
       {paymentUrl && paymentQrCode && (
         <section
+          className="receipt-payment"
           style={{
             display: 'flex',
             alignItems: 'center',

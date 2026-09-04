@@ -48,6 +48,7 @@ export default function ReceiptExportActions({ documentRef, documentNumber }: { 
 
             image.addEventListener('load', done, { once: true })
             image.addEventListener('error', done, { once: true })
+            window.setTimeout(done, 5000)
           }),
       ),
     )
@@ -77,11 +78,13 @@ export default function ReceiptExportActions({ documentRef, documentNumber }: { 
 
     try {
       await waitForImages(clone)
+      if ('fonts' in document) await document.fonts.ready
+      await new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())))
 
       return await withTimeout(
         html2canvas(clone, {
           backgroundColor: '#ffffff',
-          scale: Math.min(window.devicePixelRatio || 2, 2),
+          scale: Math.min(window.devicePixelRatio || 2, 1.5),
           useCORS: true,
           logging: false,
           ignoreElements: (element) => element instanceof HTMLElement && element.classList.contains('no-print'),
@@ -100,7 +103,7 @@ export default function ReceiptExportActions({ documentRef, documentNumber }: { 
       const canvas = await renderCanvas()
       const link = document.createElement('a')
       link.download = `${documentNumber || 'receipt'}.png`
-      link.href = canvas.toDataURL('image/png')
+      link.href = canvas.toDataURL('image/png', 1)
       link.click()
     } catch (error) {
       console.error('Failed to download image:', error)
@@ -117,7 +120,7 @@ export default function ReceiptExportActions({ documentRef, documentNumber }: { 
       const pageWidth = 210
       const pageHeight = (canvas.height * pageWidth) / canvas.width
       const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: [pageWidth, pageHeight] })
-      pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, pageWidth, pageHeight)
+      pdf.addImage(canvas.toDataURL('image/png', 1), 'PNG', 0, 0, pageWidth, pageHeight)
       pdf.save(`${documentNumber || 'receipt'}.pdf`)
     } catch (error) {
       console.error('Failed to download PDF:', error)

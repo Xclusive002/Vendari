@@ -504,6 +504,119 @@ button,
   }
 }
 
+@media (max-width: 640px) {
+  .receipt-page {
+    padding: 1rem 0.75rem calc(5rem + env(safe-area-inset-bottom));
+  }
+
+  .receipt-page > div {
+    width: 100%;
+  }
+
+  .receipt-actions {
+    align-items: stretch;
+  }
+
+  .receipt-actions > div {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    width: 100%;
+  }
+
+  .receipt-actions > div > button,
+  .receipt-actions > div > span {
+    min-height: 2.75rem;
+    justify-content: center;
+    text-align: center;
+  }
+
+  .receipt-document {
+    padding: 1.25rem !important;
+    border-radius: 0.875rem;
+    overflow: hidden;
+    font-size: 0.8125rem !important;
+  }
+
+  .receipt-header {
+    flex-direction: column !important;
+    gap: 1.25rem !important;
+    padding-bottom: 1.25rem !important;
+    margin-bottom: 1.25rem !important;
+  }
+
+  .receipt-header > div:first-child {
+    width: 100%;
+  }
+
+  .receipt-header img {
+    width: 3.75rem !important;
+    height: 3.75rem !important;
+  }
+
+  .receipt-header h1 {
+    max-width: 100%;
+    overflow-wrap: anywhere;
+    font-size: 1.35rem !important;
+    line-height: 1.15 !important;
+  }
+
+  .receipt-header > div:last-child {
+    width: 100%;
+    text-align: left !important;
+  }
+
+  .receipt-header > div:last-child > p:first-child {
+    display: inline-block;
+    margin-right: 0.5rem !important;
+    font-size: 1.25rem !important;
+  }
+
+  .receipt-header > div:last-child > p:nth-child(2) {
+    display: inline-block;
+    margin-bottom: 0.75rem !important;
+  }
+
+  .receipt-billing {
+    grid-template-columns: 1fr !important;
+    gap: 1rem !important;
+    padding-bottom: 1rem !important;
+    margin-bottom: 1rem !important;
+  }
+
+  .receipt-billing > div:last-child {
+    text-align: left !important;
+  }
+
+  .receipt-document table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+    margin-bottom: 1.5rem !important;
+  }
+
+  .receipt-document th,
+  .receipt-document td {
+    padding: 0.7rem 0.5rem !important;
+  }
+
+  .receipt-payment {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 1rem !important;
+    padding: 1rem !important;
+    margin-bottom: 1.5rem !important;
+  }
+
+  .receipt-payment > div:last-child {
+    align-self: center;
+  }
+
+  .receipt-payment img {
+    width: 9rem !important;
+    height: 9rem !important;
+  }
+}
+
 @layer base {
   * {
     border-color: var(--border);
