@@ -8,3 +8,5 @@ services:
     envVars:
       - key: PYTHON_VERSION
         value: 3.14.0
+      - key: PAYSTACK_SECRET_KEY
+        sync: false

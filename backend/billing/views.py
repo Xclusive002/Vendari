@@ -4,6 +4,7 @@ import json
 import urllib.error
 import urllib.parse
 import urllib.request
+import logging
 from datetime import timedelta
 
 from django.conf import settings
@@ -21,6 +22,8 @@ from invoices.models import Invoice, InvoicePayment
 from .models import Plan, Subscription
 from .serializers import PaystackInitializeSerializer
 
+logger = logging.getLogger(__name__)
+
 
 def paystack_request(endpoint, payload=None, method='GET'):
     body = json.dumps(payload).encode() if payload is not None else None
@@ -32,13 +35,20 @@ def paystack_request(endpoint, payload=None, method='GET'):
     try:
         with urllib.request.urlopen(request, timeout=15) as response:
             return json.loads(response.read())
-    except (urllib.error.HTTPError, urllib.error.URLError, json.JSONDecodeError):
+    except urllib.error.HTTPError as error:
+        logger.error('Paystack request failed: endpoint=%s status=%s', endpoint, error.code)
+        return None
+    except urllib.error.URLError:
+        logger.error('Paystack request failed: endpoint=%s network_error=true', endpoint)
+        return None
+    except json.JSONDecodeError:
+        logger.error('Paystack request failed: endpoint=%s invalid_json=true', endpoint)
         return None
 
 
 class PaystackBanksView(APIView):
     def get(self, request):
-        if not settings.PAYSTACK_SECRET_KEY:
+        if not settings.PAYSTACK_SECRET_KEY or settings.PAYSTACK_SECRET_KEY.startswith('your_'):
             return Response({'detail': 'We could not load the bank list. Please try again.'}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
         data = paystack_request('bank?country=nigeria')
         if not data or not data.get('status'):
