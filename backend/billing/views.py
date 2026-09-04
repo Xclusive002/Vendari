@@ -40,12 +40,12 @@ def paystack_request(endpoint, payload=None, method='GET'):
                 logger.error('Paystack request rejected: endpoint=%s message=%s', endpoint, data.get('message', 'unknown'))
             return data
     except urllib.error.HTTPError as error:
-        response_message = ''
+        response_body = ''
         try:
-            response_message = json.loads(error.read()).get('message', '')
+            response_body = error.read().decode('utf-8', errors='replace')[:300]
         except (json.JSONDecodeError, UnicodeDecodeError):
             pass
-        logger.error('Paystack request failed: endpoint=%s status=%s message=%s', endpoint, error.code, response_message or 'unknown')
+        logger.error('Paystack request failed: endpoint=%s status=%s response=%s', endpoint, error.code, response_body or 'unknown')
         return None
     except urllib.error.URLError as error:
         logger.error('Paystack request failed: endpoint=%s network_error=%s', endpoint, error.reason)
@@ -63,7 +63,7 @@ class PaystackBanksView(APIView):
         if not secret_key.startswith(('sk_test_', 'sk_live_')):
             logger.error('Paystack key has an unsupported format: prefix=%s length=%s', secret_key[:3], len(secret_key))
             return Response({'detail': 'We could not load the bank list. Please try again.'}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
-        data = paystack_request('bank?country=nigeria&currency=NGN')
+        data = paystack_request('bank?country=nigeria')
         if not data or not data.get('status'):
             return Response({'detail': 'We could not load the bank list. Please try again.'}, status=status.HTTP_502_BAD_GATEWAY)
         return Response(data.get('data', []))
