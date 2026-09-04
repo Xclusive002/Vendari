@@ -30,7 +30,12 @@ def paystack_request(endpoint, payload=None, method='GET'):
     body = json.dumps(payload).encode() if payload is not None else None
     request = urllib.request.Request(
         f'https://api.paystack.co/{endpoint}', data=body,
-        headers={'Authorization': f'Bearer {secret_key}', 'Content-Type': 'application/json'},
+        headers={
+            'Authorization': f'Bearer {secret_key}',
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'User-Agent': 'Vendari-Payments/1.0',
+        },
         method=method,
     )
     try:
