@@ -256,7 +256,6 @@ export default function SettingsPage() {
                     <div>
                       <p className="font-medium text-negative">Bank list unavailable</p>
                       <p className="mt-1 text-sm text-text-secondary">{bankLoadError}</p>
-                      <p className="mt-2 text-xs text-text-muted">The Paystack secret key must be configured on the backend service, not only Vercel.</p>
                     </div>
                     <Button type="button" variant="outline" onClick={loadBanks}>Retry</Button>
                   </div>
