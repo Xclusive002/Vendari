@@ -1,0 +1,41 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block content %}
+<div id="content-main">
+  <h1>Send email to selected users</h1>
+  <p>The message will be sent separately to each selected user through the configured email provider.</p>
+
+  <div class="module" style="margin: 20px 0; padding: 16px;">
+    <strong>Recipients ({{ users|length }})</strong>
+    <ul>
+      {% for user in users %}
+        <li>{{ user.email }}</li>
+      {% endfor %}
+    </ul>
+  </div>
+
+  <form method="post">
+    {% csrf_token %}
+    <fieldset class="module aligned">
+      <div class="form-row">
+        <div>
+          <label for="id_subject">Subject</label>
+          <input type="text" name="subject" id="id_subject" required style="width: 100%; max-width: 720px;">
+        </div>
+      </div>
+      <div class="form-row">
+        <div>
+          <label for="id_body">Message</label>
+          <textarea name="body" id="id_body" rows="14" required style="width: 100%; max-width: 720px;"></textarea>
+          <p class="help">Write plain text. Each user receives an individual email.</p>
+        </div>
+      </div>
+    </fieldset>
+    <div class="submit-row">
+      <input type="submit" value="Send email" class="default">
+      <a href="{% url 'admin:accounts_user_changelist' %}" class="button cancel-link">Cancel</a>
+    </div>
+  </form>
+</div>
+{% endblock %}
