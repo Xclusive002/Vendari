@@ -6,8 +6,11 @@ from django.http import HttpResponseRedirect
 from django.shortcuts import render
 from django.urls import path, reverse
 from django.utils.html import format_html
+import logging
 
 from .models import User
+
+logger = logging.getLogger(__name__)
 
 
 @admin.register(User)
@@ -49,10 +52,18 @@ class UserAdmin(BaseUserAdmin):
                 self.message_user(request, 'Subject and message are required.', level='error')
             else:
                 sent = 0
+                failed = []
                 for user in users:
-                    sent += send_mail(subject, body, None, [user.email], fail_silently=False)
+                    try:
+                        sent += send_mail(subject, body, None, [user.email], fail_silently=False)
+                    except Exception:
+                        logger.exception('Selected-user email failed for user=%s', user.pk)
+                        failed.append(user.email)
+                if failed:
+                    self.message_user(request, format_html('Email sent to {} user{}. Failed for {} recipient{}.', sent, '' if sent == 1 else 's', len(failed), '' if len(failed) == 1 else 's'), level='warning')
+                else:
+                    self.message_user(request, format_html('Email sent to {} selected user{}.', sent, '' if sent == 1 else 's'))
                 request.session.pop('selected_email_user_ids', None)
-                self.message_user(request, format_html('Email sent to {} selected user{}.', sent, '' if sent == 1 else 's'))
                 return HttpResponseRedirect(reverse('admin:accounts_user_changelist'))
 
         context = {

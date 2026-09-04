@@ -7,6 +7,13 @@ import { Download, ImageDown, Loader2 } from 'lucide-react'
 
 const EXPORT_TIMEOUT_MS = 25000
 
+const blobToDataUrl = (blob: Blob) => new Promise<string>((resolve, reject) => {
+  const reader = new FileReader()
+  reader.onload = () => resolve(String(reader.result))
+  reader.onerror = () => reject(new Error('The export image could not be prepared.'))
+  reader.readAsDataURL(blob)
+})
+
 export default function ReceiptExportActions({ documentRef, documentNumber }: { documentRef: React.RefObject<HTMLDivElement | null>; documentNumber: string }) {
   const [exporting, setExporting] = useState(false)
 
@@ -101,10 +108,18 @@ export default function ReceiptExportActions({ documentRef, documentNumber }: { 
     setExporting(true)
     try {
       const canvas = await renderCanvas()
+      const blob = await new Promise<Blob>((resolve, reject) => {
+        canvas.toBlob((value) => value ? resolve(value) : reject(new Error('The image could not be created.')), 'image/png', 1)
+      })
+      const url = URL.createObjectURL(blob)
       const link = document.createElement('a')
       link.download = `${documentNumber || 'receipt'}.png`
-      link.href = canvas.toDataURL('image/png', 1)
+      link.href = url
+      link.rel = 'noopener'
+      document.body.appendChild(link)
       link.click()
+      link.remove()
+      window.setTimeout(() => URL.revokeObjectURL(url), 1000)
     } catch (error) {
       console.error('Failed to download image:', error)
       alert(error instanceof Error ? error.message : 'Failed to generate image. Please try again.')
@@ -120,8 +135,20 @@ export default function ReceiptExportActions({ documentRef, documentNumber }: { 
       const pageWidth = 210
       const pageHeight = (canvas.height * pageWidth) / canvas.width
       const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: [pageWidth, pageHeight] })
-      pdf.addImage(canvas.toDataURL('image/png', 1), 'PNG', 0, 0, pageWidth, pageHeight)
-      pdf.save(`${documentNumber || 'receipt'}.pdf`)
+      const imageBlob = await new Promise<Blob>((resolve, reject) => {
+        canvas.toBlob((value) => value ? resolve(value) : reject(new Error('The PDF image could not be created.')), 'image/png', 1)
+      })
+      pdf.addImage(await blobToDataUrl(imageBlob), 'PNG', 0, 0, pageWidth, pageHeight)
+      const pdfBlob = pdf.output('blob')
+      const pdfUrl = URL.createObjectURL(pdfBlob)
+      const link = document.createElement('a')
+      link.download = `${documentNumber || 'receipt'}.pdf`
+      link.href = pdfUrl
+      link.rel = 'noopener'
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      window.setTimeout(() => URL.revokeObjectURL(pdfUrl), 1000)
     } catch (error) {
       console.error('Failed to download PDF:', error)
       alert(error instanceof Error ? error.message : 'Failed to generate PDF. Please try again.')
