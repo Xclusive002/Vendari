@@ -1,9 +1,11 @@
 from django.contrib import admin
 from django.contrib.admin import helpers
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
-from django.core.mail import send_mail
+from django.conf import settings
+from django.core.mail import EmailMultiAlternatives
 from django.http import HttpResponseRedirect
 from django.shortcuts import render
+from django.template.loader import render_to_string
 from django.urls import path, reverse
 import logging
 
@@ -55,7 +57,19 @@ class UserAdmin(BaseUserAdmin):
                     failed = []
                     for user in users:
                         try:
-                            sent += send_mail(subject, body, None, [user.email], fail_silently=False)
+                            html_body = render_to_string('emails/admin_selected_user.html', {
+                                'subject': subject,
+                                'message': body,
+                                'recipient': user,
+                            })
+                            email = EmailMultiAlternatives(
+                                subject=subject,
+                                body=body,
+                                from_email=getattr(settings, 'ADMIN_EMAIL_FROM', settings.DEFAULT_FROM_EMAIL),
+                                to=[user.email],
+                            )
+                            email.attach_alternative(html_body, 'text/html')
+                            sent += email.send(fail_silently=False)
                         except Exception:
                             logger.exception('Selected-user email failed for user=%s', user.pk)
                             failed.append(user.email)

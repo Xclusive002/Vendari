@@ -126,6 +126,7 @@ REST_FRAMEWORK = {
 
 RESEND_API_KEY = env('RESEND_API_KEY', default='')
 DEFAULT_FROM_EMAIL = env('DEFAULT_FROM_EMAIL', default='onboarding@resend.dev')
+ADMIN_EMAIL_FROM = env('ADMIN_EMAIL_FROM', default='Vendari Support Team <support@vendari.name.ng>')
 EMAIL_BACKEND = env('EMAIL_BACKEND', default='vendari_api.resend_backend.ResendBackend')
 EMAIL_HOST = env('EMAIL_HOST', default='')
 EMAIL_PORT = env.int('EMAIL_PORT', default=0)
