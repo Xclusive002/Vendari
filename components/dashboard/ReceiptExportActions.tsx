@@ -14,6 +14,24 @@ const blobToDataUrl = (blob: Blob) => new Promise<string>((resolve, reject) => {
   reader.readAsDataURL(blob)
 })
 
+const isIOSBrowser = () => /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
+
+const saveBlob = (blob: Blob, filename: string, mobileWindow: Window | null) => {
+  const url = URL.createObjectURL(blob)
+  if (mobileWindow) {
+    mobileWindow.location.href = url
+  } else {
+    const link = document.createElement('a')
+    link.download = filename
+    link.href = url
+    link.rel = 'noopener'
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+  }
+  window.setTimeout(() => URL.revokeObjectURL(url), 60000)
+}
+
 export default function ReceiptExportActions({ documentRef, documentNumber }: { documentRef: React.RefObject<HTMLDivElement | null>; documentNumber: string }) {
   const [exporting, setExporting] = useState(false)
 
@@ -105,22 +123,16 @@ export default function ReceiptExportActions({ documentRef, documentNumber }: { 
   }
 
   const downloadImage = async () => {
+    const mobileWindow = isIOSBrowser() ? window.open('', '_blank') : null
     setExporting(true)
     try {
       const canvas = await renderCanvas()
       const blob = await new Promise<Blob>((resolve, reject) => {
         canvas.toBlob((value) => value ? resolve(value) : reject(new Error('The image could not be created.')), 'image/png', 1)
       })
-      const url = URL.createObjectURL(blob)
-      const link = document.createElement('a')
-      link.download = `${documentNumber || 'receipt'}.png`
-      link.href = url
-      link.rel = 'noopener'
-      document.body.appendChild(link)
-      link.click()
-      link.remove()
-      window.setTimeout(() => URL.revokeObjectURL(url), 1000)
+      saveBlob(blob, `${documentNumber || 'receipt'}.png`, mobileWindow)
     } catch (error) {
+      mobileWindow?.close()
       console.error('Failed to download image:', error)
       alert(error instanceof Error ? error.message : 'Failed to generate image. Please try again.')
     } finally {
@@ -129,6 +141,7 @@ export default function ReceiptExportActions({ documentRef, documentNumber }: { 
   }
 
   const downloadPdf = async () => {
+    const mobileWindow = isIOSBrowser() ? window.open('', '_blank') : null
     setExporting(true)
     try {
       const canvas = await renderCanvas()
@@ -139,17 +152,9 @@ export default function ReceiptExportActions({ documentRef, documentNumber }: { 
         canvas.toBlob((value) => value ? resolve(value) : reject(new Error('The PDF image could not be created.')), 'image/png', 1)
       })
       pdf.addImage(await blobToDataUrl(imageBlob), 'PNG', 0, 0, pageWidth, pageHeight)
-      const pdfBlob = pdf.output('blob')
-      const pdfUrl = URL.createObjectURL(pdfBlob)
-      const link = document.createElement('a')
-      link.download = `${documentNumber || 'receipt'}.pdf`
-      link.href = pdfUrl
-      link.rel = 'noopener'
-      document.body.appendChild(link)
-      link.click()
-      link.remove()
-      window.setTimeout(() => URL.revokeObjectURL(pdfUrl), 1000)
+      saveBlob(pdf.output('blob'), `${documentNumber || 'receipt'}.pdf`, mobileWindow)
     } catch (error) {
+      mobileWindow?.close()
       console.error('Failed to download PDF:', error)
       alert(error instanceof Error ? error.message : 'Failed to generate PDF. Please try again.')
     } finally {

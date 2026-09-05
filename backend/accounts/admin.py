@@ -5,7 +5,6 @@ from django.core.mail import send_mail
 from django.http import HttpResponseRedirect
 from django.shortcuts import render
 from django.urls import path, reverse
-from django.utils.html import format_html
 import logging
 
 from .models import User
@@ -39,41 +38,46 @@ class UserAdmin(BaseUserAdmin):
         return custom_urls + urls
 
     def send_email_view(self, request):
-        user_ids = request.session.get('selected_email_user_ids', [])
-        users = User.objects.filter(pk__in=user_ids, is_active=True).order_by('email')
-        if not users.exists():
-            self.message_user(request, 'No active users were selected.', level='error')
-            return HttpResponseRedirect(reverse('admin:accounts_user_changelist'))
-
-        if request.method == 'POST':
-            subject = request.POST.get('subject', '').strip()
-            body = request.POST.get('body', '').strip()
-            if not subject or not body:
-                self.message_user(request, 'Subject and message are required.', level='error')
-            else:
-                sent = 0
-                failed = []
-                for user in users:
-                    try:
-                        sent += send_mail(subject, body, None, [user.email], fail_silently=False)
-                    except Exception:
-                        logger.exception('Selected-user email failed for user=%s', user.pk)
-                        failed.append(user.email)
-                if failed:
-                    self.message_user(request, format_html('Email sent to {} user{}. Failed for {} recipient{}.', sent, '' if sent == 1 else 's', len(failed), '' if len(failed) == 1 else 's'), level='warning')
-                else:
-                    self.message_user(request, format_html('Email sent to {} selected user{}.', sent, '' if sent == 1 else 's'))
-                request.session.pop('selected_email_user_ids', None)
+        try:
+            user_ids = request.session.get('selected_email_user_ids', [])
+            users = User.objects.filter(pk__in=user_ids, is_active=True).order_by('email')
+            if not users.exists():
+                self.message_user(request, 'No active users were selected.', level='error')
                 return HttpResponseRedirect(reverse('admin:accounts_user_changelist'))
 
-        context = {
-            **self.admin_site.each_context(request),
-            'title': 'Send email to selected users',
-            'users': users,
-            'opts': self.model._meta,
-            'action_checkbox_name': helpers.ACTION_CHECKBOX_NAME,
-        }
-        return render(request, 'admin/accounts/user/send_email.html', context)
+            if request.method == 'POST':
+                subject = request.POST.get('subject', '').strip()
+                body = request.POST.get('body', '').strip()
+                if not subject or not body:
+                    self.message_user(request, 'Subject and message are required.', level='error')
+                else:
+                    sent = 0
+                    failed = []
+                    for user in users:
+                        try:
+                            sent += send_mail(subject, body, None, [user.email], fail_silently=False)
+                        except Exception:
+                            logger.exception('Selected-user email failed for user=%s', user.pk)
+                            failed.append(user.email)
+                    message = f'Email sent to {sent} user{"" if sent == 1 else "s"}.'
+                    if failed:
+                        message += f' Failed for {len(failed)} recipient{"" if len(failed) == 1 else "s"}.'
+                    self.message_user(request, message, level='warning' if failed else 'success')
+                    request.session.pop('selected_email_user_ids', None)
+                    return HttpResponseRedirect(reverse('admin:accounts_user_changelist'))
+
+            context = {
+                **self.admin_site.each_context(request),
+                'title': 'Send email to selected users',
+                'users': users,
+                'opts': self.model._meta,
+                'action_checkbox_name': helpers.ACTION_CHECKBOX_NAME,
+            }
+            return render(request, 'admin/accounts/user/send_email.html', context)
+        except Exception:
+            logger.exception('Selected-user email page failed')
+            self.message_user(request, 'The email could not be sent. Please check the email settings and try again.', level='error')
+            return HttpResponseRedirect(reverse('admin:accounts_user_changelist'))
 
     fieldsets = (
         (None, {'fields': ('email', 'password')}),
