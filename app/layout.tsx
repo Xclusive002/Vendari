@@ -3,7 +3,6 @@ import type { Metadata } from 'next'
 import type { Viewport } from 'next'
 
 import { Toaster } from '@/components/ui/sonner'
-import { AppInstallPrompt } from '@/components/ui/app-install-prompt'
 import './globals.css'
 
 export const metadata: Metadata = {
@@ -57,7 +56,6 @@ export default function RootLayout({
       </head>
       <body className="font-body antialiased">
         {children}
-        <AppInstallPrompt />
         <Toaster richColors closeButton position="top-right" />
         <script
           dangerouslySetInnerHTML={{

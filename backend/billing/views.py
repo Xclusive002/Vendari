@@ -6,6 +6,7 @@ import urllib.parse
 import urllib.request
 import logging
 from datetime import timedelta
+from decimal import Decimal
 
 from django.conf import settings
 from django.core import signing
@@ -21,6 +22,7 @@ from invoices.models import Invoice, InvoicePayment
 
 from .models import Plan, Subscription
 from .serializers import PaystackInitializeSerializer
+from .utils import has_feature
 
 logger = logging.getLogger(__name__)
 
@@ -119,6 +121,8 @@ class InvoicePaymentInitializeView(APIView):
         invoice = Invoice.objects.filter(pk=invoice_id, business_id=business_id, status=Invoice.UNPAID).select_related('business', 'customer').first()
         if invoice is None:
             return Response({'detail': 'Invoice not found.'}, status=status.HTTP_404_NOT_FOUND)
+        if not has_feature(invoice.business, 'payments'):
+            return Response({'detail': 'Online invoice payments are available on a paid plan.'}, status=status.HTTP_403_FORBIDDEN)
         if not invoice.business.paystack_subaccount_code:
             return Response({'detail': 'Complete Payment Settings before offering Pay Now.'}, status=status.HTTP_409_CONFLICT)
         email = invoice.customer.email if invoice.customer and invoice.customer.email else request.user.email
@@ -212,4 +216,6 @@ class PaystackWebhookView(APIView):
                     'renews_at': timezone.now() + timedelta(days=renew_days),
                 },
             )
+            business.plan = plan
+            business.save(update_fields=('plan', 'updated_at'))
         return Response({'status': 'processed', 'subscription_id': subscription.pk})

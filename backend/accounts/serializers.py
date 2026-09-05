@@ -6,6 +6,7 @@ from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 from businesses.models import Business, InviteCode, Membership
+from billing.models import Plan
 
 from .models import User
 
@@ -36,6 +37,13 @@ class RegisterSerializer(serializers.Serializer):
             name=validated_data['business_name'],
             email=user.email,
         )
+        free_plan, _ = Plan.objects.get_or_create(
+            name=Plan.PLAN_FREE,
+            interval=Plan.INTERVAL_MONTHLY,
+            defaults={'amount': 0},
+        )
+        business.plan = free_plan
+        business.save(update_fields=['plan'])
         Membership.objects.create(user=user, business=business, role=Membership.ROLE_OWNER)
         return user
 

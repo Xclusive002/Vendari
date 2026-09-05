@@ -5,9 +5,11 @@ from django.utils import timezone
 from rest_framework import status, viewsets
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework.permissions import IsAuthenticated
 
 from accounts.permissions import IsBusinessMember
 from billing.models import Plan
+from billing.utils import has_feature
 
 from .models import Business, Membership
 from .serializers import BusinessSerializer, ConciergeInquirySerializer
@@ -31,9 +33,14 @@ class BusinessViewSet(viewsets.ModelViewSet):
 				'amount': 0,
 				'interval': Plan.INTERVAL_MONTHLY,
 				'feature_flags': {
-					'ai_insights': True,
-					'nl_reporting': True,
-					'forecasting': True,
+					'ai_insights': False,
+					'nl_reporting': False,
+					'forecasting': False,
+					'voice_entry': False,
+					'invoice_ai': False,
+					'advanced_reports': False,
+					'payments': False,
+					'team_members': False,
 				}
 			})
 			business.plan = default_plan
@@ -50,6 +57,75 @@ class ConciergeInquiryView(APIView):
 			inquiry = serializer.save()
 			return Response(ConciergeInquirySerializer(inquiry).data, status=status.HTTP_201_CREATED)
 		return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class BusinessPlansView(APIView):
+	permission_classes = [IsAuthenticated]
+
+	def get(self, request):
+		return Response([
+			{
+				'id': plan.id,
+				'name': plan.name,
+				'amount': float(plan.amount),
+				'interval': plan.interval,
+				'feature_flags': plan.feature_flags,
+			}
+			for plan in Plan.objects.all().order_by('amount', 'id')
+		])
+
+
+class BusinessSubscriptionView(APIView):
+	permission_classes = [IsBusinessMember]
+
+	def get(self, request, business_id):
+		business = Business.objects.filter(pk=business_id).first()
+		if business is None:
+			return Response({'detail': 'Business not found.'}, status=status.HTTP_404_NOT_FOUND)
+		subscription = getattr(business, 'subscription', None)
+		return Response({
+			'plan': business.plan.name if business.plan else 'free',
+			'plan_id': business.plan_id,
+			'status': subscription.status if subscription else 'active',
+			'renews_at': subscription.renews_at if subscription else None,
+			'feature_flags': business.plan.feature_flags if business.plan else {},
+		})
+
+
+class BusinessMembersView(APIView):
+	permission_classes = [IsBusinessMember]
+
+	def _owner(self, request, business_id):
+		return Business.objects.filter(pk=business_id, owner=request.user).exists()
+
+	def get(self, request, business_id):
+		members = Membership.objects.filter(business_id=business_id).select_related('user').order_by('created_at')
+		return Response([{'id': member.id, 'email': member.user.email, 'role': member.role, 'created_at': member.created_at} for member in members])
+
+	def post(self, request, business_id):
+		if not self._owner(request, business_id):
+			return Response({'detail': 'Only the business owner can manage team members.'}, status=status.HTTP_403_FORBIDDEN)
+		business = Business.objects.get(pk=business_id)
+		if not has_feature(business, 'team_members'):
+			return Response({'detail': 'Team members are available on a paid plan.'}, status=status.HTTP_403_FORBIDDEN)
+		from django.utils.crypto import get_random_string
+		email = str(request.data.get('email', '')).strip().lower()
+		role = str(request.data.get('role', Membership.ROLE_STAFF)).strip()
+		if not email or role not in {Membership.ROLE_STAFF, Membership.ROLE_ACCOUNTANT}:
+			return Response({'detail': 'A valid email and role are required.'}, status=status.HTTP_400_BAD_REQUEST)
+		code = get_random_string(24).upper()
+		invite = InviteCode.objects.create(business=business, code=code, role=role)
+		return Response({'id': invite.id, 'code': invite.code, 'role': invite.role}, status=status.HTTP_201_CREATED)
+
+	def delete(self, request, business_id):
+		if not self._owner(request, business_id):
+			return Response({'detail': 'Only the business owner can manage team members.'}, status=status.HTTP_403_FORBIDDEN)
+		member_id = request.data.get('member_id')
+		member = Membership.objects.filter(id=member_id, business_id=business_id).exclude(role=Membership.ROLE_OWNER).first()
+		if member is None:
+			return Response({'detail': 'Team member not found.'}, status=status.HTTP_404_NOT_FOUND)
+		member.delete()
+		return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class BusinessDashboardSummaryView(APIView):

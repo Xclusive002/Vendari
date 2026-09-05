@@ -12,7 +12,7 @@ class PaystackInitializeSerializer(serializers.Serializer):
 
         user = self.context['request'].user
         business = Business.objects.filter(
-            pk=attrs['business_id'], membership__user=user,
+            pk=attrs['business_id'], owner=user,
         ).first()
         if business is None:
             raise serializers.ValidationError({'business_id': 'You are not a member of this business.'})

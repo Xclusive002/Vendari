@@ -3,9 +3,14 @@ from django.db import models
 
 def default_feature_flags():
     return {
-        'ai_insights': True,
-        'nl_reporting': True,
-        'forecasting': True,
+        'ai_insights': False,
+        'nl_reporting': False,
+        'forecasting': False,
+        'voice_entry': False,
+        'invoice_ai': False,
+        'advanced_reports': False,
+        'payments': False,
+        'team_members': False,
     }
 
 

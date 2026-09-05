@@ -252,3 +252,22 @@ export async function getTopProducts(businessId: string, limit: number = 20) {
   const result = await request<ApiItem[]>(`/businesses/${businessId}/top-products/?limit=${limit}`)
   return result.success ? { success: true, data: result.data.map(itemFromApi) } : { ...result, data: [] }
 }
+
+export async function getBusinessMembers(businessId: string) {
+  const result = await request<any[]>(`/businesses/${businessId}/members/`)
+  return result.success ? { success: true, data: result.data } : { ...result, data: [] }
+}
+
+export async function createBusinessInvite(businessId: string, email: string, role: string) {
+  return request<{ id: number; code: string; role: string }>(`/businesses/${businessId}/members/`, {
+    method: 'POST',
+    body: JSON.stringify({ email, role }),
+  })
+}
+
+export async function removeBusinessMember(businessId: string, memberId: number) {
+  return request(`/businesses/${businessId}/members/`, {
+    method: 'DELETE',
+    body: JSON.stringify({ member_id: memberId }),
+  })
+}

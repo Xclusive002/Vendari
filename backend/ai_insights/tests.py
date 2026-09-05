@@ -8,6 +8,7 @@ from rest_framework.test import APITestCase
 
 from accounts.models import User
 from businesses.models import Business, Membership
+from billing.models import Subscription
 from expenses.models import Expense
 from inventory.models import InventoryItem
 from sales.models import Sale
@@ -86,8 +87,23 @@ class InsightsTests(APITestCase):
 		generate_content.side_effect = [initial, object()]
 		from billing.models import Plan
 
-		self.business.plan = Plan.objects.create(name='pro')
+		self.business.plan = Plan.objects.create(name='pro', feature_flags={
+			'ai_insights': True,
+			'nl_reporting': True,
+			'forecasting': True,
+			'voice_entry': True,
+			'invoice_ai': True,
+			'advanced_reports': True,
+			'payments': True,
+			'team_members': True,
+		})
 		self.business.save(update_fields=['plan'])
+		Subscription.objects.create(
+			business=self.business,
+			plan=self.business.plan,
+			status=Subscription.STATUS_ACTIVE,
+			renews_at=timezone.now() + timedelta(days=30),
+		)
 		self.client.force_authenticate(self.user)
 		response = self.client.post(
 			f'/api/businesses/{self.business.pk}/ask/',

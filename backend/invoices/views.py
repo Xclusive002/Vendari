@@ -12,6 +12,7 @@ from accounts.permissions import IsBusinessMember
 from businesses.models import Business, Membership
 from sales.models import Sale
 from ai_insights.gemini import GeminiRateLimitError, generate_content, response_text
+from billing.utils import has_feature
 
 from .models import Invoice, InvoiceLineItem
 from .serializers import InvoiceSerializer
@@ -44,6 +45,9 @@ class GenerateInvoiceNotesView(APIView):
     def post(self, request, business_id):
         if not Membership.objects.filter(user=request.user, business_id=business_id).exists():
             return Response({'detail': 'You must be a member of this business.'}, status=status.HTTP_403_FORBIDDEN)
+        business = Business.objects.get(pk=business_id)
+        if not has_feature(business, 'invoice_ai'):
+            return Response({'detail': 'AI invoice drafting is available on a paid plan.'}, status=status.HTTP_403_FORBIDDEN)
 
         if not settings.GEMINI_API_KEY:
             return Response({'detail': 'AI service not configured.'}, status=status.HTTP_503_SERVICE_UNAVAILABLE)

@@ -24,6 +24,7 @@ export function DashboardNav() {
     { href: '/dashboard/setup', label: 'Setup', icon: Settings2 },
     { href: '/dashboard/ask', label: 'Ask', icon: MessageCircleQuestion },
     { href: '/dashboard/settings', label: 'Settings', icon: Settings },
+    { href: '/dashboard/team', label: 'Team', icon: Users },
   ]
 
   const primaryNavItems = navItems.slice(0, 3)

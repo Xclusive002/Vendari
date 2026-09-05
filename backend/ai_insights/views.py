@@ -91,6 +91,8 @@ class VoiceEntryView(APIView):
 			business = Business.objects.get(pk=business_id)
 		except Business.DoesNotExist:
 			return Response({'detail': 'Business not found.'}, status=status.HTTP_404_NOT_FOUND)
+		if not has_feature(business, 'voice_entry'):
+			return Response({'detail': 'Voice entry is available on a paid plan.'}, status=status.HTTP_403_FORBIDDEN)
 		
 		# Extract request parameters
 		audio_file = request.FILES.get('audio')
