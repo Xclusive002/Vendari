@@ -7,6 +7,8 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { LoadingButton } from '@/components/ui/loading-button'
+import { getSubscription } from '@/app/actions/payment'
+import { LockedFeature } from '@/components/dashboard/locked-feature'
 import { Sparkles, TrendingUp, Users, ShoppingBag } from 'lucide-react'
 
 const promptSuggestions = [
@@ -22,10 +24,16 @@ export default function AskPage() {
   const [answer, setAnswer] = useState<{ text: string; data: Record<string, unknown> } | null>(null)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [canAsk, setCanAsk] = useState(false)
   const askingRef = useRef(false)
 
   useEffect(() => {
-    getBusiness().then((business) => business && setBusinessId(String(business.id)))
+    getBusiness().then(async (business) => {
+      if (!business) return
+      setBusinessId(String(business.id))
+      const subscription = await getSubscription(String(business.id))
+      setCanAsk(Boolean(subscription.success && subscription.data?.feature_flags?.nl_reporting))
+    })
   }, [])
 
   const submit = async (event: React.FormEvent) => {
@@ -89,7 +97,9 @@ export default function AskPage() {
           ))}
         </div>
 
-        <Card className="dashboard-panel">
+        {!canAsk && <div className="mb-6"><LockedFeature title="Ask Vendari is part of Pro" description="Upgrade to ask questions about sales, customers, inventory, expenses, and business performance using your live data." /></div>}
+
+        <Card className={`dashboard-panel ${!canAsk ? 'opacity-60' : ''}`}>
           <CardHeader>
             <CardTitle className="font-display text-ink">Business question</CardTitle>
           </CardHeader>
@@ -102,8 +112,9 @@ export default function AskPage() {
                   placeholder="Ask about sales, inventory, or customer repeat purchases..."
                   className="dashboard-input flex-1"
                   required
+                  disabled={!canAsk}
                 />
-                <LoadingButton type="submit" loading={loading} disabled={!businessId || !question.trim()} className="dashboard-primary whitespace-nowrap">
+                <LoadingButton type="submit" loading={loading} disabled={!canAsk || !businessId || !question.trim()} className="dashboard-primary whitespace-nowrap">
                   Ask Vendari
                 </LoadingButton>
               </div>

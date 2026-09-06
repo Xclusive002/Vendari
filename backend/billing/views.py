@@ -9,6 +9,7 @@ from datetime import timedelta
 from decimal import Decimal
 
 from django.conf import settings
+from django.core.mail import EmailMultiAlternatives
 from django.core import signing
 from django.db import transaction
 from django.utils import timezone
@@ -25,6 +26,27 @@ from .serializers import PaystackInitializeSerializer
 from .utils import has_feature
 
 logger = logging.getLogger(__name__)
+
+
+def send_subscription_success_email(business, plan):
+    recipient = business.owner.email
+    subject = f'Your Vendari {plan.name.title()} plan is active'
+    body = f'''Your Vendari {plan.name.title()} plan is now active.
+
+Business: {business.name}
+Plan: {plan.name.title()}
+Billing: {plan.interval}
+
+Your premium features are now available in your Vendari dashboard.
+Manage your subscription: {settings.DASHBOARD_URL.rstrip('/')}/dashboard/settings/billing
+
+Vendari Support Team
+support@vendari.name.ng
+'''
+    html = f'''<!doctype html><html><body style="margin:0;background:#F7F9FC;color:#0B1220;font-family:Arial,sans-serif;line-height:1.6"><table width="100%" cellspacing="0" cellpadding="0" style="padding:32px 16px;background:#F7F9FC"><tr><td align="center"><table width="100%" cellspacing="0" cellpadding="0" style="max-width:620px;background:#fff;border:1px solid #E3E8F1;border-radius:12px;overflow:hidden"><tr><td style="padding:28px 32px;background:#06122B;color:#fff;font-size:24px;font-weight:700">Vendari</td></tr><tr><td style="padding:32px"><p style="margin:0;color:#16A34A;font-size:12px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase">Payment successful</p><h1 style="color:#06122B;font-size:28px;line-height:1.2">Your {plan.name.title()} plan is active</h1><p>Your payment was confirmed and your premium features are now available.</p><div style="margin:24px 0;padding:16px;border:1px solid #E3E8F1;border-radius:8px;background:#F7F9FC"><strong>Business:</strong> {business.name}<br><strong>Plan:</strong> {plan.name.title()}<br><strong>Billing:</strong> {plan.interval}</div><a href="{settings.DASHBOARD_URL.rstrip('/')}/dashboard/settings/billing" style="display:inline-block;padding:12px 20px;border-radius:8px;background:#4683EC;color:#fff;text-decoration:none;font-weight:700">Open billing</a></td></tr><tr><td style="padding:20px 32px;border-top:1px solid #E3E8F1;color:#8792A2;font-size:12px">Vendari Support Team · support@vendari.name.ng</td></tr></table></td></tr></table></body></html>'''
+    message = EmailMultiAlternatives(subject=subject, body=body, from_email=getattr(settings, 'ADMIN_EMAIL_FROM', settings.DEFAULT_FROM_EMAIL), to=[recipient])
+    message.attach_alternative(html, 'text/html')
+    return message.send(fail_silently=False)
 
 
 def paystack_request(endpoint, payload=None, method='GET'):
@@ -219,4 +241,8 @@ class PaystackWebhookView(APIView):
             )
             business.plan = plan
             business.save(update_fields=('plan', 'updated_at'))
+            try:
+                send_subscription_success_email(business, plan)
+            except Exception:
+                logger.exception('Subscription confirmation email failed for business=%s', business.pk)
         return Response({'status': 'processed', 'subscription_id': subscription.pk})
