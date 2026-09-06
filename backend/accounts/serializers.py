@@ -2,6 +2,7 @@ from django.contrib.auth import authenticate
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.utils.crypto import get_random_string
+from django.utils import timezone
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
@@ -87,12 +88,17 @@ class InviteAcceptSerializer(serializers.Serializer):
     @transaction.atomic
     def create(self, validated_data):
         invite = InviteCode.objects.select_for_update().select_related('business').filter(
-            code=validated_data['token'].upper(), used=False,
+            code=validated_data['token'].upper(), used=False, revoked_at__isnull=True,
         ).first()
         if invite is None:
             raise serializers.ValidationError('Invalid or already used invite code.')
 
+        if invite.expires_at and invite.expires_at <= timezone.now():
+            raise serializers.ValidationError('This invite has expired.')
+
         email = validated_data['email'].lower()
+        if invite.email and invite.email.lower() != email:
+            raise serializers.ValidationError('This invite was created for a different email address.')
         user = User.objects.filter(email__iexact=email).first()
         if user is None:
             if not validated_data.get('password'):

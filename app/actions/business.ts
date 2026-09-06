@@ -254,8 +254,8 @@ export async function getTopProducts(businessId: string, limit: number = 20) {
 }
 
 export async function getBusinessMembers(businessId: string) {
-  const result = await request<any[]>(`/businesses/${businessId}/members/`)
-  return result.success ? { success: true, data: result.data } : { ...result, data: [] }
+  const result = await request<{ members: any[]; invites: any[] }>(`/businesses/${businessId}/members/`)
+  return result.success ? { success: true, data: result.data } : { ...result, data: { members: [], invites: [] } }
 }
 
 export async function createBusinessInvite(businessId: string, email: string, role: string) {
@@ -270,4 +270,12 @@ export async function removeBusinessMember(businessId: string, memberId: number)
     method: 'DELETE',
     body: JSON.stringify({ member_id: memberId }),
   })
+}
+
+export async function updateBusinessMemberRole(businessId: string, memberId: number, role: string) {
+  return request(`/businesses/${businessId}/members/`, { method: 'PATCH', body: JSON.stringify({ member_id: memberId, role }) })
+}
+
+export async function revokeBusinessInvite(businessId: string, inviteId: number) {
+  return request(`/businesses/${businessId}/members/`, { method: 'PUT', body: JSON.stringify({ invite_id: inviteId }) })
 }

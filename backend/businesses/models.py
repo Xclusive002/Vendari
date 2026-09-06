@@ -53,8 +53,11 @@ class Membership(models.Model):
 class InviteCode(models.Model):
     business = models.ForeignKey(Business, on_delete=models.CASCADE, related_name='invite_codes')
     code = models.CharField(max_length=32, unique=True)
+    email = models.EmailField(blank=True)
     role = models.CharField(max_length=20, choices=Membership.ROLE_CHOICES, default=Membership.ROLE_STAFF)
     used = models.BooleanField(default=False)
+    expires_at = models.DateTimeField(null=True, blank=True)
+    revoked_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

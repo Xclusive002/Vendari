@@ -100,7 +100,11 @@ class BusinessMembersView(APIView):
 
 	def get(self, request, business_id):
 		members = Membership.objects.filter(business_id=business_id).select_related('user').order_by('created_at')
-		return Response([{'id': member.id, 'email': member.user.email, 'role': member.role, 'created_at': member.created_at} for member in members])
+		invites = InviteCode.objects.filter(business_id=business_id, used=False, revoked_at__isnull=True).order_by('-created_at')
+		return Response({
+			'members': [{'id': member.id, 'email': member.user.email, 'role': member.role, 'created_at': member.created_at} for member in members],
+			'invites': [{'id': invite.id, 'email': invite.email, 'code': invite.code, 'role': invite.role, 'expires_at': invite.expires_at} for invite in invites],
+		})
 
 	def post(self, request, business_id):
 		if not self._owner(request, business_id):
@@ -114,7 +118,7 @@ class BusinessMembersView(APIView):
 		if not email or role not in {Membership.ROLE_STAFF, Membership.ROLE_ACCOUNTANT}:
 			return Response({'detail': 'A valid email and role are required.'}, status=status.HTTP_400_BAD_REQUEST)
 		code = get_random_string(24).upper()
-		invite = InviteCode.objects.create(business=business, code=code, role=role)
+		invite = InviteCode.objects.create(business=business, code=code, email=email, role=role, expires_at=timezone.now() + timedelta(days=7))
 		return Response({'id': invite.id, 'code': invite.code, 'role': invite.role}, status=status.HTTP_201_CREATED)
 
 	def delete(self, request, business_id):
@@ -125,6 +129,27 @@ class BusinessMembersView(APIView):
 		if member is None:
 			return Response({'detail': 'Team member not found.'}, status=status.HTTP_404_NOT_FOUND)
 		member.delete()
+		return Response(status=status.HTTP_204_NO_CONTENT)
+
+	def patch(self, request, business_id):
+		if not self._owner(request, business_id):
+			return Response({'detail': 'Only the business owner can manage team members.'}, status=status.HTTP_403_FORBIDDEN)
+		member = Membership.objects.filter(id=request.data.get('member_id'), business_id=business_id).exclude(role=Membership.ROLE_OWNER).first()
+		role = str(request.data.get('role', '')).strip()
+		if member is None or role not in {Membership.ROLE_STAFF, Membership.ROLE_ACCOUNTANT}:
+			return Response({'detail': 'A valid team member and role are required.'}, status=status.HTTP_400_BAD_REQUEST)
+		member.role = role
+		member.save(update_fields=['role'])
+		return Response({'id': member.id, 'role': member.role})
+
+	def put(self, request, business_id):
+		if not self._owner(request, business_id):
+			return Response({'detail': 'Only the business owner can manage team members.'}, status=status.HTTP_403_FORBIDDEN)
+		invite = InviteCode.objects.filter(id=request.data.get('invite_id'), business_id=business_id, used=False, revoked_at__isnull=True).first()
+		if invite is None:
+			return Response({'detail': 'Invite not found.'}, status=status.HTTP_404_NOT_FOUND)
+		invite.revoked_at = timezone.now()
+		invite.save(update_fields=['revoked_at'])
 		return Response(status=status.HTTP_204_NO_CONTENT)
 
 

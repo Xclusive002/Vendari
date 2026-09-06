@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { getBusiness, getSales, getExpenses, addExpense } from '@/app/actions/business'
+import { getSubscription } from '@/app/actions/payment'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar } from 'recharts'
 import { LoadingButton } from '@/components/ui/loading-button'
@@ -46,6 +47,7 @@ export default function ReportsPage() {
   const [sales, setSales] = useState<any[]>([])
   const [expenses, setExpenses] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const [canExport, setCanExport] = useState(false)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [savingExpense, setSavingExpense] = useState(false)
   const savingExpenseRef = useRef(false)
@@ -74,6 +76,8 @@ export default function ReportsPage() {
       }
 
       setBusiness(businessData)
+      const subscriptionResult = await getSubscription(String(businessData.id))
+      setCanExport(Boolean(subscriptionResult.success && subscriptionResult.data?.feature_flags?.advanced_reports))
       const [salesData, expensesData] = await Promise.all([
         getSales(businessData.id, dateRange.start, dateRange.end),
         getExpenses(businessData.id, dateRange.start, dateRange.end),
@@ -207,6 +211,10 @@ export default function ReportsPage() {
 
   const handleDownloadPdf = () => {
     if (!business) return
+    if (!canExport) {
+      toast.error('PDF reports are available on a paid plan. Upgrade from Billing to export this report.')
+      return
+    }
 
     const doc = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' })
     const pageWidth = doc.internal.pageSize.getWidth()

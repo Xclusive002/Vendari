@@ -142,6 +142,7 @@ class PaystackInitializeView(APIView):
             'email': request.user.email,
             'amount': int(plan.amount * 100),
             'currency': 'NGN',
+            'callback_url': f'{settings.DASHBOARD_URL.rstrip("/")}/payment/success',
             'metadata': {'business_id': business.pk, 'plan_id': plan.pk},
         }).encode()
         paystack_request = urllib.request.Request(

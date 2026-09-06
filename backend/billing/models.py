@@ -57,3 +57,13 @@ class Subscription(models.Model):
 
     def __str__(self):
         return f'{self.business.name} - {self.plan.name}'
+
+
+class UsageRecord(models.Model):
+    business = models.ForeignKey('businesses.Business', on_delete=models.CASCADE, related_name='usage_records')
+    period = models.DateField()
+    metric = models.CharField(max_length=50)
+    count = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=('business', 'period', 'metric'), name='unique_business_usage_period_metric')]

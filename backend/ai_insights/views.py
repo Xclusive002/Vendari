@@ -9,7 +9,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from accounts.permissions import IsBusinessMember
-from billing.utils import has_feature
+from billing.utils import consume_usage, has_feature
 from businesses.models import Business, Membership
 from inventory.models import InventoryItem
 
@@ -49,6 +49,9 @@ class BusinessAskView(APIView):
 		business = Business.objects.get(pk=business_id)
 		if not has_feature(business, 'nl_reporting'):
 			return Response({'detail': 'Natural-language reporting is not enabled for this business plan.'}, status=status.HTTP_403_FORBIDDEN)
+		allowed, _, limit = consume_usage(business, 'ai_questions')
+		if not allowed:
+			return Response({'detail': f'You have used your monthly AI question allowance of {limit}. Upgrade to continue.'}, status=status.HTTP_429_TOO_MANY_REQUESTS)
 		question = request.data.get('question', '').strip()
 		if not question:
 			return Response({'detail': 'Question is required.'}, status=status.HTTP_400_BAD_REQUEST)
@@ -93,6 +96,9 @@ class VoiceEntryView(APIView):
 			return Response({'detail': 'Business not found.'}, status=status.HTTP_404_NOT_FOUND)
 		if not has_feature(business, 'voice_entry'):
 			return Response({'detail': 'Voice entry is available on a paid plan.'}, status=status.HTTP_403_FORBIDDEN)
+		allowed, _, limit = consume_usage(business, 'voice_entries')
+		if not allowed:
+			return Response({'detail': f'You have used your monthly voice-entry allowance of {limit}. Upgrade to continue.'}, status=status.HTTP_429_TOO_MANY_REQUESTS)
 		
 		# Extract request parameters
 		audio_file = request.FILES.get('audio')
