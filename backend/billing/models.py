@@ -34,6 +34,7 @@ class Plan(models.Model):
     amount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     interval = models.CharField(max_length=20, choices=INTERVAL_CHOICES, default=INTERVAL_MONTHLY)
     feature_flags = models.JSONField(default=default_feature_flags)
+    limits = models.JSONField(default=dict)
 
     def __str__(self):
         return self.name

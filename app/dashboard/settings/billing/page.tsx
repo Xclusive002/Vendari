@@ -9,7 +9,7 @@ import { LoadingButton } from '@/components/ui/loading-button'
 
 export default function BillingPage() {
   const [businessId, setBusinessId] = useState('')
-  const [plans, setPlans] = useState<Array<{ id: number; name: string; amount: number; interval: string; feature_flags: Record<string, boolean> }>>([])
+  const [plans, setPlans] = useState<Array<{ id: number; name: string; amount: number; interval: string; feature_flags: Record<string, boolean>; limits: Record<string, number> }>>([])
   const [subscription, setSubscription] = useState<{ plan: string; status: string; renews_at: string | null } | null>(null)
   const [loading, setLoading] = useState(false)
   const [loadingPage, setLoadingPage] = useState(true)
@@ -64,7 +64,7 @@ export default function BillingPage() {
           <div className="grid gap-4 md:grid-cols-2">
             {plans.map((plan) => {
               const active = selectedPlan === plan.id
-              return <button key={plan.id} type="button" onClick={() => setSelectedPlan(plan.id)} className={`rounded-xl border p-5 text-left transition ${active ? 'border-blue bg-blue/5 shadow-md' : 'border-border bg-surface hover:border-blue/40'}`}><p className="font-display text-xl font-semibold capitalize text-ink">{plan.name}</p><p className="mt-2 font-mono text-2xl text-ink">₦{plan.amount.toLocaleString()}<span className="font-body text-sm text-text-secondary">/{plan.interval}</span></p><ul className="mt-4 space-y-2 text-sm text-text-secondary">{Object.entries(plan.feature_flags).filter(([, enabled]) => enabled).slice(0, 5).map(([flag]) => <li key={flag}>✓ {flag.replaceAll('_', ' ')}</li>)}</ul></button>
+              return <button key={plan.id} type="button" onClick={() => setSelectedPlan(plan.id)} className={`rounded-xl border p-5 text-left transition ${active ? 'border-blue bg-blue/5 shadow-md' : 'border-border bg-surface hover:border-blue/40'}`}><p className="font-display text-xl font-semibold capitalize text-ink">{plan.name}</p><p className="mt-2 font-mono text-2xl text-ink">₦{plan.amount.toLocaleString()}<span className="font-body text-sm text-text-secondary">/{plan.interval}</span></p><ul className="mt-4 space-y-2 text-sm text-text-secondary"><li>✓ {plan.limits.invoices_per_month?.toLocaleString()} invoices/month</li><li>✓ {plan.limits.ai_questions?.toLocaleString()} AI questions/month</li><li>✓ {plan.limits.voice_entries?.toLocaleString()} voice entries/month</li><li>✓ {plan.limits.team_members} team members</li>{Object.entries(plan.feature_flags).filter(([, enabled]) => enabled).slice(0, plan.name === 'pro' ? 4 : 7).map(([flag]) => <li key={flag}>✓ {flag.replaceAll('_', ' ')}</li>)}</ul></button>
             })}
           </div>
           {error && <p className="text-sm text-negative">{error}</p>}

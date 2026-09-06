@@ -4,6 +4,7 @@ from rest_framework import serializers
 
 from customers.models import Customer
 from sales.models import Sale
+from django.utils import timezone
 
 from .models import Invoice, InvoiceLineItem
 
@@ -28,6 +29,13 @@ class InvoiceSerializer(serializers.ModelSerializer):
 
     def validate(self, attrs):
         business = self.context['business']
+        if self.instance is None and business.plan:
+            monthly_limit = business.plan.limits.get('invoices_per_month')
+            if monthly_limit is not None:
+                month_start = timezone.localdate().replace(day=1)
+                invoice_count = Invoice.objects.filter(business=business, issue_date__gte=month_start).count()
+                if invoice_count >= monthly_limit:
+                    raise serializers.ValidationError({'detail': f'Your {business.plan.name.title()} plan allows {monthly_limit} invoices per month. Upgrade to create more.'})
         customer = attrs.get('customer')
         if customer is not None and customer.business_id != business.id:
             raise serializers.ValidationError({'customer': 'The customer does not belong to this business.'})

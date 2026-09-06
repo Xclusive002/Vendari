@@ -12,6 +12,7 @@ FREE_FLAGS = {
     'team_members': False,
 }
 
+
 PRO_FLAGS = {
     **FREE_FLAGS,
     'ai_insights': True,
@@ -24,6 +25,8 @@ PRO_FLAGS = {
     'team_members': True,
 }
 
+GROWTH_FLAGS = {**PRO_FLAGS, 'team_members': True}
+
 
 def normalize_entitlements(apps, schema_editor):
     Plan = apps.get_model('billing', 'Plan')
@@ -31,7 +34,7 @@ def normalize_entitlements(apps, schema_editor):
     plans = {
         'free': (0, FREE_FLAGS),
         'pro': (9500, PRO_FLAGS),
-        'enterprise': (25000, {key: True for key in FREE_FLAGS}),
+        'enterprise': (25000, GROWTH_FLAGS),
     }
 
     for name, (amount, flags) in plans.items():
@@ -49,7 +52,7 @@ def normalize_entitlements(apps, schema_editor):
         elif plan.name == 'pro':
             plan.feature_flags = PRO_FLAGS
         else:
-            plan.feature_flags = {key: True for key in FREE_FLAGS}
+            plan.feature_flags = GROWTH_FLAGS
         plan.save(update_fields=['feature_flags'])
 
     if free_plan:

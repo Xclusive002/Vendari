@@ -4,7 +4,7 @@ import { apiJson } from '@/lib/api-client'
 
 export async function getPlans() {
   try {
-    return { success: true, data: await apiJson<Array<{ id: number; name: string; amount: number; interval: string; feature_flags: Record<string, boolean> }>>('/billing/plans/') }
+    return { success: true, data: await apiJson<Array<{ id: number; name: string; amount: number; interval: string; feature_flags: Record<string, boolean>; limits: Record<string, number> }>>('/billing/plans/') }
   } catch (error) {
     return { success: false, error: error instanceof Error ? error.message : 'Unable to load plans', data: [] }
   }

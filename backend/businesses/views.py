@@ -70,6 +70,7 @@ class BusinessPlansView(APIView):
 				'amount': float(plan.amount),
 				'interval': plan.interval,
 				'feature_flags': plan.feature_flags,
+				'limits': plan.limits,
 			}
 			for plan in Plan.objects.all().order_by('amount', 'id')
 		])
