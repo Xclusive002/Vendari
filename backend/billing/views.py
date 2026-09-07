@@ -160,26 +160,15 @@ class PaystackInitializeView(APIView):
         serializer.is_valid(raise_exception=True)
         business = serializer.validated_data['business']
         plan = serializer.validated_data['plan']
-        payload = json.dumps({
+        payload = {
             'email': request.user.email,
             'amount': int(plan.amount * 100),
             'currency': 'NGN',
             'callback_url': f'{settings.DASHBOARD_URL.rstrip("/")}/payment/success',
             'metadata': {'business_id': business.pk, 'plan_id': plan.pk},
-        }).encode()
-        paystack_request = urllib.request.Request(
-            'https://api.paystack.co/transaction/initialize',
-            data=payload,
-            headers={
-                'Authorization': f'Bearer {settings.PAYSTACK_SECRET_KEY}',
-                'Content-Type': 'application/json',
-            },
-            method='POST',
-        )
-        try:
-            with urllib.request.urlopen(paystack_request, timeout=15) as response:
-                data = json.loads(response.read())
-        except (urllib.error.URLError, json.JSONDecodeError):
+        }
+        data = paystack_request('transaction/initialize', payload, method='POST')
+        if not data:
             return Response({'error': 'Unable to initialize Paystack transaction.'}, status=status.HTTP_502_BAD_GATEWAY)
         if not data.get('status') or not data.get('data', {}).get('authorization_url'):
             return Response({'error': 'Paystack rejected the transaction.'}, status=status.HTTP_502_BAD_GATEWAY)
@@ -195,7 +184,7 @@ class PaystackWebhookView(APIView):
     def post(self, request):
         signature = request.headers.get('X-Paystack-Signature', '')
         expected = hmac.new(
-            settings.PAYSTACK_SECRET_KEY.encode(), request.body, hashlib.sha512,
+            settings.PAYSTACK_SECRET_KEY.strip().encode(), request.body, hashlib.sha512,
         ).hexdigest()
         if not signature or not hmac.compare_digest(signature, expected):
             return Response({'error': 'Invalid signature.'}, status=status.HTTP_401_UNAUTHORIZED)
