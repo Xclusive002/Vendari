@@ -59,19 +59,6 @@ export default function RootLayout({
       <body className="font-body antialiased">
         {children}
         <Toaster richColors closeButton position="top-right" />
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              if ('serviceWorker' in navigator) {
-                window.addEventListener('load', function() {
-                  navigator.serviceWorker.register('/sw.js?v=2').catch(function(err) {
-                    console.log('[PWA] ServiceWorker registration failed: ', err)
-                  })
-                })
-              }
-            `,
-          }}
-        />
       </body>
     </html>
   )
