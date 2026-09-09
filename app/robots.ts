@@ -5,7 +5,7 @@ export default function robots(): MetadataRoute.Robots {
     rules: {
       userAgent: '*',
       allow: '/',
-      disallow: ['/api/', '/login/', '/register/', '/dashboard/'],
+      disallow: ['/api/', '/dashboard/'],
     },
     sitemap: 'https://www.vendari.name.ng/sitemap.xml',
   }
