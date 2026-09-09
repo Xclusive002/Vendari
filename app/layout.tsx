@@ -26,6 +26,7 @@ export const metadata: Metadata = {
   other: {
     'mobile-web-app-capable': 'yes',
     'mobile-web-app-status-bar-style': 'black-translucent',
+    'google-site-verification': 'e3Td5zQws0eWm1p-GORToY8Hjs20FJmXJsgz2ORne8I',
   },
 }
 
@@ -53,6 +54,7 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-title" content="Vendari" />
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1" />
         <meta name="msapplication-TileColor" content="#06122B" />
+        <meta name="google-site-verification" content="e3Td5zQws0eWm1p-GORToY8Hjs20FJmXJsgz2ORne8I" />
       </head>
       <body className="font-body antialiased">
         {children}

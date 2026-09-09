@@ -1,5 +1,14 @@
+import type { Metadata } from 'next'
 import Link from 'next/link'
 import { ArrowRight, Check, Headphones, Sparkles, Users } from 'lucide-react'
+
+export const metadata: Metadata = {
+  title: 'Pricing | Vendari',
+  description: 'Compare Vendari plans for businesses that need simple operations, sales, inventory, reporting, and growth support.',
+  alternates: {
+    canonical: 'https://www.vendari.name.ng/pricing',
+  },
+}
 
 const plans = [
   {

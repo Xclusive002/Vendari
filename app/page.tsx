@@ -1,8 +1,17 @@
+import type { Metadata } from 'next'
 import Link from 'next/link'
 import Image from 'next/image'
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { HeroMotion, ScrollReveal } from '@/components/landing-motion'
+
+export const metadata: Metadata = {
+  title: 'Vendari - Business Management Software',
+  description: 'Run sales, inventory, expenses, customers, reporting, and team operations from one modern business dashboard.',
+  alternates: {
+    canonical: 'https://www.vendari.name.ng',
+  },
+}
 import { ConciergeOverview } from '@/components/concierge-content'
 import {
   ArrowRight,
