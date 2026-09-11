@@ -28,5 +28,23 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: 'monthly',
       priority: 0.6,
     },
+    {
+      url: 'https://www.vendari.name.ng/privacy',
+      lastModified: now,
+      changeFrequency: 'yearly',
+      priority: 0.3,
+    },
+    {
+      url: 'https://www.vendari.name.ng/terms',
+      lastModified: now,
+      changeFrequency: 'yearly',
+      priority: 0.3,
+    },
+    {
+      url: 'https://www.vendari.name.ng/dmca',
+      lastModified: now,
+      changeFrequency: 'yearly',
+      priority: 0.2,
+    },
   ]
 }

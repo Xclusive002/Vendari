@@ -15,6 +15,7 @@ export const metadata: Metadata = {
 import { ConciergeOverview } from '@/components/concierge-content'
 import {
   ArrowRight,
+  AtSign,
   BarChart3,
   ChevronRight,
   CircleDollarSign,
@@ -22,6 +23,7 @@ import {
   Gauge,
   LayoutDashboard,
   LockKeyhole,
+  Music2,
   Package,
   PanelLeft,
   Receipt,
@@ -148,7 +150,7 @@ export default async function Home() {
 
       <ScrollReveal><section className="bg-brand-gradient px-5 py-20 sm:px-8 sm:py-24"><div className="mx-auto flex max-w-7xl flex-col items-start justify-between gap-8 sm:flex-row sm:items-end"><div><p className="text-xs font-semibold uppercase tracking-[0.18em] text-white/65">A clearer next day starts here</p><h2 className="mt-4 max-w-2xl font-display text-4xl font-semibold leading-tight text-white sm:text-6xl">Run your business smarter with Vendari.</h2><p className="mt-5 text-lg font-medium text-white/85">One platform. Total control.</p><p className="mt-1 text-sm text-white/70">Get started today — simplify your operations, scale your growth.</p></div><Link href="/register" className="motion-hover inline-flex shrink-0 items-center gap-2 rounded-lg bg-white px-5 py-3.5 text-sm font-semibold text-ink shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-blue">Create your free account <ArrowRight className="h-4 w-4" /></Link></div></section></ScrollReveal>
 
-      <footer className="bg-ink px-5 py-8 text-white sm:px-8"><div className="mx-auto flex max-w-7xl flex-col items-start justify-between gap-4 text-xs text-white/50 sm:flex-row sm:items-center"><Image src="/vendari-dark-blue-bg.png" alt="Vendari" width={144} height={144} className="h-8 w-auto object-contain" /><p>Business operations, with less guesswork.</p><p>© 2026 Vendari</p></div></footer>
+      <footer className="bg-ink px-5 py-12 text-white sm:px-8 sm:py-14"><div className="mx-auto grid max-w-7xl gap-10 md:grid-cols-[1.4fr_1fr_1fr]"><div><Image src="/vendari-dark-blue-bg.png" alt="Vendari" width={144} height={144} className="h-9 w-auto object-contain" /><p className="mt-4 max-w-xs text-sm leading-6 text-white/55">Business operations, with less guesswork. One clear place for the work behind the work.</p><div className="mt-6 flex items-center gap-3"><a href="https://www.tiktok.com/@vendari_ng?_r=1&_t=ZS-99dm8ICiMdT" target="_blank" rel="noreferrer" aria-label="Vendari on TikTok" className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-white/15 text-white/65 transition-colors hover:border-blue hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue"><Music2 className="h-4 w-4" /></a><a href="https://x.com/vendarihq?s=11" target="_blank" rel="noreferrer" aria-label="Vendari on X" className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-white/15 text-white/65 transition-colors hover:border-blue hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue"><AtSign className="h-4 w-4" /></a></div></div><div><p className="text-xs font-semibold uppercase tracking-[0.16em] text-white/40">Explore</p><nav className="mt-4 flex flex-col items-start gap-3 text-sm text-white/65" aria-label="Footer navigation"><a href="#features" className="transition-colors hover:text-white">Features</a><a href="#businesses" className="transition-colors hover:text-white">For every business</a><Link href="/pricing" className="transition-colors hover:text-white">Pricing</Link><Link href="/register" className="transition-colors hover:text-white">Start free</Link></nav></div><div><p className="text-xs font-semibold uppercase tracking-[0.16em] text-white/40">Legal</p><nav className="mt-4 flex flex-col items-start gap-3 text-sm text-white/65" aria-label="Legal navigation"><Link href="/privacy" className="transition-colors hover:text-white">Privacy policy</Link><Link href="/terms" className="transition-colors hover:text-white">Terms and conditions</Link><Link href="/dmca" className="transition-colors hover:text-white">DMCA policy</Link></nav></div></div><div className="mx-auto mt-10 flex max-w-7xl flex-col gap-2 border-t border-white/10 pt-5 text-xs text-white/40 sm:flex-row sm:items-center sm:justify-between"><p>© 2026 Vendari</p><p>Built for retailers and service businesses.</p></div></footer>
     </main>
   )
 }
