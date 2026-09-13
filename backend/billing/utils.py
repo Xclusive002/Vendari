@@ -5,10 +5,10 @@ from datetime import date
 from .models import UsageRecord
 
 USAGE_LIMITS = {
-    'ai_questions': {'pro': 100, 'enterprise': 500},
-    'voice_entries': {'pro': 100, 'enterprise': 500},
-    'invoice_ai': {'pro': 50, 'enterprise': 250},
-    'report_exports': {'pro': 30, 'enterprise': 150},
+    'ai_questions': {'pro': 100},
+    'voice_entries': {'pro': 100},
+    'invoice_ai': {'pro': 50},
+    'report_exports': {'pro': 30},
 }
 
 

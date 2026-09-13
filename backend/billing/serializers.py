@@ -20,5 +20,7 @@ class PaystackInitializeSerializer(serializers.Serializer):
             plan = Plan.objects.get(pk=attrs['plan_id'])
         except Plan.DoesNotExist:
             raise serializers.ValidationError({'plan_id': 'Plan not found.'})
+        if plan.name != Plan.PLAN_PRO or plan.amount != 9999:
+            raise serializers.ValidationError({'plan_id': 'The Vendari Pro plan is ₦9,999 per month.'})
         attrs.update(business=business, plan=plan)
         return attrs

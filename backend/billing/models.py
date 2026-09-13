@@ -16,10 +16,8 @@ def default_feature_flags():
 
 class Plan(models.Model):
     PLAN_PRO = 'pro'
-    PLAN_ENTERPRISE = 'enterprise'
     PLAN_CHOICES = [
         (PLAN_PRO, 'Pro'),
-        (PLAN_ENTERPRISE, 'Enterprise'),
     ]
     INTERVAL_MONTHLY = 'monthly'
     INTERVAL_YEARLY = 'yearly'

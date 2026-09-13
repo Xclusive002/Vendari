@@ -4,7 +4,7 @@ import { ArrowRight, Check, Headphones, Sparkles, Users } from 'lucide-react'
 
 export const metadata: Metadata = {
   title: 'Pricing | Vendari',
-  description: 'Compare Vendari plans for businesses that need simple operations, sales, inventory, reporting, and growth support.',
+  description: 'Simple Vendari pricing for sales, inventory, customers, reporting, and daily business operations.',
   alternates: {
     canonical: 'https://www.vendari.name.ng/pricing',
   },
@@ -21,17 +21,6 @@ const plans = [
     action: 'Start 5-day trial',
     href: '/register',
     featured: true,
-  },
-  {
-    name: 'Growth',
-    audience: 'For teams and growing operations',
-    price: '₦25,000',
-    cadence: 'per month',
-    description: 'Give your team shared visibility and give the owner stronger control across people, products, and performance.',
-    features: ['Everything in Pro', 'Up to 1,000 invoices/month', '500 AI questions and voice entries/month', 'Up to 10 staff or accountant members', 'Higher operational and payment capacity', 'Priority support'],
-    action: 'Choose Growth',
-    href: '/register',
-    featured: false,
   },
 ]
 
@@ -52,12 +41,12 @@ export default function PricingPage() {
         <div className="mx-auto max-w-4xl text-center">
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-blue">Simple pricing for real businesses</p>
           <h1 className="mt-4 font-display text-4xl font-bold leading-tight text-ink sm:text-6xl">Start small. Get clearer. Grow with confidence.</h1>
-          <p className="mx-auto mt-6 max-w-2xl text-base leading-7 text-text-secondary sm:text-lg">Start with a 5-day free trial, then continue with Vendari from ₦9,999 per month. Every plan gives you a dependable place to run the work.</p>
+          <p className="mx-auto mt-6 max-w-2xl text-base leading-7 text-text-secondary sm:text-lg">Use Vendari free for 5 days, then subscribe for ₦9,999 per month to continue running your business.</p>
         </div>
       </section>
 
       <section className="px-5 py-14 sm:px-8 sm:py-20">
-        <div className="mx-auto grid max-w-7xl gap-5 lg:grid-cols-3">
+        <div className="mx-auto grid max-w-2xl gap-5">
           {plans.map((plan) => (
             <article key={plan.name} className={`relative flex flex-col rounded-xl border p-6 shadow-sm sm:p-7 ${plan.featured ? 'border-blue bg-surface shadow-xl shadow-blue/10 ring-2 ring-blue/20' : 'border-border bg-surface'}`}>
               {plan.featured && <span className="absolute right-5 top-5 rounded-full bg-blue/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-blue">Most useful</span>}

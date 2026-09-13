@@ -81,6 +81,7 @@ class BusinessPlansView(APIView):
 
 class BusinessSubscriptionView(APIView):
 	permission_classes = [IsBusinessMember]
+	allow_expired_trial = True
 
 	def get(self, request, business_id):
 		business = Business.objects.filter(pk=business_id).first()
@@ -90,7 +91,7 @@ class BusinessSubscriptionView(APIView):
 		return Response({
 			'plan': business.plan.name if business.plan else 'pro',
 			'plan_id': business.plan_id,
-			'status': subscription.status if subscription else 'active',
+			'status': subscription.status if subscription else ('trial' if business.trial_active else 'expired'),
 			'renews_at': subscription.renews_at if subscription else None,
 			'trial_active': business.trial_active,
 			'trial_ends_at': business.trial_ends_at,

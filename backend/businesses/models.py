@@ -34,6 +34,13 @@ class Business(models.Model):
     def trial_active(self):
         return bool(self.trial_ends_at and self.trial_ends_at > timezone.now())
 
+    @property
+    def access_active(self):
+        subscription = getattr(self, 'subscription', None)
+        if subscription and subscription.status == 'active':
+            return not subscription.renews_at or subscription.renews_at > timezone.now()
+        return self.trial_active
+
 
 class Membership(models.Model):
     ROLE_OWNER = 'owner'

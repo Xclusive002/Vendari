@@ -645,17 +645,12 @@ export default async function Home() {
                 [
                   "Pro",
                   "₦9,999/mo",
-                  "Sales, stock, customers, expenses, AI insights, voice entry, reports, and payment links.",
+                  "Free for 5 days, then subscribe for sales, stock, customers, expenses, AI insights, voice entry, reports, and payment links.",
                 ],
-                [
-                  "Growth",
-                  "₦25,000/mo",
-                  "Team management, higher capacity, stronger controls, and priority support.",
-                ],
-              ].map(([name, price, copy], index) => (
+              ].map(([name, price, copy]) => (
                 <article
                   key={name}
-                  className={`rounded-xl border p-6 ${index === 0 ? "border-blue bg-blue/5 shadow-lg shadow-blue/10" : "border-border bg-bg"}`}
+                  className="rounded-xl border border-blue bg-blue/5 p-6 shadow-lg shadow-blue/10"
                 >
                   <p className="text-xs font-semibold uppercase tracking-[0.16em] text-blue">
                     {name}
