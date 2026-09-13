@@ -12,24 +12,13 @@ export const metadata: Metadata = {
 
 const plans = [
   {
-    name: 'Free',
-    audience: 'For a business getting organised',
-    price: '₦0',
-    cadence: 'forever',
-    description: 'Build the daily habit of recording sales, stock, customers, and expenses in one dependable place.',
-    features: ['Sales and inventory tracking', 'Customer and expense records', 'Basic dashboard overview', 'Simple receipts', 'No card required'],
-    action: 'Start for free',
-    href: '/register',
-    featured: false,
-  },
-  {
     name: 'Pro',
     audience: 'For businesses ready to make better decisions',
-    price: '₦9,500',
+    price: '₦9,999',
     cadence: 'per month',
-    description: 'Use your business data to understand what changed, what needs attention, and what to do next.',
-    features: ['Everything in Free', 'Up to 100 invoices/month', '100 AI questions and voice entries/month', 'AI insights, forecasting, and invoice drafting', 'Advanced PDF reports and payment links', 'Up to 3 team members'],
-    action: 'Choose Pro',
+    description: 'Everything you need to run sales, inventory, customers, expenses, reporting, and day-to-day operations.',
+    features: ['5-day free trial', 'Sales, inventory, customer, and expense records', 'Up to 100 invoices/month', '100 AI questions and voice entries/month', 'AI insights, forecasting, advanced reports, and payment links', 'Up to 3 team members'],
+    action: 'Start 5-day trial',
     href: '/register',
     featured: true,
   },
@@ -54,7 +43,7 @@ export default function PricingPage() {
           <Link href="/" className="font-display text-xl font-bold text-ink">Vendari</Link>
           <div className="flex items-center gap-3">
             <Link href="/login" className="hidden rounded-md px-3 py-2 text-sm font-semibold text-ink hover:bg-bg sm:inline-flex">Sign in</Link>
-            <Link href="/register" className="inline-flex items-center gap-2 rounded-lg bg-brand-gradient px-4 py-2.5 text-sm font-semibold text-white">Start free <ArrowRight className="h-4 w-4" /></Link>
+            <Link href="/register" className="inline-flex items-center gap-2 rounded-lg bg-brand-gradient px-4 py-2.5 text-sm font-semibold text-white">Start trial <ArrowRight className="h-4 w-4" /></Link>
           </div>
         </div>
       </nav>
@@ -63,7 +52,7 @@ export default function PricingPage() {
         <div className="mx-auto max-w-4xl text-center">
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-blue">Simple pricing for real businesses</p>
           <h1 className="mt-4 font-display text-4xl font-bold leading-tight text-ink sm:text-6xl">Start small. Get clearer. Grow with confidence.</h1>
-          <p className="mx-auto mt-6 max-w-2xl text-base leading-7 text-text-secondary sm:text-lg">Every plan gives you a dependable place to run the work. Paid plans add the intelligence, automation, and team control that become more valuable as your business grows.</p>
+          <p className="mx-auto mt-6 max-w-2xl text-base leading-7 text-text-secondary sm:text-lg">Start with a 5-day free trial, then continue with Vendari from ₦9,999 per month. Every plan gives you a dependable place to run the work.</p>
         </div>
       </section>
 

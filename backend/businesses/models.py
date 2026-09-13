@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.db import models
+from django.utils import timezone
 from decimal import Decimal
 
 
@@ -17,6 +18,8 @@ class Business(models.Model):
     paystack_subaccount_code = models.CharField(max_length=100, blank=True)
     platform_fee_percentage = models.DecimalField(max_digits=5, decimal_places=2, default=Decimal('0.00'))
     plan = models.ForeignKey('billing.Plan', null=True, blank=True, on_delete=models.SET_NULL, related_name='businesses')
+    trial_started_at = models.DateTimeField(null=True, blank=True)
+    trial_ends_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -26,6 +29,10 @@ class Business(models.Model):
     @property
     def has_complete_profile(self):
         return bool(self.name.strip() and self.address.strip() and self.phone.strip())
+
+    @property
+    def trial_active(self):
+        return bool(self.trial_ends_at and self.trial_ends_at > timezone.now())
 
 
 class Membership(models.Model):

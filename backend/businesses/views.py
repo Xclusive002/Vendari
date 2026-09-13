@@ -27,10 +27,10 @@ class BusinessViewSet(viewsets.ModelViewSet):
 
 	def perform_create(self, serializer):
 		business = serializer.save(owner=self.request.user)
-		# Assign a default Free plan if no plan exists
+		# Assign the paid plan and start the trial for every new business.
 		if not business.plan:
-			default_plan, _ = Plan.objects.get_or_create(name=Plan.PLAN_FREE, defaults={
-				'amount': 0,
+			default_plan, _ = Plan.objects.get_or_create(name=Plan.PLAN_PRO, interval=Plan.INTERVAL_MONTHLY, defaults={
+				'amount': 9999,
 				'interval': Plan.INTERVAL_MONTHLY,
 				'feature_flags': {
 					'ai_insights': False,
@@ -43,8 +43,11 @@ class BusinessViewSet(viewsets.ModelViewSet):
 					'team_members': False,
 				}
 			})
+			trial_started_at = timezone.now()
 			business.plan = default_plan
-			business.save(update_fields=['plan'])
+			business.trial_started_at = trial_started_at
+			business.trial_ends_at = trial_started_at + timedelta(days=5)
+			business.save(update_fields=['plan', 'trial_started_at', 'trial_ends_at'])
 		business.membership_set.create(user=self.request.user, role='owner')
 
 
@@ -85,10 +88,12 @@ class BusinessSubscriptionView(APIView):
 			return Response({'detail': 'Business not found.'}, status=status.HTTP_404_NOT_FOUND)
 		subscription = getattr(business, 'subscription', None)
 		return Response({
-			'plan': business.plan.name if business.plan else 'free',
+			'plan': business.plan.name if business.plan else 'pro',
 			'plan_id': business.plan_id,
 			'status': subscription.status if subscription else 'active',
 			'renews_at': subscription.renews_at if subscription else None,
+			'trial_active': business.trial_active,
+			'trial_ends_at': business.trial_ends_at,
 			'feature_flags': business.plan.feature_flags if business.plan else {},
 		})
 

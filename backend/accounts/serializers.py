@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 from django.contrib.auth import authenticate
 from django.core.exceptions import ValidationError
 from django.db import transaction
@@ -38,13 +40,16 @@ class RegisterSerializer(serializers.Serializer):
             name=validated_data['business_name'],
             email=user.email,
         )
-        free_plan, _ = Plan.objects.get_or_create(
-            name=Plan.PLAN_FREE,
+        paid_plan, _ = Plan.objects.get_or_create(
+            name=Plan.PLAN_PRO,
             interval=Plan.INTERVAL_MONTHLY,
-            defaults={'amount': 0},
+            defaults={'amount': 9999},
         )
-        business.plan = free_plan
-        business.save(update_fields=['plan'])
+        trial_started_at = timezone.now()
+        business.plan = paid_plan
+        business.trial_started_at = trial_started_at
+        business.trial_ends_at = trial_started_at + timedelta(days=5)
+        business.save(update_fields=['plan', 'trial_started_at', 'trial_ends_at'])
         Membership.objects.create(user=user, business=business, role=Membership.ROLE_OWNER)
         return user
 

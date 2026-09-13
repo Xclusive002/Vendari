@@ -48,7 +48,7 @@ export default function DashboardPage() {
   const [showWelcome, setShowWelcome] = useState(false)
   const [loading, setLoading] = useState(true)
   const [mobileTodos, setMobileTodos] = useState<MobileTodoItem[]>([])
-  const [subscription, setSubscription] = useState<{ plan: string; status: string; renews_at: string | null } | null>(null)
+  const [subscription, setSubscription] = useState<{ plan: string; status: string; renews_at: string | null; trial_active: boolean; trial_ends_at: string | null } | null>(null)
 
   useEffect(() => {
     let loadVersion = 0
@@ -163,8 +163,8 @@ export default function DashboardPage() {
 
           <section className="mx-auto mt-6 max-w-7xl rounded-xl border border-blue/20 bg-surface p-5 shadow-sm sm:p-6" aria-label="Current plan">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-              <div><p className="text-xs font-semibold uppercase tracking-[0.18em] text-blue">Current plan</p><p className="mt-2 font-display text-2xl font-semibold capitalize text-ink">{subscription?.plan || 'free'}</p><p className="mt-1 text-sm text-text-secondary">{subscription?.status === 'active' && subscription.plan !== 'free' ? `Active subscription${subscription.renews_at ? ` · renews ${new Date(subscription.renews_at).toLocaleDateString()}` : ''}` : 'Upgrade to unlock AI, advanced reports, voice entry, payments, and team tools.'}</p></div>
-              <Link href="/dashboard/settings/billing" className="inline-flex items-center justify-center gap-2 rounded-lg bg-brand-gradient px-4 py-2.5 text-sm font-semibold text-white">{subscription?.plan === 'free' ? 'Upgrade plan' : 'Manage billing'} <ArrowRight className="h-4 w-4" /></Link>
+              <div><p className="text-xs font-semibold uppercase tracking-[0.18em] text-blue">Current plan</p><p className="mt-2 font-display text-2xl font-semibold capitalize text-ink">{subscription?.plan || 'pro'}</p><p className="mt-1 text-sm text-text-secondary">{subscription?.trial_active ? `5-day trial${subscription.trial_ends_at ? ` · ends ${new Date(subscription.trial_ends_at).toLocaleDateString()}` : ''}` : subscription?.status === 'active' ? `Active subscription${subscription.renews_at ? ` · renews ${new Date(subscription.renews_at).toLocaleDateString()}` : ''}` : 'Start your 5-day trial, then continue for ₦9,999 per month.'}</p></div>
+              <Link href="/dashboard/settings/billing" className="inline-flex items-center justify-center gap-2 rounded-lg bg-brand-gradient px-4 py-2.5 text-sm font-semibold text-white">Manage billing <ArrowRight className="h-4 w-4" /></Link>
             </div>
           </section>
 
@@ -313,8 +313,8 @@ export default function DashboardPage() {
 
             <section className="mt-5 rounded-2xl border border-blue/20 bg-surface p-4 shadow-sm" aria-label="Current plan">
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-blue">Current plan</p>
-              <p className="mt-2 font-display text-xl font-semibold capitalize text-ink">{subscription?.plan || 'free'}</p>
-              <p className="mt-1 text-sm leading-6 text-text-secondary">{subscription?.plan === 'free' ? 'Unlock AI, advanced reports, voice entry, payments, and team tools.' : 'Manage your subscription and renewal details.'}</p>
+              <p className="mt-2 font-display text-xl font-semibold capitalize text-ink">{subscription?.plan || 'pro'}</p>
+              <p className="mt-1 text-sm leading-6 text-text-secondary">{subscription?.trial_active ? 'Your 5-day trial is active.' : 'Manage your subscription and renewal details.'}</p>
               <Link href="/dashboard/settings/billing" className="mt-3 inline-flex items-center gap-2 text-sm font-semibold text-blue">View billing <ArrowRight className="h-4 w-4" /></Link>
             </section>
 

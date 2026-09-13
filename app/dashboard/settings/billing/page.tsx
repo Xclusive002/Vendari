@@ -10,7 +10,7 @@ import { LoadingButton } from '@/components/ui/loading-button'
 export default function BillingPage() {
   const [businessId, setBusinessId] = useState('')
   const [plans, setPlans] = useState<Array<{ id: number; name: string; amount: number; interval: string; feature_flags: Record<string, boolean>; limits: Record<string, number> }>>([])
-  const [subscription, setSubscription] = useState<{ plan: string; status: string; renews_at: string | null } | null>(null)
+  const [subscription, setSubscription] = useState<{ plan: string; status: string; renews_at: string | null; trial_active: boolean; trial_ends_at: string | null } | null>(null)
   const [loading, setLoading] = useState(false)
   const [loadingPage, setLoadingPage] = useState(true)
   const [selectedPlan, setSelectedPlan] = useState<number | null>(null)
@@ -60,7 +60,7 @@ export default function BillingPage() {
         </CardHeader>
         <CardContent className="space-y-5">
           {loadingPage ? <p className="text-sm text-text-secondary">Loading plans...</p> : <>
-          {subscription && <div className="rounded-xl border border-positive/20 bg-positive/5 p-4"><p className="text-xs uppercase tracking-[0.16em] text-positive">Current plan</p><p className="mt-2 text-lg font-semibold capitalize text-ink">{subscription.plan}</p><p className="mt-1 text-sm text-text-secondary">Status: {subscription.status}{subscription.renews_at ? ` · Renews ${new Date(subscription.renews_at).toLocaleDateString()}` : ''}</p></div>}
+          {subscription && <div className="rounded-xl border border-positive/20 bg-positive/5 p-4"><p className="text-xs uppercase tracking-[0.16em] text-positive">Current plan</p><p className="mt-2 text-lg font-semibold capitalize text-ink">{subscription.plan}</p><p className="mt-1 text-sm text-text-secondary">{subscription.trial_active && subscription.trial_ends_at ? `5-day trial · Ends ${new Date(subscription.trial_ends_at).toLocaleDateString()}` : `Status: ${subscription.status}${subscription.renews_at ? ` · Renews ${new Date(subscription.renews_at).toLocaleDateString()}` : ''}`}</p></div>}
           <div className="grid gap-4 md:grid-cols-2">
             {plans.map((plan) => {
               const active = selectedPlan === plan.id

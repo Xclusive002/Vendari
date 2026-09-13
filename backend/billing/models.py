@@ -15,11 +15,9 @@ def default_feature_flags():
 
 
 class Plan(models.Model):
-    PLAN_FREE = 'free'
     PLAN_PRO = 'pro'
     PLAN_ENTERPRISE = 'enterprise'
     PLAN_CHOICES = [
-        (PLAN_FREE, 'Free'),
         (PLAN_PRO, 'Pro'),
         (PLAN_ENTERPRISE, 'Enterprise'),
     ]

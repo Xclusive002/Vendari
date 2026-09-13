@@ -16,18 +16,19 @@ def has_feature(business, flag_name):
     plan = getattr(business, 'plan', None)
     if not plan:
         return False
+    if business.trial_active:
+        return bool(plan.feature_flags.get(flag_name, False))
     subscription = getattr(business, 'subscription', None)
-    if plan.name != plan.PLAN_FREE:
-        if not subscription or subscription.status != subscription.STATUS_ACTIVE:
-            return False
-        if subscription.renews_at and subscription.renews_at <= timezone.now():
-            return False
+    if not subscription or subscription.status != subscription.STATUS_ACTIVE:
+        return False
+    if subscription.renews_at and subscription.renews_at <= timezone.now():
+        return False
     return bool(plan.feature_flags.get(flag_name, False))
 
 
 @transaction.atomic
 def consume_usage(business, metric, amount=1):
-    plan_name = business.plan.name if business.plan else 'free'
+    plan_name = business.plan.name if business.plan else 'pro'
     limit = USAGE_LIMITS.get(metric, {}).get(plan_name, 0)
     period = timezone.localdate().replace(day=1)
     record, _ = UsageRecord.objects.select_for_update().get_or_create(

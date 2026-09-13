@@ -12,7 +12,7 @@ export async function getPlans() {
 
 export async function getSubscription(businessId: string) {
   try {
-    return { success: true, data: await apiJson<{ plan: string; plan_id: number | null; status: string; renews_at: string | null; feature_flags: Record<string, boolean> }>(`/businesses/${businessId}/subscription/`) }
+    return { success: true, data: await apiJson<{ plan: string; plan_id: number | null; status: string; renews_at: string | null; trial_active: boolean; trial_ends_at: string | null; feature_flags: Record<string, boolean> }>(`/businesses/${businessId}/subscription/`) }
   } catch (error) {
     return { success: false, error: error instanceof Error ? error.message : 'Unable to load subscription' }
   }
