@@ -18,6 +18,7 @@ export default function SettingsPage() {
   const [businessName, setBusinessName] = useState('')
   const [businessEmail, setBusinessEmail] = useState('')
   const [businessPhone, setBusinessPhone] = useState('')
+  const [whatsappNumber, setWhatsappNumber] = useState('')
   const [businessAddress, setBusinessAddress] = useState('')
   const [logo, setLogo] = useState<File | null>(null)
   const [logoPreview, setLogoPreview] = useState('')
@@ -43,6 +44,7 @@ export default function SettingsPage() {
         setBusinessName(business.name || '')
         setBusinessEmail(business.email || '')
         setBusinessPhone(business.phone || '')
+        setWhatsappNumber(business.whatsapp_number || '')
         setBusinessAddress(business.address || '')
         setLogoPreview(business.logo || '')
         setLinkedPayment({ bankCode: business.bank_code || '', accountNumber: business.bank_account_number || '', accountName: business.bank_account_name || '', subaccountCode: business.paystack_subaccount_code || '' })
@@ -125,6 +127,7 @@ export default function SettingsPage() {
         business_name: businessName,
         business_email: businessEmail,
         business_phone: businessPhone,
+        whatsapp_number: whatsappNumber,
         business_address: businessAddress,
         logo,
       })
@@ -217,6 +220,12 @@ export default function SettingsPage() {
                 placeholder="Enter business phone"
                 className="dashboard-input mt-2"
               />
+            </div>
+
+            <div>
+              <Label htmlFor="whatsappNumber" className="text-text-secondary">WhatsApp number for Vendari commands</Label>
+              <Input id="whatsappNumber" value={whatsappNumber} onChange={(e) => setWhatsappNumber(e.target.value)} placeholder="2348012345678" className="dashboard-input mt-2" />
+              <p className="mt-1.5 text-xs text-text-muted">Use the full international number without spaces. Messages from this number can log sales, restock inventory, and add customers.</p>
             </div>
 
             <LoadingButton

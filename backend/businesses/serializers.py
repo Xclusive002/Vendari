@@ -7,6 +7,10 @@ class BusinessSerializer(serializers.ModelSerializer):
     logo = serializers.ImageField(required=False, allow_null=True)
     has_complete_profile = serializers.BooleanField(read_only=True)
 
+    def validate_whatsapp_number(self, value):
+        value = ''.join(character for character in value.strip() if character.isdigit())
+        return value or None
+
     class Meta:
         model = Business
         fields = '__all__'

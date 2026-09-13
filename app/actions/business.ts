@@ -6,6 +6,7 @@ type BusinessData = {
   business_name: string
   business_email?: string
   business_phone?: string
+  whatsapp_number?: string
   business_address?: string
   business_type?: string
   logo?: File | null
@@ -92,6 +93,7 @@ export async function updateBusiness(businessId: string, updates: Partial<Busine
   if (updates.business_name !== undefined) formData.set('name', updates.business_name)
   if (updates.business_email !== undefined) formData.set('email', updates.business_email)
   if (updates.business_phone !== undefined) formData.set('phone', updates.business_phone)
+  if (updates.whatsapp_number !== undefined) formData.set('whatsapp_number', updates.whatsapp_number)
   if (updates.business_address !== undefined) formData.set('address', updates.business_address)
   if (updates.logo) formData.set('logo', updates.logo)
   return request(`/businesses/${businessId}/`, { method: 'PATCH', body: formData })

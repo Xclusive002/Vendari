@@ -9,6 +9,7 @@ class Business(models.Model):
     name = models.CharField(max_length=255)
     email = models.EmailField(max_length=255, blank=True)
     phone = models.CharField(max_length=20, blank=True)
+    whatsapp_number = models.CharField(max_length=30, unique=True, blank=True, null=True)
     address = models.TextField(blank=True)
     logo = models.ImageField(upload_to='business_logos/', blank=True, null=True)
     business_type = models.CharField(max_length=100, blank=True)
@@ -40,6 +41,10 @@ class Business(models.Model):
         if subscription and subscription.status == 'active':
             return not subscription.renews_at or subscription.renews_at > timezone.now()
         return self.trial_active
+
+    @property
+    def has_active_access(self):
+        return self.access_active
 
 
 class Membership(models.Model):

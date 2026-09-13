@@ -29,6 +29,7 @@ from customers.views import CustomerViewSet
 from billing.views import PaystackInitializeView, PaystackWebhookView, PaystackBanksView, VerifyBankAccountView, CreateSubaccountView, InvoicePaymentInitializeView
 from ai_insights.views import BusinessAskView, BusinessInsightsView, VoiceEntryView
 from invoices.views import InvoiceViewSet, SaleReceiptView, GenerateInvoiceNotesView
+from whatsapp.views import WhatsAppWebhookView
 
 business_router = routers.SimpleRouter()
 business_router.register('businesses', BusinessViewSet, basename='business')
@@ -59,6 +60,7 @@ urlpatterns = [
     path('api/businesses/<int:business_id>/dashboard-summary/', BusinessDashboardSummaryView.as_view()),
     path('api/billing/paystack/initialize/', PaystackInitializeView.as_view()),
     path('api/billing/paystack/webhook/', PaystackWebhookView.as_view()),
+    path('api/whatsapp/webhook/', WhatsAppWebhookView.as_view()),
     path('api/paystack/banks/', PaystackBanksView.as_view()),
     path('api/businesses/<int:business_id>/verify-bank-account/', VerifyBankAccountView.as_view()),
     path('api/businesses/<int:business_id>/create-subaccount/', CreateSubaccountView.as_view()),

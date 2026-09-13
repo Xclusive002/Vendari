@@ -28,6 +28,7 @@ const plans = [
       'Advanced reports and downloadable report exports',
       'AI questions, AI insights, and forecasting',
       'Voice entry for sales and inventory',
+      'WhatsApp sales, inventory restocks, and customer logging by text or voice note',
       'Team members, staff roles, invitations, and activity controls',
       'Business profile, settings, notifications, and secure account access',
       'All future Vendari product improvements included in membership',

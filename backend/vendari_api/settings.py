@@ -46,6 +46,11 @@ CORS_ALLOWED_ORIGINS = env.list(
 PAYSTACK_SECRET_KEY = env('PAYSTACK_SECRET_KEY', default='')
 GEMINI_API_KEY = env('GEMINI_API_KEY', default='')
 GEMINI_MODEL = env('GEMINI_MODEL', default='gemini-2.5-flash')
+WHATSAPP_ACCESS_TOKEN = env('WHATSAPP_ACCESS_TOKEN', default='')
+WHATSAPP_PHONE_NUMBER_ID = env('WHATSAPP_PHONE_NUMBER_ID', default='')
+WHATSAPP_BUSINESS_ACCOUNT_ID = env('WHATSAPP_BUSINESS_ACCOUNT_ID', default='')
+WHATSAPP_APP_SECRET = env('WHATSAPP_APP_SECRET', default='')
+WHATSAPP_WEBHOOK_VERIFY_TOKEN = env('WHATSAPP_WEBHOOK_VERIFY_TOKEN', default='')
 
 # Application definition
 
@@ -71,6 +76,7 @@ INSTALLED_APPS = [
     'invoices',
     'billing',
     'ai_insights',
+    'whatsapp',
 ]
 
 MIDDLEWARE = [

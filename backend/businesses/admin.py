@@ -5,7 +5,7 @@ from .models import Business, ConciergeInquiry, InviteCode, Membership
 
 @admin.register(Business)
 class BusinessAdmin(admin.ModelAdmin):
-    list_display = ('name', 'owner', 'email', 'business_type', 'created_at')
+    list_display = ('name', 'owner', 'email', 'whatsapp_number', 'business_type', 'created_at')
     list_filter = ('business_type', 'created_at')
     search_fields = ('name', 'email', 'owner__email', 'paystack_subaccount_code')
     readonly_fields = ('paystack_subaccount_code',)
