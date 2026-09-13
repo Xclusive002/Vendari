@@ -399,7 +399,7 @@ export default async function Home() {
           <div className="flex items-center gap-3">
             <Link
               href="/login"
-              className="hidden rounded-md px-3 py-2 text-sm font-semibold text-ink hover:bg-bg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue sm:inline-flex"
+              className="inline-flex rounded-md px-3 py-2 text-sm font-semibold text-ink hover:bg-bg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue"
             >
               Sign in
             </Link>
@@ -413,7 +413,7 @@ export default async function Home() {
               href="/register"
               className="motion-hover inline-flex items-center gap-2 rounded-md bg-brand-gradient px-3.5 py-2 text-xs font-semibold text-white shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue focus-visible:ring-offset-2 sm:text-sm"
             >
-              Start trial <ArrowRight className="h-3.5 w-3.5" />
+              Start now <ArrowRight className="h-3.5 w-3.5" />
             </Link>
           </div>
         </div>
@@ -769,7 +769,7 @@ export default async function Home() {
                 href="/register"
                 className="transition-colors hover:text-white"
               >
-                Start trial
+                Become a member
               </Link>
             </nav>
           </div>
