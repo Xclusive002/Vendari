@@ -1,3 +1,4 @@
+from django.conf import settings
 from rest_framework import serializers
 
 from .models import Business, ConciergeInquiry
@@ -6,6 +7,10 @@ from .models import Business, ConciergeInquiry
 class BusinessSerializer(serializers.ModelSerializer):
     logo = serializers.ImageField(required=False, allow_null=True)
     has_complete_profile = serializers.BooleanField(read_only=True)
+    whatsapp_service_number = serializers.SerializerMethodField()
+
+    def get_whatsapp_service_number(self, instance):
+        return getattr(settings, 'WHATSAPP_DISPLAY_NUMBER', '')
 
     def validate_whatsapp_number(self, value):
         value = ''.join(character for character in value.strip() if character.isdigit())

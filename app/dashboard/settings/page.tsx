@@ -19,6 +19,7 @@ export default function SettingsPage() {
   const [businessEmail, setBusinessEmail] = useState('')
   const [businessPhone, setBusinessPhone] = useState('')
   const [whatsappNumber, setWhatsappNumber] = useState('')
+  const [whatsappServiceNumber, setWhatsappServiceNumber] = useState('')
   const [businessAddress, setBusinessAddress] = useState('')
   const [logo, setLogo] = useState<File | null>(null)
   const [logoPreview, setLogoPreview] = useState('')
@@ -45,6 +46,7 @@ export default function SettingsPage() {
         setBusinessEmail(business.email || '')
         setBusinessPhone(business.phone || '')
         setWhatsappNumber(business.whatsapp_number || '')
+        setWhatsappServiceNumber(business.whatsapp_service_number || '')
         setBusinessAddress(business.address || '')
         setLogoPreview(business.logo || '')
         setLinkedPayment({ bankCode: business.bank_code || '', accountNumber: business.bank_account_number || '', accountName: business.bank_account_name || '', subaccountCode: business.paystack_subaccount_code || '' })
@@ -237,6 +239,26 @@ export default function SettingsPage() {
               {loading ? 'Saving...' : 'Save business settings'}
             </LoadingButton>
             </>}
+          </CardContent>
+        </Card>
+
+        <Card className="dashboard-panel">
+          <CardHeader>
+            <CardTitle className="font-display text-ink">Use Vendari on WhatsApp</CardTitle>
+            <CardDescription>Connect your own WhatsApp number, then message Vendari to record business activity.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="rounded-xl border border-blue/20 bg-blue/5 p-4">
+              <p className="text-sm font-semibold text-ink">1. Save the Vendari WhatsApp number</p>
+              {whatsappServiceNumber ? <a href={`https://wa.me/${whatsappServiceNumber.replace(/\D/g, '')}`} target="_blank" rel="noreferrer" className="mt-2 inline-flex text-lg font-semibold text-blue hover:underline">+{whatsappServiceNumber}</a> : <p className="mt-2 text-sm text-negative">Vendari WhatsApp is not configured yet. An administrator must add WHATSAPP_DISPLAY_NUMBER to the backend environment.</p>}
+              <p className="mt-1 text-sm text-text-secondary">Open this number in WhatsApp and send a message such as “I sold 3 bags of cement”.</p>
+            </div>
+            <div className="rounded-xl border border-border bg-bg p-4 text-sm leading-6 text-text-secondary">
+              <p className="font-semibold text-ink">2. Link your personal number above</p>
+              <p className="mt-1">In the WhatsApp number field, enter the phone number you will message from, in international format without spaces, for example 2348012345678. This tells Vendari which business should receive your commands.</p>
+              <p className="mt-2">After you send a sale, restock, or customer message, Vendari will summarize it. Reply <strong className="text-ink">YES</strong> to save it or <strong className="text-ink">NO</strong> to cancel it.</p>
+            </div>
+            <p className="text-xs leading-5 text-text-muted">Your Meta access token, phone number ID, business account ID, app secret, and webhook token are managed by Vendari and are never entered here.</p>
           </CardContent>
         </Card>
 
