@@ -18,12 +18,13 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from businesses.models import Business, Membership
+from businesses.models import Business, Membership, StorefrontOrder
 from invoices.models import Invoice, InvoicePayment
 
 from .models import Plan, Subscription
 from .serializers import PaystackInitializeSerializer
 from .utils import has_feature
+from sales.serializers import SaleSerializer
 
 logger = logging.getLogger(__name__)
 
@@ -209,6 +210,29 @@ class PaystackWebhookView(APIView):
                     invoice.status = Invoice.PAID
                     invoice.save(update_fields=('status',))
             return Response({'status': 'processed' if created else 'already_processed', 'invoice_id': invoice.pk})
+        if metadata.get('payment_type') == 'storefront_order':
+            order = StorefrontOrder.objects.filter(
+                pk=metadata.get('storefront_order_id'),
+                business_id=metadata.get('business_id'),
+            ).first()
+            if order is None:
+                return Response({'error': 'Invalid storefront order metadata.'}, status=status.HTTP_400_BAD_REQUEST)
+            with transaction.atomic():
+                order = StorefrontOrder.objects.select_for_update().prefetch_related('line_items').get(pk=order.pk)
+                if order.status == StorefrontOrder.STATUS_PAID:
+                    return Response({'status': 'already_processed', 'order_id': order.pk})
+                for line in order.line_items.all():
+                    serializer = SaleSerializer(data={
+                        'item': line.inventory_item_id,
+                        'quantity': line.quantity,
+                        'payment_method': 'paystack',
+                    }, context={'business': order.business, 'storefront_unit_price': line.unit_price})
+                    serializer.is_valid(raise_exception=True)
+                    serializer.save()
+                order.status = StorefrontOrder.STATUS_PAID
+                order.paystack_reference = reference or order.paystack_reference
+                order.save(update_fields=('status', 'paystack_reference'))
+            return Response({'status': 'processed', 'order_id': order.pk})
         business_id = metadata.get('business_id')
         plan_id = metadata.get('plan_id')
         if not reference or not business_id or not plan_id:

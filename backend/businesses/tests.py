@@ -1,12 +1,16 @@
+from datetime import timedelta
 from io import BytesIO
 
 from PIL import Image
+from django.utils import timezone
 from rest_framework import status
 from rest_framework.test import APITestCase
 
 from accounts.models import User
 
-from .models import Business, ConciergeInquiry, Membership
+from inventory.models import InventoryItem
+
+from .models import Business, ConciergeInquiry, Membership, StorefrontOrder, StorefrontSettings
 
 
 def image_file():
@@ -21,7 +25,12 @@ def image_file():
 class BusinessProfileTests(APITestCase):
 	def setUp(self):
 		self.user = User.objects.create_user('business@test.local', 'password123')
-		self.business = Business.objects.create(owner=self.user, name='Profile Business')
+		self.business = Business.objects.create(
+			owner=self.user,
+			name='Profile Business',
+			trial_started_at=timezone.now(),
+			trial_ends_at=timezone.now() + timedelta(days=5),
+		)
 		Membership.objects.create(user=self.user, business=self.business, role='owner')
 		self.client.force_authenticate(self.user)
 
@@ -55,5 +64,106 @@ class BusinessProfileTests(APITestCase):
 		}, format='json')
 		self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 		self.assertTrue(ConciergeInquiry.objects.filter(business_name='Test Shop').exists())
+
+	def test_storefront_launch_generates_unique_non_reserved_slug(self):
+		store1 = StorefrontSettings.objects.create(business=self.business, slug='adeventures', is_published=True)
+		self.assertEqual(store1.slug, 'adeventures')
+		self.assertNotIn(store1.slug, StorefrontSettings.RESERVED_SLUGS)
+
+		other_business = Business.objects.create(owner=self.user, name='Ade Ventures')
+		other_store = StorefrontSettings.generate_for_business(other_business)
+		self.assertNotEqual(other_store.slug, 'adeventures')
+		self.assertTrue(other_store.slug.startswith('adeventures'))
+		self.assertNotIn(other_store.slug, StorefrontSettings.RESERVED_SLUGS)
+
+		reserved = StorefrontSettings.generate_for_business(Business.objects.create(owner=self.user, name='Admin Store'))
+		self.assertNotEqual(reserved.slug, 'admin')
+
+	def test_storefront_slug_endpoints_reject_reserved_and_taken_values(self):
+		other_business = Business.objects.create(owner=self.user, name='Fresh Basket Co')
+		StorefrontSettings.objects.create(business=other_business, slug='freshbasket', is_published=True)
+
+		reserved_response = self.client.patch(
+			f'/api/businesses/{self.business.pk}/storefront-settings/',
+			{'slug': 'admin'},
+			format='json',
+		)
+		self.assertEqual(reserved_response.status_code, status.HTTP_400_BAD_REQUEST)
+		self.assertIn('slug', reserved_response.data)
+
+		taken_response = self.client.patch(
+			f'/api/businesses/{self.business.pk}/storefront-settings/',
+			{'slug': 'freshbasket'},
+			format='json',
+		)
+		self.assertEqual(taken_response.status_code, status.HTTP_400_BAD_REQUEST)
+		self.assertIn('slug', taken_response.data)
+
+	def test_check_slug_endpoint_returns_availability(self):
+		self.client.logout()
+		response = self.client.get('/api/storefronts/check-slug/?slug=admin')
+		self.assertEqual(response.status_code, status.HTTP_200_OK)
+		self.assertFalse(response.data['available'])
+
+		response = self.client.get('/api/storefronts/check-slug/?slug=shopdelight')
+		self.assertEqual(response.status_code, status.HTTP_200_OK)
+		self.assertTrue(response.data['available'])
+
+	def test_public_storefront_only_returns_priced_visible_items(self):
+		storefront = StorefrontSettings.objects.create(business=self.business, slug='profilebusiness', is_published=True)
+		visible = InventoryItem.objects.create(
+			business=self.business, product_name='Visible', qty_in_stock=3, cost_price=10,
+			selling_price=20, is_visible_on_storefront=True,
+		)
+		InventoryItem.objects.create(
+			business=self.business, product_name='Hidden', qty_in_stock=3, cost_price=10,
+			selling_price=20, is_visible_on_storefront=False,
+		)
+		InventoryItem.objects.create(
+			business=self.business, product_name='Unpriced', qty_in_stock=3, cost_price=10,
+			selling_price=None, is_visible_on_storefront=True,
+		)
+
+		self.client.logout()
+		response = self.client.get(f'/api/storefronts/{storefront.slug}/')
+
+		self.assertEqual(response.status_code, status.HTTP_200_OK)
+		self.assertEqual(response.data['business_name'], self.business.name)
+		self.assertEqual([item['product_name'] for item in response.data['items']], [visible.product_name])
+		self.assertEqual(set(response.data['items'][0]), {'product_name', 'description', 'image', 'selling_price', 'in_stock'})
+
+	def test_unpublished_or_unknown_storefront_is_not_publicly_discoverable(self):
+		StorefrontSettings.objects.create(business=self.business, slug='hiddenstore', is_published=False)
+		self.client.logout()
+		self.assertEqual(self.client.get('/api/storefronts/hiddenstore/').status_code, status.HTTP_404_NOT_FOUND)
+		self.assertEqual(self.client.get('/api/storefronts/does-not-exist/').status_code, status.HTTP_404_NOT_FOUND)
+
+	def test_storefront_whatsapp_checkout_returns_prefilled_link(self):
+		storefront = StorefrontSettings.objects.create(
+			business=self.business, slug='profilebusiness', is_published=True,
+			whatsapp_number='2348012345678',
+		)
+		InventoryItem.objects.create(
+			business=self.business, product_name='Visible', qty_in_stock=3, cost_price=10,
+			selling_price=20, is_visible_on_storefront=True,
+		)
+		self.client.logout()
+		response = self.client.post(f'/api/storefronts/{storefront.slug}/checkout/', {
+			'customer_name': 'Ada', 'customer_phone': '08012345678', 'delivery_option': 'pickup',
+			'checkout_method': 'whatsapp', 'items': [{'product_name': 'Visible', 'quantity': 2}],
+		}, format='json')
+		self.assertEqual(response.status_code, status.HTTP_200_OK)
+		self.assertIn('wa.me/2348012345678?text=', response.data['whatsapp_url'])
+		self.assertEqual(StorefrontOrder.objects.get(pk=response.data['order_id']).status, StorefrontOrder.STATUS_PENDING_WHATSAPP)
+
+	def test_pay_now_requires_payment_setup(self):
+		storefront = StorefrontSettings.objects.create(business=self.business, slug='profilebusiness', is_published=True)
+		self.client.logout()
+		response = self.client.post(f'/api/storefronts/{storefront.slug}/checkout/', {
+			'customer_name': 'Ada', 'customer_phone': '08012345678', 'delivery_option': 'pickup',
+			'checkout_method': 'pay_now', 'items': [],
+		}, format='json')
+		self.assertEqual(response.status_code, status.HTTP_409_CONFLICT)
+		self.assertIn('Pay Now', response.data['detail'])
 
 # Create your tests here.

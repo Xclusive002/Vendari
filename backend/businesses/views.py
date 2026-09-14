@@ -1,5 +1,8 @@
 from datetime import timedelta
+from decimal import Decimal, InvalidOperation
+from urllib.parse import quote
 
+from django.db import transaction
 from django.db.models import F, Sum
 from django.utils import timezone
 from rest_framework import status, viewsets
@@ -11,11 +14,14 @@ from accounts.permissions import IsBusinessMember
 from billing.models import Plan
 from billing.utils import has_feature
 
-from .models import Business, Membership
-from .serializers import BusinessSerializer, ConciergeInquirySerializer
+from .models import Business, Membership, StorefrontOrder, StorefrontOrderLineItem, StorefrontSettings
+from .serializers import BusinessSerializer, ConciergeInquirySerializer, StorefrontSettingsSerializer
 from expenses.models import Expense
 from inventory.models import InventoryItem
+from inventory.serializers import PublicInventoryItemSerializer
 from sales.models import Sale
+from sales.serializers import SaleSerializer
+from billing.views import paystack_request
 
 
 class BusinessViewSet(viewsets.ModelViewSet):
@@ -159,6 +165,159 @@ class BusinessMembersView(APIView):
 		invite.save(update_fields=['revoked_at'])
 		return Response(status=status.HTTP_204_NO_CONTENT)
 
+class StorefrontSlugCheckView(APIView):
+    permission_classes = []
+
+    def get(self, request):
+        slug = request.query_params.get('slug', '').strip()
+        normalized = StorefrontSettings.normalize_slug(slug)
+        if not normalized:
+            return Response({'available': False, 'message': 'Please enter a valid slug.'}, status=status.HTTP_400_BAD_REQUEST)
+        available = normalized not in StorefrontSettings.RESERVED_SLUGS and not StorefrontSettings.objects.filter(slug=normalized).exists()
+        return Response({'slug': normalized, 'available': available, 'message': 'Slug is available.' if available else 'Slug is already taken or reserved.'})
+
+
+class StorefrontSettingsView(APIView):
+    permission_classes = [IsBusinessMember]
+
+    def get_object(self, business_id, user):
+        business = Business.objects.filter(pk=business_id).first()
+        if business is None:
+            return None
+        if not (Membership.objects.filter(user=user, business=business).exists() or business.owner == user):
+            return None
+        return StorefrontSettings.ensure_for_business(business)
+
+    def get(self, request, business_id):
+        storefront = self.get_object(business_id, request.user)
+        if storefront is None:
+            return Response({'detail': 'Business not found.'}, status=status.HTTP_404_NOT_FOUND)
+        serializer = StorefrontSettingsSerializer(storefront, context={'request': request})
+        return Response(serializer.data)
+
+    def patch(self, request, business_id):
+        storefront = self.get_object(business_id, request.user)
+        if storefront is None:
+            return Response({'detail': 'Business not found.'}, status=status.HTTP_404_NOT_FOUND)
+        serializer = StorefrontSettingsSerializer(storefront, data=request.data, partial=True, context={'request': request})
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        serializer.save()
+        return Response(serializer.data)
+
+
+class PublicStorefrontView(APIView):
+	permission_classes = []
+
+	def get(self, request, slug):
+		storefront = StorefrontSettings.objects.select_related('business').filter(
+			slug=StorefrontSettings.normalize_slug(slug),
+			is_published=True,
+		).first()
+		if storefront is None:
+			return Response({'detail': 'Storefront not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+		items = InventoryItem.objects.filter(
+			business=storefront.business,
+			is_visible_on_storefront=True,
+			selling_price__isnull=False,
+		).exclude(selling_price=0).order_by('product_name')
+		return Response({
+			'business_name': storefront.business.name,
+			'has_payments_enabled': storefront.business.has_payments_enabled,
+			'storefront': StorefrontSettingsSerializer(storefront, context={'request': request}).data,
+			'items': PublicInventoryItemSerializer(items, many=True, context={'request': request}).data,
+		})
+
+
+class PublicStorefrontCheckoutView(APIView):
+	permission_classes = []
+
+	def post(self, request, slug):
+		storefront = StorefrontSettings.objects.select_related('business').filter(
+			slug=StorefrontSettings.normalize_slug(slug), is_published=True,
+		).first()
+		if storefront is None:
+			return Response({'detail': 'Storefront not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+		customer_name = str(request.data.get('customer_name', '')).strip()
+		customer_phone = str(request.data.get('customer_phone', '')).strip()
+		customer_address = str(request.data.get('customer_address', '')).strip()
+		delivery_option = str(request.data.get('delivery_option', '')).strip()
+		checkout_method = str(request.data.get('checkout_method', '')).strip().lower()
+		if not customer_name or not customer_phone:
+			return Response({'detail': 'Customer name and phone are required.'}, status=status.HTTP_400_BAD_REQUEST)
+		if delivery_option not in dict(StorefrontSettings.DELIVERY_CHOICES):
+			return Response({'detail': 'Choose a valid delivery option.'}, status=status.HTTP_400_BAD_REQUEST)
+		if checkout_method not in {'whatsapp', 'pay_now'}:
+			return Response({'detail': 'Choose WhatsApp or Pay Now checkout.'}, status=status.HTTP_400_BAD_REQUEST)
+		if checkout_method == 'pay_now' and not storefront.business.has_payments_enabled:
+			return Response({'detail': 'Pay Now is unavailable until this business completes Payment Settings.'}, status=status.HTTP_409_CONFLICT)
+		if checkout_method == 'whatsapp' and not ''.join(character for character in storefront.whatsapp_number if character.isdigit()):
+			return Response({'detail': 'This storefront has not configured a WhatsApp number yet.'}, status=status.HTTP_409_CONFLICT)
+
+		raw_items = request.data.get('items')
+		if not isinstance(raw_items, list) or not raw_items:
+			return Response({'detail': 'Your cart is empty.'}, status=status.HTTP_400_BAD_REQUEST)
+
+		requested = {}
+		for line in raw_items:
+			name = str(line.get('product_name', '')).strip() if isinstance(line, dict) else ''
+			try:
+				quantity = int(line.get('quantity', 0)) if isinstance(line, dict) else 0
+			except (TypeError, ValueError):
+				quantity = 0
+			if not name or quantity <= 0:
+				return Response({'detail': 'Every cart item needs a valid product and quantity.'}, status=status.HTTP_400_BAD_REQUEST)
+			requested[name.casefold()] = requested.get(name.casefold(), 0) + quantity
+
+		items = list(InventoryItem.objects.filter(
+			business=storefront.business, is_visible_on_storefront=True,
+			selling_price__isnull=False,
+		))
+		by_name = {item.product_name.casefold(): item for item in items}
+		if len(by_name) != len(requested):
+			return Response({'detail': 'One or more products are no longer available.'}, status=status.HTTP_409_CONFLICT)
+		total = Decimal('0.00')
+		validated_lines = []
+		for normalized_name, quantity in requested.items():
+			item = by_name[normalized_name]
+			if item.selling_price is None or item.selling_price <= 0:
+				return Response({'detail': f'{item.product_name} no longer has a valid price.'}, status=status.HTTP_409_CONFLICT)
+			if item.qty_in_stock < quantity:
+				return Response({'detail': f'Only {item.qty_in_stock} of {item.product_name} remain in stock.'}, status=status.HTTP_409_CONFLICT)
+			total += item.selling_price * quantity
+			validated_lines.append((item, quantity))
+
+		with transaction.atomic():
+			order = StorefrontOrder.objects.create(
+				business=storefront.business, customer_name=customer_name,
+				customer_phone=customer_phone, customer_address=customer_address,
+				delivery_option=delivery_option,
+				status=StorefrontOrder.STATUS_PENDING_PAYMENT if checkout_method == 'pay_now' else StorefrontOrder.STATUS_PENDING_WHATSAPP,
+				total=total,
+			)
+			for item, quantity in validated_lines:
+				StorefrontOrderLineItem.objects.create(order=order, inventory_item=item, quantity=quantity, unit_price=item.selling_price)
+
+		if checkout_method == 'whatsapp':
+			whatsapp_number = ''.join(character for character in storefront.whatsapp_number if character.isdigit())
+			summary = '\n'.join(f'- {item.product_name} x {quantity} = N{item.selling_price * quantity:,.2f}' for item, quantity in validated_lines)
+			message = f'Hello {storefront.business.name}, I would like to place an order.\n\n{summary}\n\nTotal: N{total:,.2f}\nName: {customer_name}\nPhone: {customer_phone}\nDelivery: {delivery_option}'
+			return Response({'order_id': order.pk, 'whatsapp_url': f'https://wa.me/{whatsapp_number}?text={quote(message)}'})
+
+		data = paystack_request('transaction/initialize', {
+			'email': f'order-{order.pk}@orders.vendari.name.ng',
+			'amount': int(total * 100), 'currency': 'NGN',
+			'subaccount': storefront.business.paystack_subaccount_code,
+			'bearer': 'subaccount',
+			'metadata': {'payment_type': 'storefront_order', 'storefront_order_id': order.pk, 'business_id': storefront.business_id},
+		}, method='POST')
+		if not data or not data.get('status') or not data.get('data', {}).get('authorization_url'):
+			return Response({'detail': 'Unable to initialize payment. Please try WhatsApp checkout instead.'}, status=status.HTTP_502_BAD_GATEWAY)
+		order.paystack_reference = data['data'].get('reference')
+		order.save(update_fields=('paystack_reference',))
+		return Response({'order_id': order.pk, 'authorization_url': data['data']['authorization_url'], 'reference': order.paystack_reference})
 
 class BusinessDashboardSummaryView(APIView):
 	permission_classes = [IsBusinessMember]

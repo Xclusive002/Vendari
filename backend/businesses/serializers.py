@@ -1,7 +1,37 @@
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from rest_framework import serializers
 
-from .models import Business, ConciergeInquiry
+from .models import Business, ConciergeInquiry, StorefrontSettings
+
+
+class StorefrontSettingsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = StorefrontSettings
+        fields = [
+            'id', 'business', 'slug', 'is_published', 'theme', 'primary_color', 'accent_color',
+            'banner_image', 'description', 'whatsapp_number', 'social_links', 'delivery_option',
+            'created_at', 'updated_at',
+        ]
+        read_only_fields = ('id', 'business', 'created_at', 'updated_at')
+
+    def validate_slug(self, value):
+        request = self.context.get('request')
+        business = getattr(self.instance, 'business', None)
+        if request and request.parser_context.get('kwargs', {}).get('business_id'):
+            business = Business.objects.filter(pk=request.parser_context['kwargs']['business_id']).first() or business
+        try:
+            normalized = StorefrontSettings.validate_slug_candidate(value, business=business)
+        except ValidationError as exc:
+            raise serializers.ValidationError(str(exc))
+        return normalized
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        request = self.context.get('request')
+        if instance.banner_image:
+            data['banner_image'] = request.build_absolute_uri(instance.banner_image.url) if request else instance.banner_image.url
+        return data
 
 
 class BusinessSerializer(serializers.ModelSerializer):
@@ -26,6 +56,7 @@ class BusinessSerializer(serializers.ModelSerializer):
         if instance.logo:
             request = self.context.get('request')
             data['logo'] = request.build_absolute_uri(instance.logo.url) if request else instance.logo.url
+        data['has_payments_enabled'] = instance.has_payments_enabled
         return data
 
 

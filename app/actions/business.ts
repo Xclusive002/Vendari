@@ -33,6 +33,9 @@ type ApiItem = {
   reorder_level: number
   cost_price?: number
   selling_price?: number
+  description?: string
+  image?: string | null
+  is_visible_on_storefront?: boolean
   is_low_stock?: boolean
 }
 
@@ -55,6 +58,9 @@ function itemFromApi(item: ApiItem) {
     unit_cost: item.cost_price || 0,
     supplier_name: '',
     supplier_contact: '',
+    description: item.description || '',
+    image: item.image || null,
+    is_visible_on_storefront: Boolean(item.is_visible_on_storefront),
   }
 }
 
@@ -108,6 +114,32 @@ export async function getBusiness() {
   }
 }
 
+export async function getStorefrontSettings(businessId: string) {
+  return request<any>(`/businesses/${businessId}/storefront-settings/`)
+}
+
+export async function launchStorefront(businessId: string) {
+  const result = await getStorefrontSettings(businessId)
+  if (result.success && result.data?.slug) return result
+
+  const autoSlug = `shop${Math.random().toString(36).slice(2, 7)}`
+  return request<any>(`/businesses/${businessId}/storefront-settings/`, {
+    method: 'PATCH',
+    body: JSON.stringify({ slug: autoSlug, is_published: true }),
+  })
+}
+
+export async function checkStorefrontSlug(slug: string) {
+  return request<{ slug: string; available: boolean; message: string }>(`/storefronts/check-slug/?slug=${encodeURIComponent(slug)}`)
+}
+
+export async function updateStorefrontSettings(businessId: string, updates: Record<string, any>) {
+  return request<any>(`/businesses/${businessId}/storefront-settings/`, {
+    method: 'PATCH',
+    body: JSON.stringify(updates),
+  })
+}
+
 export async function getDashboardSummary(businessId: string) {
   return request<{
     total_sales: number
@@ -156,6 +188,20 @@ export async function updateInventoryItem(businessId: string, itemId: string, up
   const result = await request<ApiItem>(`/businesses/${businessId}/inventory/${itemId}/`, { method: 'PATCH', body: JSON.stringify(itemToApi(updates)) })
   if (!result.success) return result
   return { success: true as const, data: itemFromApi(result.data) }
+}
+
+export async function setAllInventoryStorefrontVisibility(businessId: string, visible: boolean) {
+  return request<{ visible: boolean; updated: number }>(`/businesses/${businessId}/inventory/storefront-visibility/`, {
+    method: 'POST',
+    body: JSON.stringify({ visible }),
+  })
+}
+
+export async function setInventoryItemStorefrontVisibility(businessId: string, itemId: string, visible: boolean) {
+  return request<ApiItem>(`/businesses/${businessId}/inventory/${itemId}/`, {
+    method: 'PATCH',
+    body: JSON.stringify({ is_visible_on_storefront: visible }),
+  })
 }
 
 export async function deleteInventoryItem(businessId: string, itemId: string) {

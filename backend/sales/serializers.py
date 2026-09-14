@@ -1,4 +1,5 @@
 from django.db import transaction
+from decimal import Decimal
 from rest_framework import serializers
 
 from inventory.models import InventoryItem
@@ -31,11 +32,12 @@ class SaleSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError({'quantity': 'Quantity must be greater than zero.'})
         if item.qty_in_stock < quantity:
             raise serializers.ValidationError({'quantity': 'Sale would oversell available stock.'})
+        unit_price = self.context.get('storefront_unit_price', item.selling_price)
         validated_data.update(
             business=business,
             product_name=item.product_name,
-            unit_price=item.selling_price,
-            total=item.selling_price * quantity,
+            unit_price=unit_price,
+            total=unit_price * quantity,
         )
         item.qty_in_stock -= quantity
         item.save(update_fields=('qty_in_stock', 'updated_at'))

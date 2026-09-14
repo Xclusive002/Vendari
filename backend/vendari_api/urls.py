@@ -21,7 +21,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 from rest_framework_nested import routers
 
-from businesses.views import BusinessDashboardSummaryView, BusinessViewSet, BusinessMembersView, BusinessPlansView, BusinessSubscriptionView, ConciergeInquiryView
+from businesses.views import BusinessDashboardSummaryView, BusinessViewSet, BusinessMembersView, BusinessPlansView, BusinessSubscriptionView, ConciergeInquiryView, PublicStorefrontCheckoutView, PublicStorefrontView, StorefrontSettingsView, StorefrontSlugCheckView
 from inventory.views import InventoryItemViewSet, TopProductsView
 from sales.views import SaleViewSet
 from expenses.views import ExpenseViewSet
@@ -55,8 +55,12 @@ urlpatterns = [
     path('api/auth/', include('accounts.urls')),
     path('api/concierge-inquiries/', ConciergeInquiryView.as_view()),
     path('api/billing/plans/', BusinessPlansView.as_view()),
+    path('api/storefronts/check-slug/', StorefrontSlugCheckView.as_view()),
+    path('api/storefronts/<slug>/', PublicStorefrontView.as_view()),
+    path('api/storefronts/<slug>/checkout/', PublicStorefrontCheckoutView.as_view()),
     path('api/businesses/<int:business_id>/subscription/', BusinessSubscriptionView.as_view()),
     path('api/businesses/<int:business_id>/members/', BusinessMembersView.as_view()),
+    path('api/businesses/<int:business_id>/storefront-settings/', StorefrontSettingsView.as_view()),
     path('api/businesses/<int:business_id>/dashboard-summary/', BusinessDashboardSummaryView.as_view()),
     path('api/billing/paystack/initialize/', PaystackInitializeView.as_view()),
     path('api/billing/paystack/webhook/', PaystackWebhookView.as_view()),

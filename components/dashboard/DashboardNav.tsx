@@ -4,7 +4,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { useState } from 'react'
-import { BarChart3, CreditCard, HelpCircle, LayoutDashboard, LogOut, Menu, MessageCircleQuestion, MoreHorizontal, Package, Receipt, Settings, Settings2, ShoppingCart, Users, X } from 'lucide-react'
+import { BarChart3, CreditCard, HelpCircle, LayoutDashboard, LogOut, Menu, MessageCircleQuestion, MoreHorizontal, Package, Receipt, Settings, Settings2, ShoppingCart, Store, Users, X } from 'lucide-react'
 import { logout } from '@/app/actions/auth'
 
 export function DashboardNav() {
@@ -22,6 +22,7 @@ export function DashboardNav() {
     { href: '/dashboard/expenses', label: 'Expenses', icon: Receipt },
     { href: '/dashboard/help', label: 'Help', icon: HelpCircle },
     { href: '/dashboard/setup', label: 'Setup', icon: Settings2 },
+    { href: '/dashboard/storefront', label: 'Storefront', icon: Store },
     { href: '/dashboard/ask', label: 'Ask', icon: MessageCircleQuestion },
     { href: '/dashboard/settings', label: 'Settings', icon: Settings },
     { href: '/dashboard/team', label: 'Team', icon: Users },

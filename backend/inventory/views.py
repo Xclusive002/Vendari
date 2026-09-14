@@ -36,6 +36,14 @@ class BusinessScopedViewSet(viewsets.ModelViewSet):
 class InventoryItemViewSet(BusinessScopedViewSet):
     serializer_class = InventoryItemSerializer
 
+    @action(detail=False, methods=['post'], url_path='storefront-visibility')
+    def storefront_visibility(self, request, business_pk=None):
+        visible = request.data.get('visible')
+        if not isinstance(visible, bool):
+            return Response({'detail': 'visible must be a boolean.'}, status=status.HTTP_400_BAD_REQUEST)
+        updated = self.get_queryset().update(is_visible_on_storefront=visible)
+        return Response({'visible': visible, 'updated': updated})
+
 
 class TopProductsView(APIView):
 	"""
