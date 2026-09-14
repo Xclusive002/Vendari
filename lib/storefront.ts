@@ -1,3 +1,4 @@
-export function getStorefrontUrl(slug: string) {
-  return `/s/${encodeURIComponent(slug)}`
+export function getStorefrontUrl(slug: string, absolute = false) {
+  const path = `/s/${encodeURIComponent(slug)}`
+  return absolute ? `https://www.vendari.name.ng${path}` : path
 }

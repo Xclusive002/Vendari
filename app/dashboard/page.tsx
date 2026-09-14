@@ -4,12 +4,14 @@ import { useEffect, useState } from 'react'
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { AlertTriangle, ArrowDownRight, ArrowRight, ArrowUpRight, CircleDollarSign, FileText, Lightbulb, Package, Plus, ShoppingCart, Sparkles, Wallet } from 'lucide-react'
 import Link from 'next/link'
-import { getBusiness, getDashboardSummary, getInsights, getInvoices } from '@/app/actions/business'
+import { getBusiness, getDashboardSummary, getInsights, getInvoices, getStorefrontSettings } from '@/app/actions/business'
 import { getCurrentUser, markWelcomeSeen } from '@/app/actions/auth'
 import { useCountUp } from '@/hooks/use-count-up'
 import { Skeleton } from '@/components/ui/skeleton'
 import { LoadingButton } from '@/components/ui/loading-button'
 import { getSubscription } from '@/app/actions/payment'
+import { getStorefrontUrl } from '@/lib/storefront'
+import { toast } from 'sonner'
 
 type Icon = typeof Wallet
 type DashboardSummary = {
@@ -28,6 +30,36 @@ type MobileTodoItem = {
   detail: string
   href: string
   tone: 'warning' | 'critical' | 'neutral'
+}
+
+function StorefrontCard({ storefront }: { storefront: any }) {
+  const link = storefront?.slug ? getStorefrontUrl(storefront.slug, true) : ''
+  const shareMessage = link ? `Shop with us online 👉 ${link}` : ''
+
+  const copyShareMessage = async () => {
+    if (!shareMessage) return
+    await navigator.clipboard.writeText(shareMessage)
+    toast.success('Share message copied')
+  }
+
+  return (
+    <section className="mx-auto mt-6 max-w-7xl rounded-xl border border-blue/20 bg-surface p-5 shadow-sm sm:p-6" aria-labelledby="storefront-card-heading">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-blue">Your Storefront</p>
+          <h2 id="storefront-card-heading" className="mt-2 font-display text-2xl font-semibold text-ink">Your storefront</h2>
+          {link ? <button type="button" onClick={() => navigator.clipboard.writeText(link).then(() => toast.success('Storefront link copied'))} className="mt-2 break-all text-left text-sm font-semibold text-blue hover:underline">{link}</button> : <p className="mt-2 text-sm text-text-secondary">Launch your storefront to get a shareable link.</p>}
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {link && <button type="button" onClick={() => navigator.clipboard.writeText(link).then(() => toast.success('Storefront link copied'))} className="rounded-lg border border-border px-4 py-2.5 text-sm font-semibold text-text-secondary hover:bg-bg">Copy link</button>}
+          {link && <a href={getStorefrontUrl(storefront.slug)} target="_blank" rel="noreferrer" className="rounded-lg border border-border px-4 py-2.5 text-sm font-semibold text-text-secondary hover:bg-bg">Preview</a>}
+          {link && <button type="button" onClick={copyShareMessage} className="rounded-lg bg-brand-gradient px-4 py-2.5 text-sm font-semibold text-white">Share</button>}
+          <Link href="/dashboard/storefront" className="rounded-lg border border-blue/20 px-4 py-2.5 text-sm font-semibold text-blue hover:bg-blue/5">Manage</Link>
+        </div>
+      </div>
+      <div className="mt-4 flex items-center gap-2 text-sm text-text-secondary"><span className={`h-2.5 w-2.5 rounded-full ${storefront?.is_published ? 'bg-emerald-500' : 'bg-amber-500'}`} />{storefront?.is_published ? 'Published and visible to customers' : 'Not published yet'}</div>
+    </section>
+  )
 }
 
 function StatCard({ label, value, prefix = '', trend, icon: IconComponent, negative = false }: { label: string; value: number; prefix?: string; trend?: string; icon: Icon; negative?: boolean }) {
@@ -49,6 +81,7 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true)
   const [mobileTodos, setMobileTodos] = useState<MobileTodoItem[]>([])
   const [subscription, setSubscription] = useState<{ plan: string; status: string; renews_at: string | null; trial_active: boolean; trial_ends_at: string | null } | null>(null)
+  const [storefront, setStorefront] = useState<any>(null)
 
   useEffect(() => {
     let loadVersion = 0
@@ -66,6 +99,9 @@ export default function DashboardPage() {
         }
         if (currentLoad !== loadVersion) return
         setBusiness(currentBusiness)
+
+        const storefrontResult = await getStorefrontSettings(currentBusiness.id)
+        if (currentLoad === loadVersion && storefrontResult.success) setStorefront(storefrontResult.data)
 
         const subscriptionResult = await getSubscription(currentBusiness.id)
         if (currentLoad === loadVersion && subscriptionResult.success && subscriptionResult.data) {
@@ -170,6 +206,8 @@ export default function DashboardPage() {
           </section>
 
           <section className="mx-auto mt-8 max-w-7xl" aria-labelledby="overview-heading"><h2 id="overview-heading" className="sr-only">Business overview</h2><div className="grid gap-4 md:grid-cols-3"><StatCard label="Total Sales" value={totalSales} prefix="₦" icon={CircleDollarSign} /><StatCard label="Orders" value={orders} icon={ShoppingCart} /><StatCard label="Profit" value={profit} prefix="₦" icon={Wallet} /></div></section>
+
+          <StorefrontCard storefront={storefront} />
 
           <section className="mx-auto mt-6 grid max-w-7xl gap-6 lg:grid-cols-[1.45fr_1fr]" aria-label="Sales and top products">
             <article className="rounded-xl border border-border bg-surface p-5 shadow-sm sm:p-6"><div className="flex items-start justify-between"><div><p className="text-sm font-medium text-text-secondary">Sales over time</p><p className="mt-1 font-mono text-xl text-ink">₦{totalSales.toLocaleString()}</p></div></div><div className="mt-6 h-[250px] w-full">{trend.length ? <ResponsiveContainer width="100%" height="100%"><AreaChart data={trend}><defs><linearGradient id="salesFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#4683EC" stopOpacity={0.28} /><stop offset="100%" stopColor="#4954F1" stopOpacity={0.02} /></linearGradient></defs><CartesianGrid stroke="#E3E8F1" strokeDasharray="3 5" vertical={false} /><XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fill: '#8792A2', fontSize: 11 }} /><YAxis axisLine={false} tickLine={false} tick={{ fill: '#8792A2', fontSize: 11 }} tickFormatter={(value) => `₦${Math.round(value / 1000)}k`} /><Tooltip contentStyle={{ border: '1px solid #E3E8F1', borderRadius: 8, fontSize: 12 }} formatter={(value) => [`₦${Number(value).toLocaleString()}`, 'Sales']} /><Area type="monotone" dataKey="amount" stroke="#4683EC" strokeWidth={3} fill="url(#salesFill)" /></AreaChart></ResponsiveContainer> : <div className="flex h-full items-center justify-center text-center text-sm text-text-muted">Record your first sale to see trends here</div>}</div></article>

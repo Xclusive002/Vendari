@@ -58,8 +58,16 @@ export default function StorefrontPage() {
 
   const storefrontUrl = useMemo(() => {
     if (!settings?.slug) return 'Storefront not launched yet'
-    return getStorefrontUrl(settings.slug)
+    return getStorefrontUrl(settings.slug, true)
   }, [settings])
+
+  const shareMessage = settings?.slug ? `Shop with us online 👉 ${storefrontUrl}` : ''
+
+  const copyShareMessage = async () => {
+    if (!shareMessage) return
+    await navigator.clipboard.writeText(shareMessage)
+    toast.success('Share message copied')
+  }
 
   const handleLaunch = async () => {
     if (!business) return
@@ -132,6 +140,19 @@ export default function StorefrontPage() {
         <Link href="/dashboard/storefront/products" className="inline-flex items-center gap-2 text-sm font-semibold text-blue hover:underline">
           Manage storefront products <ExternalLink className="h-4 w-4" />
         </Link>
+
+        <div className="rounded-xl border border-blue/20 bg-surface p-4 shadow-sm">
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-text-muted">Storefront link</p>
+          <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <a href={storefrontUrl} target="_blank" rel="noreferrer" className="break-all text-sm font-semibold text-blue hover:underline">{storefrontUrl}</a>
+            <div className="flex flex-wrap gap-2">
+              <Button variant="outline" size="sm" onClick={() => navigator.clipboard.writeText(storefrontUrl).then(() => toast.success('Storefront link copied'))}>Copy</Button>
+              <Button variant="outline" size="sm" onClick={copyShareMessage}>Share</Button>
+              <a href={getStorefrontUrl(settings.slug)} target="_blank" rel="noreferrer" className="inline-flex items-center rounded-md border border-border px-3 py-1.5 text-sm font-medium">Preview</a>
+            </div>
+          </div>
+          <p className="mt-3 text-xs text-text-muted">Share text: {shareMessage}</p>
+        </div>
 
         <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
           <Card>

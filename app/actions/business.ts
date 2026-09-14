@@ -22,6 +22,8 @@ type ItemData = {
   selling_price?: number
   supplier_name?: string
   supplier_contact?: string
+  description?: string
+  image?: File | null
 }
 
 type ApiItem = {
@@ -74,6 +76,20 @@ function itemToApi(item: Partial<ItemData>) {
     cost_price: item.unit_cost ?? 0,
     selling_price: item.selling_price ?? 0,
   }
+}
+
+function inventoryFormData(item: Partial<ItemData>) {
+  const formData = new FormData()
+  if (item.product_name !== undefined) formData.set('product_name', item.product_name)
+  if (item.product_code !== undefined) formData.set('code', item.product_code || '')
+  if (item.category !== undefined) formData.set('category', item.category || '')
+  if (item.quantity_in_stock !== undefined) formData.set('qty_in_stock', String(item.quantity_in_stock))
+  if (item.reorder_level !== undefined) formData.set('reorder_level', String(item.reorder_level))
+  if (item.unit_cost !== undefined) formData.set('cost_price', String(item.unit_cost))
+  if (item.selling_price !== undefined) formData.set('selling_price', item.selling_price ? String(item.selling_price) : '')
+  if (item.description !== undefined) formData.set('description', item.description || '')
+  if (item.image) formData.set('image', item.image)
+  return formData
 }
 
 async function request<T>(path: string, options?: RequestInit): Promise<RequestResult<T>> {
@@ -174,7 +190,7 @@ export async function initializeInvoicePayment(businessId: string, invoiceId: st
 }
 
 export async function addInventoryItem(businessId: string, itemData: ItemData) {
-  const result = await request<ApiItem>(`/businesses/${businessId}/inventory/`, { method: 'POST', body: JSON.stringify(itemToApi(itemData)) })
+  const result = await request<ApiItem>(`/businesses/${businessId}/inventory/`, { method: 'POST', body: inventoryFormData(itemData) })
   if (!result.success) return result
   return { success: true as const, data: itemFromApi(result.data) }
 }
@@ -185,7 +201,7 @@ export async function getInventory(businessId: string) {
 }
 
 export async function updateInventoryItem(businessId: string, itemId: string, updates: Partial<ItemData>) {
-  const result = await request<ApiItem>(`/businesses/${businessId}/inventory/${itemId}/`, { method: 'PATCH', body: JSON.stringify(itemToApi(updates)) })
+  const result = await request<ApiItem>(`/businesses/${businessId}/inventory/${itemId}/`, { method: 'PATCH', body: inventoryFormData(updates) })
   if (!result.success) return result
   return { success: true as const, data: itemFromApi(result.data) }
 }

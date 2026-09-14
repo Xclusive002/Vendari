@@ -14,6 +14,13 @@ class InventoryItemSerializer(serializers.ModelSerializer):
     def get_is_low_stock(self, obj):
         return obj.qty_in_stock <= obj.reorder_level
 
+    def create(self, validated_data):
+        validated_data.setdefault(
+            'is_visible_on_storefront',
+            bool(validated_data.get('selling_price') and validated_data['selling_price'] > 0),
+        )
+        return super().create(validated_data)
+
 
 class PublicInventoryItemSerializer(serializers.ModelSerializer):
     in_stock = serializers.SerializerMethodField()

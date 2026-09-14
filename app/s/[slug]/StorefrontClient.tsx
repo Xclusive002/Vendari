@@ -9,7 +9,7 @@ type Product = {
   product_name: string
   description: string
   image: string | null
-  selling_price: string | number
+  selling_price: string | number | null
   in_stock: boolean
 }
 
@@ -36,7 +36,8 @@ function excerpt(value: string) {
   return value.length > 92 ? `${value.slice(0, 92).trim()}...` : value
 }
 
-function money(value: string | number) {
+function money(value: string | number | null) {
+  if (value === null) return 'Message us for price'
   return `N${Number(value).toLocaleString('en-NG', { minimumFractionDigits: 2 })}`
 }
 
@@ -57,6 +58,7 @@ export default function StorefrontClient({ data }: { data: StorefrontData }) {
   const themeClass = theme === 'editorial' ? 'font-serif' : theme === 'playful' ? 'tracking-wide' : ''
 
   const addToCart = (product: Product) => {
+    if (product.selling_price === null || Number(product.selling_price) <= 0) return
     setCart((current) => {
       const existing = current.find((item) => item.product_name === product.product_name)
       if (existing) return current.map((item) => item.product_name === product.product_name ? { ...item, quantity: item.quantity + 1 } : item)
@@ -114,7 +116,7 @@ export default function StorefrontClient({ data }: { data: StorefrontData }) {
           <button type="button" onClick={() => setCartOpen(true)} className="relative flex h-12 w-12 items-center justify-center rounded-full text-white shadow-lg" style={{ backgroundColor: primary }} aria-label={`Open cart with ${cartCount} items`}><ShoppingCart className="h-5 w-5" />{cartCount > 0 && <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-white px-1 text-xs font-bold" style={{ color: primary }}>{cartCount}</span>}</button>
         </div>
 
-        {data.items.length === 0 ? <div className="rounded-2xl border border-slate-200 bg-slate-50 px-6 py-16 text-center text-slate-600">No products are available right now.</div> : <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-5 lg:grid-cols-4">{data.items.map((product) => <article key={product.product_name} className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"><div className="aspect-square bg-slate-100">{product.image ? <img src={product.image} alt={product.product_name} className="h-full w-full object-cover" /> : <div className="flex h-full items-center justify-center" style={{ color: primary }}><ShoppingBag className="h-10 w-10 opacity-40" /></div>}</div><div className="p-3 sm:p-4"><div className="mb-2 flex items-start justify-between gap-2"><h3 className="font-semibold leading-tight">{product.product_name}</h3><span className={`shrink-0 rounded-full px-2 py-1 text-[10px] font-semibold ${product.in_stock ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>{product.in_stock ? 'In stock' : 'Out of stock'}</span></div>{product.description && <p className="mb-3 text-xs leading-5 text-slate-500">{excerpt(product.description)}</p>}<p className="text-lg font-bold" style={{ color: primary }}>{money(product.selling_price)}</p>{product.in_stock && <button type="button" onClick={() => addToCart(product)} className="mt-3 w-full rounded-xl px-3 py-2.5 text-sm font-semibold text-white" style={{ backgroundColor: accent }}>Add to cart</button>}</div></article>)}</div>}
+        {data.items.length === 0 ? <div className="rounded-2xl border border-slate-200 bg-slate-50 px-6 py-16 text-center text-slate-600">No products are available right now.</div> : <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-5 lg:grid-cols-4">{data.items.map((product) => { const hasPrice = product.selling_price !== null && Number(product.selling_price) > 0; return <article key={product.product_name} className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"><div className="aspect-square bg-slate-100">{product.image ? <img src={product.image} alt={product.product_name} className="h-full w-full object-cover" /> : <div className="flex h-full items-center justify-center" style={{ color: primary }}><ShoppingBag className="h-10 w-10 opacity-40" /></div>}</div><div className="p-3 sm:p-4"><div className="mb-2 flex items-start justify-between gap-2"><h3 className="font-semibold leading-tight">{product.product_name}</h3><span className={`shrink-0 rounded-full px-2 py-1 text-[10px] font-semibold ${product.in_stock ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>{product.in_stock ? 'In stock' : 'Out of stock'}</span></div>{product.description && <p className="mb-3 text-xs leading-5 text-slate-500">{excerpt(product.description)}</p>}<p className="text-lg font-bold" style={{ color: primary }}>{hasPrice ? money(product.selling_price) : 'Message us for price'}</p>{hasPrice && product.in_stock && <button type="button" onClick={() => addToCart(product)} className="mt-3 w-full rounded-xl px-3 py-2.5 text-sm font-semibold text-white" style={{ backgroundColor: accent }}>Add to cart</button>}</div></article> })}</div>}
       </section>
 
       <footer className="border-t border-slate-200 px-5 py-8 text-center text-sm text-slate-500"><a href="https://www.vendari.name.ng" className="font-semibold hover:underline">Powered by Vendari</a></footer>

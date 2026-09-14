@@ -202,7 +202,10 @@ class StorefrontSettingsView(APIView):
         serializer = StorefrontSettingsSerializer(storefront, data=request.data, partial=True, context={'request': request})
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        was_published = storefront.is_published
         serializer.save()
+        if not was_published and storefront.is_published:
+            InventoryItem.objects.filter(business=storefront.business, selling_price__gt=0).update(is_visible_on_storefront=True)
         return Response(serializer.data)
 
 
@@ -220,8 +223,7 @@ class PublicStorefrontView(APIView):
 		items = InventoryItem.objects.filter(
 			business=storefront.business,
 			is_visible_on_storefront=True,
-			selling_price__isnull=False,
-		).exclude(selling_price=0).order_by('product_name')
+		).order_by('product_name')
 		return Response({
 			'business_name': storefront.business.name,
 			'has_payments_enabled': storefront.business.has_payments_enabled,
@@ -273,7 +275,6 @@ class PublicStorefrontCheckoutView(APIView):
 
 		items = list(InventoryItem.objects.filter(
 			business=storefront.business, is_visible_on_storefront=True,
-			selling_price__isnull=False,
 		))
 		by_name = {item.product_name.casefold(): item for item in items}
 		if len(by_name) != len(requested):

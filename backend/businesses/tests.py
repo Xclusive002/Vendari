@@ -109,7 +109,7 @@ class BusinessProfileTests(APITestCase):
 		self.assertEqual(response.status_code, status.HTTP_200_OK)
 		self.assertTrue(response.data['available'])
 
-	def test_public_storefront_only_returns_priced_visible_items(self):
+	def test_public_storefront_returns_visible_items_with_or_without_prices(self):
 		storefront = StorefrontSettings.objects.create(business=self.business, slug='profilebusiness', is_published=True)
 		visible = InventoryItem.objects.create(
 			business=self.business, product_name='Visible', qty_in_stock=3, cost_price=10,
@@ -129,8 +129,9 @@ class BusinessProfileTests(APITestCase):
 
 		self.assertEqual(response.status_code, status.HTTP_200_OK)
 		self.assertEqual(response.data['business_name'], self.business.name)
-		self.assertEqual([item['product_name'] for item in response.data['items']], [visible.product_name])
+		self.assertEqual([item['product_name'] for item in response.data['items']], ['Unpriced', visible.product_name])
 		self.assertEqual(set(response.data['items'][0]), {'product_name', 'description', 'image', 'selling_price', 'in_stock'})
+		self.assertIsNone(response.data['items'][0]['selling_price'])
 
 	def test_unpublished_or_unknown_storefront_is_not_publicly_discoverable(self):
 		StorefrontSettings.objects.create(business=self.business, slug='hiddenstore', is_published=False)

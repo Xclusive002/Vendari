@@ -31,6 +31,8 @@ export default function InventoryPage() {
     selling_price: 0,
     supplier_name: '',
     supplier_contact: '',
+    description: '',
+    image: null as File | null,
   })
 
   useEffect(() => {
@@ -69,6 +71,8 @@ export default function InventoryPage() {
         selling_price: item.selling_price || 0,
         supplier_name: item.supplier_name || '',
         supplier_contact: item.supplier_contact || '',
+        description: item.description || '',
+        image: null,
       })
     } else {
       setEditingId(null)
@@ -82,6 +86,8 @@ export default function InventoryPage() {
         selling_price: 0,
         supplier_name: '',
         supplier_contact: '',
+        description: '',
+        image: null,
       })
     }
     setDialogOpen(true)
@@ -198,6 +204,22 @@ export default function InventoryPage() {
                     placeholder="Product name"
                     required
                   />
+                </div>
+
+                <div>
+                  <Label className="text-slate-300">Product description</Label>
+                  <textarea
+                    value={formData.description}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    className="dashboard-input mt-1 min-h-24 w-full px-3 py-2 text-sm"
+                    placeholder="What should customers know about this product?"
+                  />
+                </div>
+
+                <div>
+                  <Label className="text-slate-300">Product image</Label>
+                  <Input type="file" accept="image/*" onChange={(e) => setFormData({ ...formData, image: e.target.files?.[0] || null })} className="dashboard-input mt-1" />
+                  {editingId && <p className="mt-1 text-xs text-text-muted">Leave empty to keep the current image.</p>}
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
