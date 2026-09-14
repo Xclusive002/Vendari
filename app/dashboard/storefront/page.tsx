@@ -18,6 +18,7 @@ export default function StorefrontPage() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [launching, setLaunching] = useState(false)
+  const [publishing, setPublishing] = useState(false)
   const [slugDraft, setSlugDraft] = useState('')
   const [slugStatus, setSlugStatus] = useState<{ available: boolean; message: string } | null>(null)
   const [checkingSlug, setCheckingSlug] = useState(false)
@@ -105,6 +106,22 @@ export default function StorefrontPage() {
     }
   }
 
+  const handlePublishToggle = async () => {
+    if (!business || !settings) return
+    setPublishing(true)
+    const nextPublished = !settings.is_published
+    const result = await updateStorefrontSettings(business.id, {
+      is_published: nextPublished,
+    })
+    setPublishing(false)
+    if (result.success && result.data) {
+      setSettings(result.data)
+      toast.success(nextPublished ? 'Storefront published' : 'Storefront unpublished')
+    } else if (result.success === false) {
+      toast.error(result.error || 'Unable to update storefront status')
+    }
+  }
+
   if (loading) return <div className="dashboard-page"><div className="mx-auto max-w-5xl rounded-xl border border-border bg-surface p-6 text-sm text-text-secondary">Loading storefront…</div></div>
 
   if (!business) return <div className="dashboard-page"><div className="mx-auto max-w-5xl rounded-xl border border-border bg-surface p-6 text-sm text-text-secondary">Set up a business to launch your storefront.</div></div>
@@ -132,8 +149,8 @@ export default function StorefrontPage() {
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-blue">Storefront</p>
             <h1 className="mt-2 font-display text-3xl font-semibold text-ink">Your online shop</h1>
           </div>
-          <Button onClick={() => setSettings({ ...settings, is_published: !settings.is_published })} className={settings.is_published ? 'bg-emerald-600 text-white' : 'bg-brand-gradient text-white'}>
-            {settings.is_published ? 'Published' : 'Publish storefront'}
+          <Button onClick={handlePublishToggle} disabled={publishing} className={settings.is_published ? 'bg-emerald-600 text-white' : 'bg-brand-gradient text-white'}>
+            {publishing ? 'Updating…' : settings.is_published ? 'Published' : 'Publish storefront'}
           </Button>
         </div>
 
