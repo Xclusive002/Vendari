@@ -40,8 +40,8 @@ export default function TermsPage() {
         {
           heading: 'Plans, payments, and refunds',
           paragraphs: [
-            'Some features require a paid plan. Prices, billing intervals, taxes, payment terms, and included limits are shown at checkout or in your account. You authorize Vendari or its payment provider to charge the selected payment method for applicable fees.',
-            'Unless a plan or written agreement says otherwise, subscriptions renew for the same billing period until cancelled. You can cancel future renewals through the available account controls or by contacting support. Fees already charged are generally non-refundable except where required by law or expressly stated at purchase.',
+            'Some features require an active membership. Prices, membership intervals, taxes, payment terms, and included limits are shown at checkout or in your account. You authorize Vendari or its payment provider to charge the selected payment method for applicable fees.',
+            'Unless a plan or written agreement says otherwise, memberships renew for the same membership period until cancelled. You can cancel future renewals through the available account controls or by contacting support. Fees already charged are generally non-refundable except where required by law or expressly stated at purchase.',
             'We may suspend or limit access for overdue payments after reasonable notice. If pricing or plan features change, we will provide notice where required and the change will generally apply at the next renewal.',
           ],
         },

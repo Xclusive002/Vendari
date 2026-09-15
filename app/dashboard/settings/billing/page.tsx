@@ -55,8 +55,8 @@ export default function BillingPage() {
       <div className="mx-auto max-w-3xl">
       <Card className="dashboard-panel">
         <CardHeader>
-          <CardTitle className="font-display text-ink">Billing</CardTitle>
-          <CardDescription>Choose a plan and continue securely with Paystack.</CardDescription>
+          <CardTitle className="font-display text-ink">Membership</CardTitle>
+          <CardDescription>Become a member and continue securely with Paystack.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-5">
           {loadingPage ? <p className="text-sm text-text-secondary">Loading plans...</p> : <>
@@ -68,7 +68,7 @@ export default function BillingPage() {
             })}
           </div>
           {error && <p className="text-sm text-negative">{error}</p>}
-          <LoadingButton onClick={startPayment} loading={loading} disabled={!businessId || !selectedPlan} className="dashboard-primary w-full">Continue to Paystack</LoadingButton>
+          <LoadingButton onClick={startPayment} loading={loading} disabled={!businessId || !selectedPlan} className="dashboard-primary w-full">Become a Member</LoadingButton>
           </>}
         </CardContent>
       </Card>

@@ -207,9 +207,9 @@ export default function DashboardPage() {
 
           <section className="mx-auto mt-6 max-w-7xl rounded-xl border border-blue/20 bg-surface p-5 shadow-sm sm:p-6" aria-label="Current plan">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-              {subscription && !subscription.trial_active && subscription.status !== 'active' && <div className="rounded-lg border border-negative/20 bg-negative/5 p-4"><p className="text-sm font-semibold text-negative">Your free 5-day trial has ended.</p><p className="mt-1 text-sm text-text-secondary">Subscribe for ₦9,999 per month to continue using Vendari.</p></div>}
-              <div><p className="text-xs font-semibold uppercase tracking-[0.18em] text-blue">Current plan</p><p className="mt-2 font-display text-2xl font-semibold capitalize text-ink">{subscription?.plan || 'pro'}</p><p className="mt-1 text-sm text-text-secondary">{subscription?.trial_active ? `5-day trial${subscription.trial_ends_at ? ` · ends ${new Date(subscription.trial_ends_at).toLocaleDateString()}` : ''}` : subscription?.status === 'active' ? `Active subscription${subscription.renews_at ? ` · renews ${new Date(subscription.renews_at).toLocaleDateString()}` : ''}` : 'Start your 5-day trial, then continue for ₦9,999 per month.'}</p></div>
-              <Link href="/dashboard/settings/billing" className="inline-flex items-center justify-center gap-2 rounded-lg bg-brand-gradient px-4 py-2.5 text-sm font-semibold text-white">Manage billing <ArrowRight className="h-4 w-4" /></Link>
+              {subscription && !subscription.trial_active && subscription.status !== 'active' && <div className="rounded-lg border border-negative/20 bg-negative/5 p-4"><p className="text-sm font-semibold text-negative">Your free 5-day trial has ended.</p><p className="mt-1 text-sm text-text-secondary">Become a member for ₦9,999 per month to continue using Vendari.</p></div>}
+              <div><p className="text-xs font-semibold uppercase tracking-[0.18em] text-blue">Current membership</p><p className="mt-2 font-display text-2xl font-semibold capitalize text-ink">{subscription?.plan || 'pro'}</p><p className="mt-1 text-sm text-text-secondary">{subscription?.trial_active ? `5-day trial${subscription.trial_ends_at ? ` · ends ${new Date(subscription.trial_ends_at).toLocaleDateString()}` : ''}` : subscription?.status === 'active' ? `Active membership${subscription.renews_at ? ` · renews ${new Date(subscription.renews_at).toLocaleDateString()}` : ''}` : 'Start your 5-day trial, then continue for ₦9,999 per month.'}</p></div>
+              <Link href="/dashboard/settings/billing" className="inline-flex items-center justify-center gap-2 rounded-lg bg-brand-gradient px-4 py-2.5 text-sm font-semibold text-white">Manage your membership <ArrowRight className="h-4 w-4" /></Link>
             </div>
           </section>
 
@@ -361,8 +361,8 @@ export default function DashboardPage() {
             <section className="mt-5 rounded-2xl border border-blue/20 bg-surface p-4 shadow-sm" aria-label="Current plan">
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-blue">Current plan</p>
               <p className="mt-2 font-display text-xl font-semibold capitalize text-ink">{subscription?.plan || 'pro'}</p>
-              <p className="mt-1 text-sm leading-6 text-text-secondary">{subscription?.trial_active ? 'Your 5-day trial is active.' : 'Manage your subscription and renewal details.'}</p>
-              <Link href="/dashboard/settings/billing" className="mt-3 inline-flex items-center gap-2 text-sm font-semibold text-blue">View billing <ArrowRight className="h-4 w-4" /></Link>
+              <p className="mt-1 text-sm leading-6 text-text-secondary">{subscription?.trial_active ? 'Your 5-day trial is active.' : 'Manage your membership and renewal details.'}</p>
+              <Link href="/dashboard/settings/billing" className="mt-3 inline-flex items-center gap-2 text-sm font-semibold text-blue">View membership <ArrowRight className="h-4 w-4" /></Link>
             </section>
 
             <section className="mt-5 rounded-2xl border border-border bg-surface p-3 shadow-sm">

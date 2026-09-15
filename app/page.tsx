@@ -645,7 +645,7 @@ export default async function Home() {
                 [
                   "Pro",
                   "₦9,999/mo",
-                  "Free for 5 days, then subscribe for sales, stock, customers, expenses, AI insights, voice entry, reports, and payment links.",
+                  "Free for 5 days, then become a member for sales, stock, customers, expenses, AI insights, voice entry, reports, and payment links.",
                 ],
               ].map(([name, price, copy]) => (
                 <article

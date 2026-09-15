@@ -212,7 +212,7 @@ export default function ReportsPage() {
   const handleDownloadPdf = () => {
     if (!business) return
     if (!canExport) {
-      toast.error('PDF reports are available on a paid plan. Upgrade from Billing to export this report.')
+      toast.error('PDF reports are available to members. Manage your membership to export this report.')
       return
     }
 

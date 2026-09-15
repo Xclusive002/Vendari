@@ -26,7 +26,7 @@ export function DashboardNav() {
     { href: '/dashboard/ask', label: 'Ask', icon: MessageCircleQuestion },
     { href: '/dashboard/settings', label: 'Settings', icon: Settings },
     { href: '/dashboard/team', label: 'Team', icon: Users },
-    { href: '/dashboard/settings/billing', label: 'Billing', icon: CreditCard },
+    { href: '/dashboard/settings/billing', label: 'Membership', icon: CreditCard },
   ]
 
   const primaryNavItems = navItems.slice(0, 3)
