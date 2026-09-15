@@ -28,7 +28,10 @@ class InvoiceViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         memberships = Membership.objects.filter(user=self.request.user).values('business_id')
         business_id = self.kwargs.get('business_pk', self.kwargs.get('business_id'))
-        return Invoice.objects.filter(business_id=business_id, business_id__in=memberships).prefetch_related('line_items')
+        return Invoice.objects.filter(
+            business_id=business_id,
+            business_id__in=memberships,
+        ).select_related('business', 'customer', 'linked_sale').prefetch_related('line_items')
 
     def get_serializer_context(self):
         context = super().get_serializer_context()

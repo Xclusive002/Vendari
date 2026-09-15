@@ -36,8 +36,10 @@ class BusinessInsightsView(APIView):
 			return Response({'detail': 'AI insights are not enabled for this business plan.'}, status=status.HTTP_403_FORBIDDEN)
 		insights = AIInsight.objects.filter(business=business).order_by('-generated_at')[:10]
 		if not insights.exists():
-			compute_business_insights(business.pk)
-			insights = AIInsight.objects.filter(business=business).order_by('-generated_at')[:10]
+			try:
+				compute_business_insights.delay(business.pk)
+			except Exception:
+				logger.exception('Unable to queue insights generation for business=%s', business.pk)
 		return Response(AIInsightSerializer(insights, many=True).data)
 
 

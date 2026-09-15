@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { getBusiness, getInventory, setAllInventoryStorefrontVisibility, setInventoryItemStorefrontVisibility } from '@/app/actions/business'
 import { toast } from 'sonner'
+import { PageSkeleton } from '@/components/ui/skeleton'
 
 export default function StorefrontProductsPage() {
   const [business, setBusiness] = useState<any>(null)
@@ -59,7 +60,7 @@ export default function StorefrontProductsPage() {
     }
   }
 
-  if (loading) return <div className="dashboard-page"><div className="mx-auto max-w-6xl text-sm text-text-secondary">Loading products...</div></div>
+  if (loading) return <PageSkeleton rows={6} />
   if (!business) return <div className="dashboard-page"><div className="mx-auto max-w-6xl text-sm text-text-secondary">Set up a business to manage storefront products.</div></div>
 
   return (

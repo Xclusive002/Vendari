@@ -60,9 +60,17 @@ def compute_business_insights(business_id):
     prior_7_start = now - timedelta(days=14)
     insights = []
 
-    items = InventoryItem.objects.filter(business=business)
+    items = list(InventoryItem.objects.filter(business=business))
+    sales_by_item = {
+        row['item_id']: row['quantity'] or 0
+        for row in Sale.objects.filter(
+            business=business,
+            item_id__in=[item.pk for item in items],
+            sold_at__gte=current_30_start,
+        ).values('item_id').annotate(quantity=Sum('quantity'))
+    }
     for item in items:
-        sales_30 = Sale.objects.filter(item=item, sold_at__gte=current_30_start).aggregate(quantity=Sum('quantity'))['quantity'] or 0
+        sales_30 = sales_by_item.get(item.pk, 0)
         velocity = float(sales_30) / 30
         days_until_stockout = float(item.qty_in_stock / velocity) if velocity else None
         if velocity and days_until_stockout <= 30:
