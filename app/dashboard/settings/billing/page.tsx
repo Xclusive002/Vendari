@@ -7,6 +7,23 @@ import { getPlans, getSubscription, initializePayment } from '@/app/actions/paym
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { LoadingButton } from '@/components/ui/loading-button'
 
+const PRO_FEATURES = [
+  '5-day free membership trial',
+  'Sales logging and sales history',
+  'Inventory, stock levels, low-stock alerts, and restocking',
+  'Customer records and customer purchase history',
+  'Expense tracking and financial summaries',
+  'Invoices, receipts, and invoice payment links',
+  'Dashboard totals, trends, profit, and top-product reporting',
+  'Advanced reports and downloadable report exports',
+  'AI questions, AI insights, and forecasting',
+  'Voice entry for sales and inventory',
+  'WhatsApp sales, inventory restocks, and customer logging by text or voice note',
+  'Team members, staff roles, invitations, and activity controls',
+  'Business profile, settings, notifications, and secure account access',
+  'All future Vendari product improvements included in membership',
+] as const
+
 export default function BillingPage() {
   const [businessId, setBusinessId] = useState('')
   const [plans, setPlans] = useState<Array<{ id: number; name: string; amount: number; interval: string; feature_flags: Record<string, boolean>; limits: Record<string, number> }>>([])
@@ -64,7 +81,8 @@ export default function BillingPage() {
           <div className="grid gap-4 md:grid-cols-2">
             {plans.map((plan) => {
               const active = selectedPlan === plan.id
-              return <button key={plan.id} type="button" onClick={() => setSelectedPlan(plan.id)} className={`rounded-xl border p-5 text-left transition ${active ? 'border-blue bg-blue/5 shadow-md' : 'border-border bg-surface hover:border-blue/40'}`}><p className="font-display text-xl font-semibold capitalize text-ink">{plan.name}</p><p className="mt-2 font-mono text-2xl text-ink">₦{plan.amount.toLocaleString()}<span className="font-body text-sm text-text-secondary">/{plan.interval}</span></p><ul className="mt-4 space-y-2 text-sm text-text-secondary"><li>✓ {plan.limits.invoices_per_month?.toLocaleString()} invoices/month</li><li>✓ {plan.limits.ai_questions?.toLocaleString()} AI questions/month</li><li>✓ {plan.limits.voice_entries?.toLocaleString()} voice entries/month</li><li>✓ {plan.limits.team_members} team members</li>{Object.entries(plan.feature_flags).filter(([, enabled]) => enabled).slice(0, plan.name === 'pro' ? 4 : 7).map(([flag]) => <li key={flag}>✓ {flag.replaceAll('_', ' ')}</li>)}</ul></button>
+              const features = plan.name.toLowerCase() === 'pro' ? PRO_FEATURES : []
+              return <button key={plan.id} type="button" onClick={() => setSelectedPlan(plan.id)} className={`rounded-xl border p-5 text-left transition ${active ? 'border-blue bg-blue/5 shadow-md' : 'border-border bg-surface hover:border-blue/40'}`}><p className="font-display text-xl font-semibold capitalize text-ink">{plan.name}</p><p className="mt-2 font-mono text-2xl text-ink">₦{plan.amount.toLocaleString()}<span className="font-body text-sm text-text-secondary">/{plan.interval}</span></p><ul className="mt-4 space-y-2 text-sm text-text-secondary">{features.map((feature) => <li key={feature}>✓ {feature}</li>)}</ul></button>
             })}
           </div>
           {error && <p className="text-sm text-negative">{error}</p>}
