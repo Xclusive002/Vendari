@@ -1,11 +1,13 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
+import Link from 'next/link'
 import { Facebook, Globe, Instagram, Minus, Music2, Plus, ShoppingBag, ShoppingCart, X } from 'lucide-react'
-import { getStorefrontUrl } from '@/lib/storefront'
+import { getStorefrontCartKey, getStorefrontUrl } from '@/lib/storefront'
 import { checkoutStorefront } from '@/app/actions/storefront'
 
 type Product = {
+  id: number
   product_name: string
   description: string
   image: string | null
@@ -52,7 +54,10 @@ function money(value: string | number | null) {
 
 export default function StorefrontClient({ data }: { data: StorefrontData }) {
   const { storefront } = data
-  const [cart, setCart] = useState<CartLine[]>([])
+  const [cart, setCart] = useState<CartLine[]>(() => {
+    if (typeof window === 'undefined') return []
+    try { return JSON.parse(window.localStorage.getItem(getStorefrontCartKey(storefront.slug)) || '[]') as CartLine[] } catch { return [] }
+  })
   const [cartOpen, setCartOpen] = useState(false)
   const [checkoutOpen, setCheckoutOpen] = useState(false)
   const [submitting, setSubmitting] = useState(false)
@@ -68,6 +73,10 @@ export default function StorefrontClient({ data }: { data: StorefrontData }) {
   const isBold = theme === 'bold'
   const isMinimal = theme === 'minimal'
   const socialLinks = SOCIAL_PLATFORMS.filter(({ key }) => storefront.social_links?.[key])
+
+  useEffect(() => {
+    window.localStorage.setItem(getStorefrontCartKey(storefront.slug), JSON.stringify(cart))
+  }, [cart, storefront.slug])
 
   const addToCart = (product: Product) => {
     if (product.selling_price === null || Number(product.selling_price) <= 0) return
@@ -129,7 +138,7 @@ export default function StorefrontClient({ data }: { data: StorefrontData }) {
           <button type="button" onClick={() => setCartOpen(true)} className="sticky top-4 z-10 flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-white shadow-lg" style={{ backgroundColor: primary }} aria-label={`Open cart with ${cartCount} items`}><ShoppingCart className="h-5 w-5" />{cartCount > 0 && <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-white px-1 text-xs font-bold" style={{ color: primary }}>{cartCount}</span>}</button>
         </div>
 
-        {data.items.length === 0 ? <div className="rounded-2xl border border-slate-200 bg-slate-50 px-6 py-16 text-center text-slate-600">No products are available right now.</div> : <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-4">{data.items.map((product) => { const hasPrice = product.selling_price !== null && Number(product.selling_price) > 0; return <article key={product.product_name} className={`overflow-hidden border border-slate-200 bg-white shadow-sm ${isMinimal ? 'rounded-none' : isBold ? 'rounded-3xl' : 'rounded-2xl'}`}><div className="aspect-[4/3] bg-slate-100 sm:aspect-square">{product.image ? <img src={product.image} alt={product.product_name} className="h-full w-full object-cover" /> : <div className="flex h-full items-center justify-center" style={{ color: primary }}><ShoppingBag className="h-10 w-10 opacity-40" /></div>}</div><div className="p-4"><div className="mb-2 flex items-start justify-between gap-2"><h3 className="min-w-0 text-base font-semibold leading-tight">{product.product_name}</h3><span className={`shrink-0 rounded-full px-2 py-1 text-[10px] font-semibold ${product.in_stock ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>{product.in_stock ? 'In stock' : 'Out of stock'}</span></div>{product.description && <p className="mb-3 text-sm leading-5 text-slate-500">{excerpt(product.description)}</p>}<p className="text-lg font-bold" style={{ color: accent }}>{hasPrice ? money(product.selling_price) : 'Message us for price'}</p>{hasPrice && product.in_stock && <button type="button" onClick={() => addToCart(product)} className={`mt-3 min-h-11 w-full px-3 py-2.5 text-sm font-semibold text-white ${isMinimal ? 'rounded-none' : 'rounded-xl'}`} style={{ backgroundColor: accent }}>Add to cart</button>}</div></article> })}</div>}
+        {data.items.length === 0 ? <div className="rounded-2xl border border-slate-200 bg-slate-50 px-6 py-16 text-center text-slate-600">No products are available right now.</div> : <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-4">{data.items.map((product) => { const hasPrice = product.selling_price !== null && Number(product.selling_price) > 0; return <Link key={product.id} href={`/s/${encodeURIComponent(storefront.slug)}/products/${product.id}`} className={`group overflow-hidden border border-slate-200 bg-white shadow-sm ${isMinimal ? 'rounded-none' : isBold ? 'rounded-3xl' : 'rounded-2xl'}`}><div className="aspect-[4/3] bg-slate-100 sm:aspect-square">{product.image ? <img src={product.image} alt={product.product_name} className="h-full w-full object-cover transition-transform group-hover:scale-105" /> : <div className="flex h-full items-center justify-center" style={{ color: primary }}><ShoppingBag className="h-10 w-10 opacity-40" /></div>}</div><div className="p-4"><div className="mb-2 flex items-start justify-between gap-2"><h3 className="min-w-0 text-base font-semibold leading-tight">{product.product_name}</h3><span className={`shrink-0 rounded-full px-2 py-1 text-[10px] font-semibold ${product.in_stock ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>{product.in_stock ? 'In stock' : 'Out of stock'}</span></div>{product.description && <p className="mb-3 text-sm leading-5 text-slate-500">{excerpt(product.description)}</p>}<p className="text-lg font-bold" style={{ color: accent }}>{hasPrice ? money(product.selling_price) : 'Message us for price'}</p></div></Link> })}</div>}
       </section>
 
       {socialLinks.length > 0 && <div className="border-t border-slate-200 px-5 py-6" style={{ color: accent }}><div className="flex justify-center gap-3">{socialLinks.map(({ key, label, icon: Icon }) => <a key={key} href={storefront.social_links[key]} target="_blank" rel="noreferrer" aria-label={label} className="flex h-11 w-11 items-center justify-center rounded-full border border-current transition-opacity hover:opacity-70"><Icon className="h-5 w-5" /></a>)}</div></div>}

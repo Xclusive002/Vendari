@@ -1,0 +1,3 @@
+export default function Loading() {
+  return <main className="min-h-screen bg-white p-5"><div className="mx-auto grid max-w-5xl gap-8 py-10 md:grid-cols-2"><div className="skeleton-shimmer aspect-square rounded-2xl" /><div className="space-y-4"><div className="skeleton-shimmer h-4 w-32 rounded" /><div className="skeleton-shimmer h-12 w-3/4 rounded" /><div className="skeleton-shimmer h-24 w-full rounded" /><div className="skeleton-shimmer h-12 w-40 rounded" /></div></div></main>
+}

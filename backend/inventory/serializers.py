@@ -27,7 +27,7 @@ class PublicInventoryItemSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = InventoryItem
-        fields = ('product_name', 'description', 'image', 'selling_price', 'in_stock')
+        fields = ('id', 'product_name', 'description', 'image', 'selling_price', 'in_stock')
 
     def get_in_stock(self, obj):
         return obj.qty_in_stock > 0

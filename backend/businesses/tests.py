@@ -130,7 +130,7 @@ class BusinessProfileTests(APITestCase):
 		self.assertEqual(response.status_code, status.HTTP_200_OK)
 		self.assertEqual(response.data['business_name'], self.business.name)
 		self.assertEqual([item['product_name'] for item in response.data['items']], ['Unpriced', visible.product_name])
-		self.assertEqual(set(response.data['items'][0]), {'product_name', 'description', 'image', 'selling_price', 'in_stock'})
+		self.assertEqual(set(response.data['items'][0]), {'id', 'product_name', 'description', 'image', 'selling_price', 'in_stock'})
 		self.assertIsNone(response.data['items'][0]['selling_price'])
 
 	def test_storefront_social_links_persist_and_validate(self):
@@ -203,6 +203,42 @@ class BusinessProfileTests(APITestCase):
 		self.assertEqual(response.status_code, status.HTTP_200_OK)
 		self.assertTrue(response.data['storefront']['logo'].startswith('http://testserver/media/business_logos/'))
 		self.assertTrue(response.data['storefront']['banner_image'].startswith('http://testserver/media/storefront_banners/'))
+
+	def test_public_storefront_product_detail_enforces_visibility_and_business(self):
+		storefront = StorefrontSettings.objects.create(business=self.business, slug='profilebusiness', is_published=True)
+		visible = InventoryItem.objects.create(
+			business=self.business, product_name='Visible', qty_in_stock=3, cost_price=10,
+			selling_price=20, is_visible_on_storefront=True, description='Full description',
+		)
+		out_of_stock = InventoryItem.objects.create(
+			business=self.business, product_name='Out of stock', qty_in_stock=0, cost_price=10,
+			selling_price=20, is_visible_on_storefront=True,
+		)
+		hidden = InventoryItem.objects.create(
+			business=self.business, product_name='Hidden', qty_in_stock=3, cost_price=10,
+			selling_price=20, is_visible_on_storefront=False,
+		)
+		unpriced = InventoryItem.objects.create(
+			business=self.business, product_name='Unpriced', qty_in_stock=3, cost_price=10,
+			selling_price=None, is_visible_on_storefront=True,
+		)
+		other_business = Business.objects.create(owner=self.user, name='Other Business')
+		other = InventoryItem.objects.create(
+			business=other_business, product_name='Other', qty_in_stock=3, cost_price=10,
+			selling_price=20, is_visible_on_storefront=True,
+		)
+
+		self.client.logout()
+		response = self.client.get(f'/api/storefronts/{storefront.slug}/products/{visible.pk}/')
+		self.assertEqual(response.status_code, status.HTTP_200_OK)
+		self.assertEqual(response.data['product']['product_name'], 'Visible')
+		self.assertEqual(response.data['product']['description'], 'Full description')
+		self.assertNotIn('cost_price', response.data['product'])
+		out_of_stock_response = self.client.get(f'/api/storefronts/{storefront.slug}/products/{out_of_stock.pk}/')
+		self.assertEqual(out_of_stock_response.status_code, status.HTTP_200_OK)
+		self.assertFalse(out_of_stock_response.data['product']['in_stock'])
+		for item in (hidden, unpriced, other):
+			self.assertEqual(self.client.get(f'/api/storefronts/{storefront.slug}/products/{item.pk}/').status_code, status.HTTP_404_NOT_FOUND)
 
 	def test_unpublished_or_unknown_storefront_is_not_publicly_discoverable(self):
 		StorefrontSettings.objects.create(business=self.business, slug='hiddenstore', is_published=False)

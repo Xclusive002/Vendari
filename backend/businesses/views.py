@@ -232,6 +232,30 @@ class PublicStorefrontView(APIView):
 		})
 
 
+class PublicStorefrontProductView(APIView):
+	permission_classes = []
+
+	def get(self, request, slug, product_id):
+		storefront = StorefrontSettings.objects.select_related('business').filter(
+			slug=StorefrontSettings.normalize_slug(slug), is_published=True,
+		).first()
+		if storefront is None:
+			return Response({'detail': 'Product not found.'}, status=status.HTTP_404_NOT_FOUND)
+		item = InventoryItem.objects.filter(
+			pk=product_id,
+			business=storefront.business,
+			is_visible_on_storefront=True,
+			selling_price__gt=0,
+		).first()
+		if item is None:
+			return Response({'detail': 'Product not found.'}, status=status.HTTP_404_NOT_FOUND)
+		return Response({
+			'business_name': storefront.business.name,
+			'storefront': StorefrontSettingsSerializer(storefront, context={'request': request}).data,
+			'product': PublicInventoryItemSerializer(item, context={'request': request}).data,
+		})
+
+
 class PublicStorefrontCheckoutView(APIView):
 	permission_classes = []
 

@@ -20,6 +20,7 @@ type StorefrontData = {
     delivery_option: string
   }
   items: Array<{
+    id: number
     product_name: string
     description: string
     image: string | null
