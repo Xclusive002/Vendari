@@ -167,6 +167,23 @@ class BusinessProfileTests(APITestCase):
 		self.assertEqual(invalid_response.status_code, status.HTTP_400_BAD_REQUEST)
 		self.assertIn('instagram', invalid_response.data['social_links'])
 
+	def test_public_storefront_includes_business_logo_and_banner_urls(self):
+		storefront = StorefrontSettings.objects.create(
+			business=self.business,
+			slug='profilebusiness',
+			is_published=True,
+			banner_image=image_file(),
+		)
+		self.business.logo = image_file()
+		self.business.save(update_fields=['logo'])
+
+		self.client.logout()
+		response = self.client.get(f'/api/storefronts/{storefront.slug}/')
+
+		self.assertEqual(response.status_code, status.HTTP_200_OK)
+		self.assertTrue(response.data['storefront']['logo'].startswith('http://testserver/media/business_logos/'))
+		self.assertTrue(response.data['storefront']['banner_image'].startswith('http://testserver/media/storefront_banners/'))
+
 	def test_unpublished_or_unknown_storefront_is_not_publicly_discoverable(self):
 		StorefrontSettings.objects.create(business=self.business, slug='hiddenstore', is_published=False)
 		self.client.logout()
