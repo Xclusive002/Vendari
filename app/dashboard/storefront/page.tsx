@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input'
 import { toast } from 'sonner'
 import { checkStorefrontSlug, getBusiness, getStorefrontSettings, launchStorefront, updateBusiness, updateStorefrontSettings, uploadStorefrontBanner } from '@/app/actions/business'
 import { getStorefrontUrl } from '@/lib/storefront'
+import { PageSkeleton } from '@/components/ui/skeleton'
 
 const VENDARI_BLUE = '#4683EC'
 const SOCIAL_PLATFORMS = [
@@ -60,21 +61,26 @@ export default function StorefrontPage() {
   const [slugStatus, setSlugStatus] = useState<{ available: boolean; message: string } | null>(null)
   const [checkingSlug, setCheckingSlug] = useState(false)
   const [uploadingMedia, setUploadingMedia] = useState<'logo' | 'banner' | null>(null)
+  const [loadError, setLoadError] = useState('')
 
   useEffect(() => {
     async function load() {
-      const current = await getBusiness()
-      if (!current) {
+      try {
+        const current = await getBusiness()
+        if (!current) return
+        setBusiness(current)
+        const storefront = await getStorefrontSettings(current.id)
+        if (!storefront.success) {
+          setLoadError(storefront.error || 'Unable to load storefront settings.')
+        } else if (storefront.data) {
+          setSettings(storefront.data)
+          setSlugDraft(storefront.data.slug || '')
+        }
+      } catch {
+        setLoadError('Unable to load storefront settings. Try again.')
+      } finally {
         setLoading(false)
-        return
       }
-      setBusiness(current)
-      const storefront = await getStorefrontSettings(current.id)
-      if (storefront.success && storefront.data) {
-        setSettings(storefront.data)
-        setSlugDraft(storefront.data.slug || '')
-      }
-      setLoading(false)
     }
     load()
   }, [])
@@ -177,7 +183,9 @@ export default function StorefrontPage() {
     }
   }
 
-  if (loading) return <div className="dashboard-page"><div className="mx-auto max-w-5xl rounded-xl border border-border bg-surface p-6 text-sm text-text-secondary">Loading storefront…</div></div>
+  if (loading) return <PageSkeleton rows={5} />
+
+  if (loadError) return <div className="dashboard-page"><div className="mx-auto max-w-5xl rounded-xl border border-negative/20 bg-surface p-6 shadow-[var(--shadow-card)]" role="alert"><p className="font-semibold text-negative">We could not load your storefront.</p><p className="mt-2 text-sm text-text-secondary">{loadError}</p></div></div>
 
   if (!business) return <div className="dashboard-page"><div className="mx-auto max-w-5xl rounded-xl border border-border bg-surface p-6 text-sm text-text-secondary">Set up a business to launch your storefront.</div></div>
 
@@ -272,7 +280,7 @@ export default function StorefrontPage() {
 
               <div>
                 <label className="text-sm font-medium text-text-secondary">Description</label>
-                <textarea value={settings.description || ''} onChange={(e) => setSettings({ ...settings, description: e.target.value })} className="mt-2 min-h-28 w-full rounded-lg border border-border bg-bg px-3 py-2 text-sm" />
+                <textarea value={settings.description || ''} onChange={(e) => setSettings({ ...settings, description: e.target.value })} className="dashboard-input mt-2 min-h-28 w-full px-3 py-2 text-sm" />
               </div>
 
               <div>
@@ -281,7 +289,7 @@ export default function StorefrontPage() {
                   {THEME_PRESETS.map((preset) => {
                     const selected = (settings.theme || 'classic') === preset.key
                     return <button key={preset.key} type="button" onClick={() => setSettings({ ...settings, theme: preset.key })} className={`text-left transition ${selected ? 'ring-2 ring-blue ring-offset-2' : 'hover:-translate-y-0.5'}`}>
-                      <div className={`overflow-hidden border ${preset.radius} ${selected ? 'border-blue' : 'border-border'}`}>
+                      <div className={`overflow-hidden rounded-lg border ${selected ? 'border-blue ring-2 ring-blue ring-offset-2' : 'border-border'}`}>
                         <div className="h-7" style={{ backgroundColor: preset.accent }} />
                         <div className="space-y-2 bg-white p-2"><div className="h-2 w-2/3 rounded-full bg-slate-200" /><div className="grid grid-cols-3 gap-1"><span className="h-8 rounded-sm bg-slate-100" /><span className="h-8 rounded-sm bg-slate-200" /><span className="h-8 rounded-sm bg-slate-100" /></div></div>
                       </div>
@@ -337,7 +345,7 @@ export default function StorefrontPage() {
 
               <div>
                 <label className="text-sm font-medium text-text-secondary">Delivery option</label>
-                <select value={settings.delivery_option || 'both'} onChange={(e) => setSettings({ ...settings, delivery_option: e.target.value })} className="mt-2 w-full rounded-lg border border-border bg-bg px-3 py-2 text-sm">
+                <select value={settings.delivery_option || 'both'} onChange={(e) => setSettings({ ...settings, delivery_option: e.target.value })} className="dashboard-input mt-2 min-h-11 w-full px-3 py-2 text-sm">
                   <option value="pickup">Pickup</option>
                   <option value="delivery">Delivery</option>
                   <option value="both">Both</option>

@@ -32,7 +32,7 @@ export function DashboardNav() {
   const moreNavItems = navItems.slice(3)
 
   return <>
-    <aside className="fixed inset-y-0 left-0 z-40 hidden w-[min(18rem,85vw)] flex-col bg-ink px-4 py-6 text-white md:flex">
+    <aside className="fixed inset-y-0 left-0 z-40 hidden w-64 flex-col bg-ink px-4 py-6 text-white md:flex">
       <div className="flex h-full flex-col overflow-hidden">
         <Link href="/dashboard" className="mb-6 flex items-center rounded-md px-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue"><Image src="/vendari-dark-blue-bg.png" alt="Vendari" width={180} height={180} className="h-14 w-auto object-contain" /></Link>
         <nav className="flex-1 space-y-1 overflow-y-auto overscroll-contain pb-4 pr-1 [-webkit-overflow-scrolling:touch]" aria-label="Dashboard navigation">{navItems.map(({ href, label, icon: Icon }) => { const active = pathname === href || (href !== '/dashboard' && pathname.startsWith(`${href}/`)); return <Link key={href} href={href} onClick={() => setIsOpen(false)} className={`group flex items-center gap-3 rounded-r-lg border-l-2 px-3 py-3 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue ${active ? 'border-blue bg-brand-gradient/20 text-white' : 'border-transparent text-white/55 hover:bg-white/5 hover:text-white'}`}><Icon className={`h-4 w-4 ${active ? 'text-blue' : 'text-white/45 group-hover:text-blue'}`} />{label}</Link> })}</nav>
@@ -62,7 +62,7 @@ export function DashboardNav() {
     {showMore && (
       <>
         <button type="button" aria-label="Close more navigation" className="fixed inset-0 z-40 bg-ink/40 backdrop-blur-[1px] md:hidden" onClick={() => setShowMore(false)} />
-        <div className="fixed inset-x-0 bottom-[calc(76px+env(safe-area-inset-bottom))] z-50 mx-auto w-[calc(100%-1.5rem)] max-w-md rounded-2xl border border-border bg-surface p-3 shadow-2xl md:hidden">
+        <div className="fixed inset-x-0 bottom-[calc(76px+env(safe-area-inset-bottom))] z-50 mx-auto w-[calc(100%-1.5rem)] max-w-md rounded-xl border border-border bg-surface p-3 shadow-[var(--shadow-modal)] md:hidden">
           <div className="mx-auto mb-2 h-1.5 w-12 rounded-full bg-border/80" />
           <div className="grid grid-cols-2 gap-2">
             {moreNavItems.map(({ href, label, icon: Icon }) => {

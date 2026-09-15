@@ -6,6 +6,7 @@ import { ArrowRight, FileText, Loader2, Plus } from 'lucide-react'
 import Link from 'next/link'
 import { getBusiness, getInvoices } from '@/app/actions/business'
 import { PageSkeleton } from '@/components/ui/skeleton'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
 interface Invoice {
   id: number
@@ -23,10 +24,13 @@ export default function InvoicesPage() {
   const [business, setBusiness] = useState<any>(null)
   const [invoices, setInvoices] = useState<Invoice[]>([])
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState('')
   const [docTypeFilter, setDocTypeFilter] = useState<'all' | 'receipt' | 'invoice'>('all')
   const [statusFilter, setStatusFilter] = useState<'all' | 'paid' | 'unpaid' | 'partial'>('all')
 
   useEffect(() => {
+    setLoading(true)
+    setLoadError('')
     getBusiness()
       .then(async (businessResult) => {
         if (!businessResult) return
@@ -44,8 +48,11 @@ export default function InvoicesPage() {
             (a, b) => new Date(b.issue_date).getTime() - new Date(a.issue_date).getTime()
           )
           setInvoices(sorted)
+        } else {
+          setLoadError('error' in result ? result.error : 'Unable to load invoices.')
         }
       })
+      .catch(() => setLoadError('Unable to load invoices. Try again.'))
       .finally(() => setLoading(false))
   }, [docTypeFilter, statusFilter])
 
@@ -87,6 +94,10 @@ export default function InvoicesPage() {
     )
   }
 
+  if (loadError) {
+    return <main className="dashboard-page md:pl-8"><div className="mx-auto max-w-6xl rounded-xl border border-negative/20 bg-surface p-6 shadow-[var(--shadow-card)]" role="alert"><p className="font-semibold text-negative">We could not load your invoices.</p><p className="mt-2 text-sm text-text-secondary">{loadError}</p></div></main>
+  }
+
   return (
     <main className="dashboard-page md:pl-8">
       <div className="mx-auto max-w-6xl">
@@ -109,28 +120,11 @@ export default function InvoicesPage() {
         <div className="dashboard-panel mb-6 flex flex-col gap-4 p-4 sm:flex-row">
           <div>
             <label className="block text-xs font-semibold text-text-secondary uppercase mb-2">Document Type</label>
-            <select
-              value={docTypeFilter}
-              onChange={(e) => setDocTypeFilter(e.target.value as any)}
-              className="rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-blue"
-            >
-              <option value="all">All</option>
-              <option value="receipt">Receipts</option>
-              <option value="invoice">Invoices</option>
-            </select>
+            <Select value={docTypeFilter} onValueChange={(value) => setDocTypeFilter(value as typeof docTypeFilter)}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">All</SelectItem><SelectItem value="receipt">Receipts</SelectItem><SelectItem value="invoice">Invoices</SelectItem></SelectContent></Select>
           </div>
           <div>
             <label className="block text-xs font-semibold text-text-secondary uppercase mb-2">Status</label>
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value as any)}
-              className="rounded-lg border border-border bg-surface px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-blue"
-            >
-              <option value="all">All</option>
-              <option value="paid">Paid</option>
-              <option value="unpaid">Unpaid</option>
-              <option value="partial">Partial</option>
-            </select>
+            <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as typeof statusFilter)}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">All</SelectItem><SelectItem value="paid">Paid</SelectItem><SelectItem value="unpaid">Unpaid</SelectItem><SelectItem value="partial">Partial</SelectItem></SelectContent></Select>
           </div>
         </div>
 

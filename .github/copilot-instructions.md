@@ -43,6 +43,11 @@ Those are the current default AI-generated design clichés — Vendari must not 
   --positive:       #16A34A;  /* up-trend figures */
   --negative:       #DC2626;  /* low-stock, down-trend, destructive actions */
   --warning:        #D97706;  /* pending/attention states */
+
+  /* Elevation — use the ink tone, never pure black */
+  --shadow-card:    0 4px 16px rgb(6 18 43 / 6%);
+  --shadow-raised:  0 12px 24px -12px rgb(6 18 43 / 22%);
+  --shadow-modal:   0 24px 48px -16px rgb(6 18 43 / 28%);
 }
 ```
 
@@ -73,6 +78,12 @@ Type scale (use CSS clamp for fluid sizing, don't hardcode single px values):
 
 - Corner radius: `12px` for cards, `8px` for buttons/inputs, `24px` for large hero panels —
   consistent, never mixed with sharp corners in the same view.
+- Spacing scale: use `4px`, `8px`, `12px`, `16px`, `24px`, `32px`, and `48px` for gaps,
+  padding, and section rhythm. Use responsive variants of these steps rather than arbitrary
+  values; exceptions require a component-specific geometry reason.
+- Elevation: `--shadow-card` for cards and panels, `--shadow-raised` for hovered or raised
+  controls and dropdowns, and `--shadow-modal` for dialogs and bottom sheets. Keep elevation
+  soft and ink-tinted so hierarchy comes from depth, not harsh outlines.
 - Section rhythm: generous vertical spacing (`96–140px` between major landing-page sections on
   desktop) — the current flyer's cramped stacked-section feel is exactly what we're fixing.
   Give the design room to breathe.
@@ -80,6 +91,9 @@ Type scale (use CSS clamp for fluid sizing, don't hardcode single px values):
   `--bg` content area — this contrast is already working in the reference flyer, keep it.
 - Grid: 12-column, `max-width: 1280px` container on marketing pages; dashboard content area is
   fluid within the sidebar layout.
+- Tablet (`768px–1023px`): keep the desktop sidebar, reserve its actual width, use two-column
+  stat and content grids, and allow dense tables to scroll without compressing actions below
+  usable touch sizes. Mobile bottom navigation begins below `768px`.
 
 ## 5. Motion — deliberate, not decorative
 
@@ -98,6 +112,9 @@ One orchestrated moment beats scattered effects. Specifically:
   justified, because it reinforces "your real numbers, computed live."
 - **Respect `prefers-reduced-motion`** everywhere — disable count-ups, staggers, and scroll
   reveals (show final state immediately) when it's set.
+- Every interactive control must expose hover, pressed, keyboard-visible focus, and disabled
+  states. Keep touch targets at least `44px` on mobile and use the shared primitives for
+  controls whenever the component type already exists.
 
 Never animate for its own sake. If a motion doesn't clarify hierarchy, state change, or draw
 attention to something that matters, cut it.

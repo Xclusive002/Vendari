@@ -70,7 +70,7 @@ button,
 
   .motion-hover:hover {
     transform: translateY(-2px);
-    box-shadow: 0 12px 24px -12px rgb(6 18 43 / 35%);
+    box-shadow: var(--shadow-raised);
   }
 
   .dashboard-page {
@@ -84,7 +84,7 @@ button,
     border: 1px solid var(--border);
     border-radius: 12px;
     background: var(--surface);
-    box-shadow: 0 4px 16px rgb(6 18 43 / 5%);
+    box-shadow: var(--shadow-card);
   }
 
   .dashboard-input {
@@ -126,6 +126,31 @@ button,
   .dashboard-primary {
     background: var(--brand-gradient);
     color: white;
+  }
+
+  .dashboard-primary:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-raised);
+  }
+
+  .dashboard-primary:active:not(:disabled) {
+    transform: translateY(0);
+  }
+
+  :where(a, button, input, select, textarea, [role='button']):focus-visible {
+    outline: 2px solid var(--blue);
+    outline-offset: 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      scroll-behavior: auto !important;
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
   }
 
   .auth-shell {
