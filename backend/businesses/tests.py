@@ -167,6 +167,26 @@ class BusinessProfileTests(APITestCase):
 		self.assertEqual(invalid_response.status_code, status.HTTP_400_BAD_REQUEST)
 		self.assertIn('instagram', invalid_response.data['social_links'])
 
+	def test_storefront_theme_and_colors_persist_to_public_response(self):
+		response = self.client.patch(
+			f'/api/businesses/{self.business.pk}/storefront-settings/',
+			{'theme': 'bold', 'primary_color': '#123456', 'accent_color': '#F97316'},
+			format='json',
+		)
+		self.assertEqual(response.status_code, status.HTTP_200_OK)
+		self.assertEqual(response.data['theme'], 'bold')
+		self.assertEqual(response.data['primary_color'], '#123456')
+		self.assertEqual(response.data['accent_color'], '#F97316')
+
+		storefront = StorefrontSettings.objects.get(business=self.business)
+		storefront.is_published = True
+		storefront.save(update_fields=['is_published'])
+		self.client.logout()
+		public_response = self.client.get(f'/api/storefronts/{storefront.slug}/')
+		self.assertEqual(public_response.data['storefront']['theme'], 'bold')
+		self.assertEqual(public_response.data['storefront']['primary_color'], '#123456')
+		self.assertEqual(public_response.data['storefront']['accent_color'], '#F97316')
+
 	def test_public_storefront_includes_business_logo_and_banner_urls(self):
 		storefront = StorefrontSettings.objects.create(
 			business=self.business,
