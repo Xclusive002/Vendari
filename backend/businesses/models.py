@@ -8,6 +8,7 @@ from decimal import Decimal
 
 
 class StorefrontSettings(models.Model):
+    SOCIAL_LINK_KEYS = ('instagram', 'facebook', 'tiktok', 'twitter')
     DELIVERY_PICKUP = 'pickup'
     DELIVERY_DELIVERY = 'delivery'
     DELIVERY_BOTH = 'both'
@@ -49,6 +50,17 @@ class StorefrontSettings(models.Model):
         super().clean()
         if self.slug:
             self.slug = self.validate_slug_candidate(self.slug, business=self.business)
+        links = self.social_links or {}
+        if not isinstance(links, dict):
+            raise ValidationError({'social_links': 'Social links must be an object.'})
+        unsupported = set(links) - set(self.SOCIAL_LINK_KEYS)
+        if unsupported:
+            raise ValidationError({'social_links': f'Unsupported social link(s): {", ".join(sorted(unsupported))}.'})
+        for key in self.SOCIAL_LINK_KEYS:
+            value = links.get(key, '')
+            if value and not str(value).strip().lower().startswith(('http://', 'https://')):
+                raise ValidationError({'social_links': f'{key.title()} must be a full URL starting with http:// or https://.'})
+        self.social_links = {key: str(links.get(key, '')).strip() for key in self.SOCIAL_LINK_KEYS}
 
     def save(self, *args, **kwargs):
         self.full_clean()

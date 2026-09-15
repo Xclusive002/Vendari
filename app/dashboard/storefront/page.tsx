@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
-import { AlertCircle, Check, Copy, ExternalLink, Globe, ImagePlus, KeyRound, Rocket, Store, Wand2 } from 'lucide-react'
+import { AlertCircle, Check, Copy, ExternalLink, Facebook, Globe, ImagePlus, Instagram, KeyRound, Music2, Rocket, Store, Wand2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -11,6 +11,12 @@ import { checkStorefrontSlug, getBusiness, getStorefrontSettings, launchStorefro
 import { getStorefrontUrl } from '@/lib/storefront'
 
 const VENDARI_BLUE = '#4683EC'
+const SOCIAL_PLATFORMS = [
+  { key: 'instagram', label: 'Instagram', icon: Instagram },
+  { key: 'facebook', label: 'Facebook', icon: Facebook },
+  { key: 'tiktok', label: 'TikTok', icon: Music2 },
+  { key: 'twitter', label: 'Twitter/X', icon: Globe },
+] as const
 
 export default function StorefrontPage() {
   const [business, setBusiness] = useState<any>(null)
@@ -96,6 +102,7 @@ export default function StorefrontPage() {
       primary_color: settings.primary_color || VENDARI_BLUE,
       theme: settings.theme || 'classic',
       is_published: Boolean(settings.is_published),
+      social_links: settings.social_links || {},
     }
     const result = await updateStorefrontSettings(business.id, payload)
     setSaving(false)
@@ -255,6 +262,25 @@ export default function StorefrontPage() {
                   <label className="text-sm font-medium text-text-secondary">Store banner</label>
                   <Input type="file" accept="image/*" onChange={(event) => handleMediaUpload('banner', event.target.files?.[0])} disabled={uploadingMedia !== null} className="mt-2" />
                   {settings.banner_image && <img src={settings.banner_image} alt="Store banner" className="mt-3 h-14 w-full rounded-lg object-cover" />}
+                </div>
+              </div>
+
+              <div>
+                <p className="text-sm font-medium text-text-secondary">Social Links</p>
+                <p className="mt-1 text-xs text-text-muted">Add any profiles you want customers to find. Leave the rest blank.</p>
+                <div className="mt-3 space-y-3">
+                  {SOCIAL_PLATFORMS.map(({ key, label, icon: Icon }) => (
+                    <div key={key} className="relative">
+                      <Icon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted" />
+                      <Input
+                        type="url"
+                        value={settings.social_links?.[key] || ''}
+                        onChange={(event) => setSettings({ ...settings, social_links: { ...(settings.social_links || {}), [key]: event.target.value } })}
+                        placeholder={`${label} URL (https://...)`}
+                        className="pl-10"
+                      />
+                    </div>
+                  ))}
                 </div>
               </div>
 

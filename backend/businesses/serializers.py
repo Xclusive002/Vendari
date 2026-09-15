@@ -28,6 +28,22 @@ class StorefrontSettingsSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(str(exc))
         return normalized
 
+    def validate_social_links(self, value):
+        if value is None:
+            value = {}
+        if not isinstance(value, dict):
+            raise serializers.ValidationError('Social links must be an object.')
+        unsupported = set(value) - set(StorefrontSettings.SOCIAL_LINK_KEYS)
+        if unsupported:
+            raise serializers.ValidationError(f'Unsupported social link(s): {", ".join(sorted(unsupported))}.')
+        normalized = {}
+        for key in StorefrontSettings.SOCIAL_LINK_KEYS:
+            url = str(value.get(key, '') or '').strip()
+            if url and not url.lower().startswith(('http://', 'https://')):
+                raise serializers.ValidationError({key: 'Enter a full URL starting with http:// or https://.'})
+            normalized[key] = url
+        return normalized
+
     def to_representation(self, instance):
         data = super().to_representation(instance)
         request = self.context.get('request')

@@ -133,6 +133,40 @@ class BusinessProfileTests(APITestCase):
 		self.assertEqual(set(response.data['items'][0]), {'product_name', 'description', 'image', 'selling_price', 'in_stock'})
 		self.assertIsNone(response.data['items'][0]['selling_price'])
 
+	def test_storefront_social_links_persist_and_validate(self):
+		response = self.client.patch(
+			f'/api/businesses/{self.business.pk}/storefront-settings/',
+			{'social_links': {
+				'instagram': 'https://instagram.com/profilebusiness',
+				'facebook': 'https://facebook.com/profilebusiness',
+				'tiktok': '',
+				'twitter': '',
+			}},
+			format='json',
+		)
+		self.assertEqual(response.status_code, status.HTTP_200_OK)
+		self.assertEqual(response.data['social_links']['instagram'], 'https://instagram.com/profilebusiness')
+		self.assertEqual(response.data['social_links']['facebook'], 'https://facebook.com/profilebusiness')
+		self.assertEqual(response.data['social_links']['tiktok'], '')
+		self.assertEqual(response.data['social_links']['twitter'], '')
+
+		storefront = StorefrontSettings.objects.get(business=self.business)
+		storefront.is_published = True
+		storefront.save(update_fields=['is_published'])
+		self.client.logout()
+		public_response = self.client.get(f'/api/storefronts/{storefront.slug}/')
+		self.assertEqual(public_response.status_code, status.HTTP_200_OK)
+		self.assertEqual(public_response.data['storefront']['social_links'], response.data['social_links'])
+
+		self.client.force_authenticate(self.user)
+		invalid_response = self.client.patch(
+			f'/api/businesses/{self.business.pk}/storefront-settings/',
+			{'social_links': {'instagram': 'instagram.com/profilebusiness'}},
+			format='json',
+		)
+		self.assertEqual(invalid_response.status_code, status.HTTP_400_BAD_REQUEST)
+		self.assertIn('instagram', invalid_response.data['social_links'])
+
 	def test_unpublished_or_unknown_storefront_is_not_publicly_discoverable(self):
 		StorefrontSettings.objects.create(business=self.business, slug='hiddenstore', is_published=False)
 		self.client.logout()

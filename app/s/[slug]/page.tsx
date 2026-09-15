@@ -10,6 +10,7 @@ type StorefrontData = {
   storefront: {
     slug: string
     logo: string | null
+    social_links: Record<string, string>
     theme: string
     primary_color: string
     accent_color: string

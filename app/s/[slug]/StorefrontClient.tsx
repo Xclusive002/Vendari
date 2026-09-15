@@ -1,7 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { Minus, Plus, ShoppingBag, ShoppingCart, X } from 'lucide-react'
+import { Facebook, Globe, Instagram, Minus, Music2, Plus, ShoppingBag, ShoppingCart, X } from 'lucide-react'
 import { getStorefrontUrl } from '@/lib/storefront'
 import { checkoutStorefront } from '@/app/actions/storefront'
 
@@ -18,6 +18,7 @@ type StorefrontData = {
   storefront: {
     slug: string
     logo: string | null
+    social_links: Record<string, string>
     theme: string
     primary_color: string
     accent_color: string
@@ -31,6 +32,13 @@ type StorefrontData = {
 }
 
 type CartLine = Product & { quantity: number }
+
+const SOCIAL_PLATFORMS = [
+  { key: 'instagram', label: 'Instagram', icon: Instagram },
+  { key: 'facebook', label: 'Facebook', icon: Facebook },
+  { key: 'tiktok', label: 'TikTok', icon: Music2 },
+  { key: 'twitter', label: 'Twitter/X', icon: Globe },
+] as const
 
 function excerpt(value: string) {
   if (!value) return ''
@@ -57,6 +65,7 @@ export default function StorefrontClient({ data }: { data: StorefrontData }) {
   const total = cart.reduce((sum, item) => sum + Number(item.selling_price) * item.quantity, 0)
 
   const themeClass = theme === 'editorial' ? 'font-serif' : theme === 'playful' ? 'tracking-wide' : ''
+  const socialLinks = SOCIAL_PLATFORMS.filter(({ key }) => storefront.social_links?.[key])
 
   const addToCart = (product: Product) => {
     if (product.selling_price === null || Number(product.selling_price) <= 0) return
@@ -120,6 +129,8 @@ export default function StorefrontClient({ data }: { data: StorefrontData }) {
 
         {data.items.length === 0 ? <div className="rounded-2xl border border-slate-200 bg-slate-50 px-6 py-16 text-center text-slate-600">No products are available right now.</div> : <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-4">{data.items.map((product) => { const hasPrice = product.selling_price !== null && Number(product.selling_price) > 0; return <article key={product.product_name} className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"><div className="aspect-[4/3] bg-slate-100 sm:aspect-square">{product.image ? <img src={product.image} alt={product.product_name} className="h-full w-full object-cover" /> : <div className="flex h-full items-center justify-center" style={{ color: primary }}><ShoppingBag className="h-10 w-10 opacity-40" /></div>}</div><div className="p-4"><div className="mb-2 flex items-start justify-between gap-2"><h3 className="min-w-0 text-base font-semibold leading-tight">{product.product_name}</h3><span className={`shrink-0 rounded-full px-2 py-1 text-[10px] font-semibold ${product.in_stock ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>{product.in_stock ? 'In stock' : 'Out of stock'}</span></div>{product.description && <p className="mb-3 text-sm leading-5 text-slate-500">{excerpt(product.description)}</p>}<p className="text-lg font-bold" style={{ color: primary }}>{hasPrice ? money(product.selling_price) : 'Message us for price'}</p>{hasPrice && product.in_stock && <button type="button" onClick={() => addToCart(product)} className="mt-3 min-h-11 w-full rounded-xl px-3 py-2.5 text-sm font-semibold text-white" style={{ backgroundColor: accent }}>Add to cart</button>}</div></article> })}</div>}
       </section>
+
+      {socialLinks.length > 0 && <div className="border-t border-slate-200 px-5 py-6" style={{ color: accent }}><div className="flex justify-center gap-3">{socialLinks.map(({ key, label, icon: Icon }) => <a key={key} href={storefront.social_links[key]} target="_blank" rel="noreferrer" aria-label={label} className="flex h-11 w-11 items-center justify-center rounded-full border border-current transition-opacity hover:opacity-70"><Icon className="h-5 w-5" /></a>)}</div></div>}
 
       <footer className="border-t border-slate-200 px-5 py-8 text-center text-sm text-slate-500"><a href="https://www.vendari.name.ng" className="font-semibold hover:underline">Powered by Vendari</a></footer>
 
