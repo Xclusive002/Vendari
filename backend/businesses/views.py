@@ -15,6 +15,7 @@ from billing.models import Plan
 from billing.utils import has_feature
 
 from .models import Business, Membership, StorefrontOrder, StorefrontOrderLineItem, StorefrontSettings
+from .email_service import send_storefront_published_email
 from .serializers import BusinessSerializer, ConciergeInquirySerializer, StorefrontSettingsSerializer
 from expenses.models import Expense
 from inventory.models import InventoryItem
@@ -206,6 +207,11 @@ class StorefrontSettingsView(APIView):
         serializer.save()
         if not was_published and storefront.is_published:
             InventoryItem.objects.filter(business=storefront.business, selling_price__gt=0).update(is_visible_on_storefront=True)
+            send_storefront_published_email(
+                storefront.business.owner.email,
+                storefront.business.name,
+                f'https://www.vendari.name.ng/s/{storefront.slug}',
+            )
         return Response(serializer.data)
 
 

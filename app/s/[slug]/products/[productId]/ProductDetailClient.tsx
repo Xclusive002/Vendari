@@ -9,6 +9,7 @@ type ProductDetailData = {
   product_name: string
   description: string
   image: string | null
+  images?: string[]
   selling_price: string | number
   in_stock: boolean
 }
@@ -46,6 +47,7 @@ export default function ProductDetailClient({ data }: { data: DetailData }) {
   const accent = storefront.accent_color || primary
   const isBold = storefront.theme === 'bold'
   const isMinimal = storefront.theme === 'minimal'
+  const gallery = product.images?.length ? product.images : product.image ? [product.image] : []
   const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0)
   const cartTotal = cart.reduce((sum, item) => sum + Number(item.selling_price) * item.quantity, 0)
 
@@ -74,8 +76,9 @@ export default function ProductDetailClient({ data }: { data: DetailData }) {
       </header>
       <section className="mx-auto grid max-w-5xl gap-8 px-5 py-10 sm:px-8 sm:py-16 md:grid-cols-2 md:items-center">
         <div className={`aspect-square overflow-hidden border border-slate-200 bg-slate-100 ${isMinimal ? 'rounded-none' : isBold ? 'rounded-3xl' : 'rounded-2xl'}`}>
-          {product.image ? <img src={product.image} alt={product.product_name} className="h-full w-full object-cover" /> : <div className="flex h-full items-center justify-center" style={{ color: primary }}><ShoppingBag className="h-20 w-20 opacity-35" /></div>}
+          {gallery.length ? <img src={gallery[0]} alt={product.product_name} className="h-full w-full object-cover" /> : <div className="flex h-full items-center justify-center" style={{ color: primary }}><ShoppingBag className="h-20 w-20 opacity-35" /></div>}
         </div>
+        {gallery.length > 1 && <div className="grid grid-cols-5 gap-2 md:col-start-1 md:row-start-2">{gallery.slice(0, 6).map((image) => <img key={image} src={image} alt="" className="aspect-square w-full rounded-lg border border-slate-200 object-cover" />)}</div>}
         <div>
           <p className="text-sm font-semibold uppercase tracking-[0.2em]" style={{ color: accent }}>Product details</p>
           <h1 className={`mt-3 font-bold leading-tight ${isBold ? 'text-5xl' : 'text-4xl'}`}>{product.product_name}</h1>

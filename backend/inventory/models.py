@@ -18,3 +18,15 @@ class InventoryItem(models.Model):
 
     def __str__(self):
         return self.product_name
+
+
+class InventoryItemImage(models.Model):
+    item = models.ForeignKey(InventoryItem, related_name='gallery_images', on_delete=models.CASCADE)
+    image = models.ImageField(upload_to='inventory/gallery/')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ('created_at', 'id')
+
+    def __str__(self):
+        return f'{self.item.product_name} gallery image'

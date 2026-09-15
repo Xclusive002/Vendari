@@ -8,6 +8,7 @@ type ProductDetailData = {
   product_name: string
   description: string
   image: string | null
+  images?: string[]
   selling_price: string | number
   in_stock: boolean
 }

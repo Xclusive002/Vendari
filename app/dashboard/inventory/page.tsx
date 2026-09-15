@@ -32,7 +32,7 @@ export default function InventoryPage() {
     supplier_name: '',
     supplier_contact: '',
     description: '',
-    image: null as File | null,
+    images: [] as File[],
   })
 
   useEffect(() => {
@@ -72,7 +72,7 @@ export default function InventoryPage() {
         supplier_name: item.supplier_name || '',
         supplier_contact: item.supplier_contact || '',
         description: item.description || '',
-        image: null,
+        images: [],
       })
     } else {
       setEditingId(null)
@@ -87,7 +87,7 @@ export default function InventoryPage() {
         supplier_name: '',
         supplier_contact: '',
         description: '',
-        image: null,
+        images: [],
       })
     }
     setDialogOpen(true)
@@ -217,9 +217,9 @@ export default function InventoryPage() {
                 </div>
 
                 <div>
-                  <Label className="text-slate-300">Product image</Label>
-                  <Input type="file" accept="image/*" onChange={(e) => setFormData({ ...formData, image: e.target.files?.[0] || null })} className="dashboard-input mt-1" />
-                  {editingId && <p className="mt-1 text-xs text-text-muted">Leave empty to keep the current image.</p>}
+                  <Label className="text-slate-300">Product photos</Label>
+                  <Input type="file" accept="image/*" multiple onChange={(e) => setFormData({ ...formData, images: Array.from(e.target.files || []).slice(0, 6) })} className="dashboard-input mt-1" />
+                  <p className="mt-1 text-xs text-text-muted">Choose up to 6 photos. The first photo is the storefront cover.</p>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">

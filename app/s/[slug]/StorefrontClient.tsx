@@ -11,6 +11,7 @@ type Product = {
   product_name: string
   description: string
   image: string | null
+  images?: string[]
   selling_price: string | number | null
   in_stock: boolean
 }

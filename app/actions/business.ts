@@ -24,6 +24,7 @@ type ItemData = {
   supplier_contact?: string
   description?: string
   image?: File | null
+  images?: File[]
 }
 
 type ApiItem = {
@@ -37,6 +38,8 @@ type ApiItem = {
   selling_price?: number
   description?: string
   image?: string | null
+  gallery?: string[]
+  images?: string[]
   is_visible_on_storefront?: boolean
   is_low_stock?: boolean
 }
@@ -62,6 +65,7 @@ function itemFromApi(item: ApiItem) {
     supplier_contact: '',
     description: item.description || '',
     image: item.image || null,
+    images: item.gallery || item.images || (item.image ? [item.image] : []),
     is_visible_on_storefront: Boolean(item.is_visible_on_storefront),
   }
 }
@@ -89,6 +93,7 @@ function inventoryFormData(item: Partial<ItemData>) {
   if (item.selling_price !== undefined) formData.set('selling_price', item.selling_price ? String(item.selling_price) : '')
   if (item.description !== undefined) formData.set('description', item.description || '')
   if (item.image) formData.set('image', item.image)
+  item.images?.forEach((image) => formData.append('images', image))
   return formData
 }
 

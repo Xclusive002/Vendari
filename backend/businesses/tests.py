@@ -1,5 +1,6 @@
 from datetime import timedelta
 from io import BytesIO
+from unittest.mock import patch
 
 from PIL import Image
 from django.utils import timezone
@@ -130,7 +131,7 @@ class BusinessProfileTests(APITestCase):
 		self.assertEqual(response.status_code, status.HTTP_200_OK)
 		self.assertEqual(response.data['business_name'], self.business.name)
 		self.assertEqual([item['product_name'] for item in response.data['items']], ['Unpriced', visible.product_name])
-		self.assertEqual(set(response.data['items'][0]), {'id', 'product_name', 'description', 'image', 'selling_price', 'in_stock'})
+		self.assertEqual(set(response.data['items'][0]), {'id', 'product_name', 'description', 'image', 'images', 'selling_price', 'in_stock'})
 		self.assertIsNone(response.data['items'][0]['selling_price'])
 
 	def test_storefront_social_links_persist_and_validate(self):
@@ -186,6 +187,26 @@ class BusinessProfileTests(APITestCase):
 		self.assertEqual(public_response.data['storefront']['theme'], 'bold')
 		self.assertEqual(public_response.data['storefront']['primary_color'], '#123456')
 		self.assertEqual(public_response.data['storefront']['accent_color'], '#F97316')
+
+	@patch('businesses.views.send_storefront_published_email', return_value=True)
+	def test_publishing_storefront_sends_owner_onboarding_email_once(self, send_email):
+		StorefrontSettings.objects.create(business=self.business, slug='publishbusiness', is_published=False)
+		self.client.patch(
+			f'/api/businesses/{self.business.pk}/storefront-settings/',
+			{'is_published': True},
+			format='json',
+		)
+		send_email.assert_called_once_with(
+			self.user.email,
+			self.business.name,
+			'https://www.vendari.name.ng/s/publishbusiness',
+		)
+		self.client.patch(
+			f'/api/businesses/{self.business.pk}/storefront-settings/',
+			{'is_published': True},
+			format='json',
+		)
+		self.assertEqual(send_email.call_count, 1)
 
 	def test_public_storefront_includes_business_logo_and_banner_urls(self):
 		storefront = StorefrontSettings.objects.create(
