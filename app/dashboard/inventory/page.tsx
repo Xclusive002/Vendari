@@ -43,7 +43,7 @@ export default function InventoryPage() {
     try {
       const businessData = await getBusiness()
       if (!businessData) {
-        window.location.href = '/dashboard/setup'
+        window.location.href = '/dashboard'
         return
       }
 

@@ -14,8 +14,8 @@ from accounts.permissions import IsBusinessMember
 from billing.models import Plan
 from billing.utils import has_feature
 
-from .models import Business, Membership, StorefrontOrder, StorefrontOrderLineItem, StorefrontSettings
-from .email_service import send_storefront_published_email
+from .models import Business, InviteCode, Membership, StorefrontOrder, StorefrontOrderLineItem, StorefrontSettings
+from .email_service import send_storefront_published_email, send_team_invite_email
 from .serializers import BusinessSerializer, ConciergeInquirySerializer, StorefrontSettingsSerializer
 from expenses.models import Expense
 from inventory.models import InventoryItem
@@ -133,6 +133,7 @@ class BusinessMembersView(APIView):
 			return Response({'detail': 'A valid email and role are required.'}, status=status.HTTP_400_BAD_REQUEST)
 		code = get_random_string(24).upper()
 		invite = InviteCode.objects.create(business=business, code=code, email=email, role=role, expires_at=timezone.now() + timedelta(days=7))
+		send_team_invite_email(email, business.name, role, invite.code)
 		return Response({'id': invite.id, 'code': invite.code, 'role': invite.role}, status=status.HTTP_201_CREATED)
 
 	def delete(self, request, business_id):

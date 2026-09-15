@@ -1,283 +1,54 @@
 'use client'
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import Link from 'next/link'
+import { useMemo, useState } from 'react'
+import { ArrowRight, BarChart3, BookOpen, CheckCircle2, CircleHelp, ClipboardList, HelpCircle, Package, Search, ShoppingCart, Store, Users } from 'lucide-react'
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
-import { HelpCircle, Play, BookOpen, Award, Lightbulb, Settings } from 'lucide-react'
 
-const tutorials = [
-  {
-    id: 'getting-started',
-    title: 'Getting Started with Vendari',
-    icon: <Play className="w-6 h-6" />,
-    content: [
-      {
-        step: 1,
-        title: 'Complete Your Business Setup',
-        description:
-          'After logging in, you\'ll be taken to the business setup page. Fill in all your business details including name, contact information, and business type. This information is crucial for proper business tracking.',
-      },
-      {
-        step: 2,
-        title: 'Add Your First Product to Inventory',
-        description:
-          'Go to the Inventory section and click "Add Item". Enter your product details including name, code, category, quantity in stock, reorder level, cost price, and selling price. This helps track your stock levels.',
-      },
-      {
-        step: 3,
-        title: 'Record Your First Sale',
-        description:
-          'Navigate to the Sales section and click "Record Sale". Enter the product name, quantity sold, unit price, and payment method. The system automatically calculates the total amount.',
-      },
-      {
-        step: 4,
-        title: 'Track Your Expenses',
-        description:
-          'In the Reports section, click "Add Expense" to record your business expenses. Categorize them properly (Rent, Utilities, Salaries, etc.) for accurate profit & loss analysis.',
-      },
-      {
-        step: 5,
-        title: 'Monitor Your Dashboard',
-        description:
-          'Visit the main dashboard regularly to see your sales trends, profit margins, and inventory alerts. This gives you a quick overview of your business performance.',
-      },
-    ],
-  },
-  {
-    id: 'features',
-    title: 'Understanding Vendari Features',
-    icon: <Award className="w-6 h-6" />,
-    content: [
-      {
-        step: 1,
-        title: 'Dashboard Overview',
-        description:
-          'The main dashboard shows your key business metrics including total sales, net profit, inventory items, and total expenses. Charts display sales trends and expense distribution for quick insights.',
-      },
-      {
-        step: 2,
-        title: 'Sales Management',
-        description:
-          'Track every transaction with detailed information. The sales page shows sales trends over time, allows filtering by date range, and displays payment methods. Use this to analyze your selling patterns.',
-      },
-      {
-        step: 3,
-        title: 'Inventory Management',
-        description:
-          'Manage all your products in one place. Set reorder levels for automatic stock alerts, track supplier information, and monitor profitability per product. Low stock items are highlighted in red.',
-      },
-      {
-        step: 4,
-        title: 'Profit & Loss Reports',
-        description:
-          'Generate comprehensive financial reports comparing your revenue against expenses. View daily revenue vs expenses charts and categorized expense breakdowns to understand your spending patterns.',
-      },
-      {
-        step: 5,
-        title: 'Smart Alerts',
-        description:
-          'Vendari automatically alerts you when products fall below reorder levels. These alerts appear on your dashboard and inventory page to ensure you never run out of stock unexpectedly.',
-      },
-    ],
-  },
-  {
-    id: 'tips',
-    title: 'Best Practices & Tips',
-    icon: <Lightbulb className="w-6 h-6" />,
-    content: [
-      {
-        step: 1,
-        title: 'Keep Records Updated Daily',
-        description:
-          'Record sales and expenses daily for accurate real-time insights. The sooner you log transactions, the more accurate your reports will be.',
-      },
-      {
-        step: 2,
-        title: 'Set Realistic Reorder Levels',
-        description:
-          'Based on your sales velocity and supplier delivery time, set appropriate reorder levels. This prevents stockouts and excess inventory.',
-      },
-      {
-        step: 3,
-        title: 'Categorize Expenses Properly',
-        description:
-          'Use consistent expense categories to get meaningful reports. This helps you identify cost-saving opportunities and understand your spending breakdown.',
-      },
-      {
-        step: 4,
-        title: 'Review Reports Regularly',
-        description:
-          'Check your profit & loss reports weekly to identify trends. Look for ways to increase revenue or reduce expenses based on the data.',
-      },
-      {
-        step: 5,
-        title: 'Monitor Inventory Turnover',
-        description:
-          'Products that sell quickly have good turnover. Focus on products with high turnover and consider removing those that move slowly.',
-      },
-      {
-        step: 6,
-        title: 'Use Payment Methods Tracking',
-        description:
-          'Track different payment methods to understand customer preferences and manage cash flow. This is especially important for credit and transfer sales.',
-      },
-    ],
-  },
+const topics = [
+  { id: 'start', label: 'Start here', icon: BookOpen, href: '/dashboard' },
+  { id: 'sales', label: 'Sales', icon: ShoppingCart, href: '/dashboard/sales' },
+  { id: 'inventory', label: 'Inventory', icon: Package, href: '/dashboard/inventory' },
+  { id: 'storefront', label: 'Storefront', icon: Store, href: '/dashboard/storefront' },
+  { id: 'reports', label: 'Reports', icon: BarChart3, href: '/dashboard/reports' },
+  { id: 'team', label: 'Team access', icon: Users, href: '/dashboard/team' },
+]
+
+const guides = [
+  { id: 'first-week', topic: 'start', title: 'Your first week in Vendari', summary: 'Set up the essentials and build a daily rhythm that keeps your numbers trustworthy.', steps: ['Confirm your business details in Settings.', 'Add products with a selling price, stock count, reorder level, description, and useful photos.', 'Record every sale as it happens so stock and revenue stay aligned.', 'Log expenses as they occur instead of reconstructing them later.', 'Review the dashboard and Reports at the end of the week.'], href: '/dashboard' },
+  { id: 'inventory', topic: 'inventory', title: 'Keep inventory accurate', summary: 'Know what is on the shelf before a customer asks for it.', steps: ['Add each product once and use a clear product name or code.', 'Set quantity in stock and a reorder level that reflects supplier lead time.', 'Use up to six product photos and a customer-friendly description for storefront items.', 'Record sales and restocks promptly.', 'Investigate low-stock alerts before they become stockouts.'], href: '/dashboard/inventory' },
+  { id: 'sales', topic: 'sales', title: 'Record a sale correctly', summary: 'Capture the transaction once, with enough detail to understand the day later.', steps: ['Choose the product and enter the quantity sold.', 'Confirm the selling price and payment method.', 'Save the sale immediately after payment.', 'Check the dashboard trend and inventory quantity when needed.'], href: '/dashboard/sales' },
+  { id: 'storefront', topic: 'storefront', title: 'Launch your online storefront', summary: 'Create a shareable shop that reflects your business and is ready to receive orders.', steps: ['Open Storefront and choose your slug, theme, colors, contact details, and delivery option.', 'Open Manage storefront products and make sure each item is priced and visible.', 'Add product descriptions and photos so customers can decide confidently.', 'Preview the public link on mobile before sharing it.', 'Test the cart and checkout path once.'], href: '/dashboard/storefront' },
+  { id: 'reports', topic: 'reports', title: 'Read your business numbers', summary: 'Use Reports to understand where money is coming from and where it is going.', steps: ['Choose a date range that matches the question you are asking.', 'Compare revenue with expenses before making a decision.', 'Look at product and payment trends, not only the headline total.', 'Use the result to choose one action for the next week.'], href: '/dashboard/reports' },
+  { id: 'team', topic: 'team', title: 'Invite the right people', summary: 'Give staff and accountants access without sharing your password.', steps: ['Open Team and enter the person’s email address.', 'Choose Staff for daily operations or Accountant for money and reports.', 'Vendari emails a one-time invitation with an acceptance link and code.', 'The invitee accepts with the invited email and creates a password if needed.', 'Review roles regularly and remove access when someone leaves.'], href: '/dashboard/team' },
 ]
 
 const faqs = [
-  {
-    question: 'How often should I update my inventory?',
-    answer:
-      'It\'s best to update inventory after each sale and when you receive new stock. For businesses with high transaction volumes, daily updates are recommended. This ensures your stock levels are always accurate.',
-  },
-  {
-    question: 'Can I edit past transactions?',
-    answer:
-      'While you can\'t edit historical transactions to maintain data integrity, you can record adjustments as new transactions. This keeps an audit trail of all your business activities.',
-  },
-  {
-    question: 'What if I need a specific date range report?',
-    answer:
-      'The Reports section allows you to select custom date ranges. Simply set your preferred start and end dates to generate reports for any period you need.',
-  },
-  {
-    question: 'How is profit calculated?',
-    answer:
-      'Profit = Total Sales Revenue - Total Expenses. The profit margin percentage is calculated as (Profit / Total Sales) × 100. This gives you a clear picture of your business profitability.',
-  },
-  {
-    question: 'What payment methods are supported?',
-    answer:
-      'You can record sales through Cash, Card transfers, Bank transfers, and Cheques. Select the appropriate method when recording each transaction.',
-  },
-  {
-    question: 'Is my data secure?',
-    answer:
-      'Yes, all your business data is encrypted and securely stored. Access is protected by your account credentials, and your data is never shared with third parties.',
-  },
-  {
-    question: 'Can I export my reports?',
-    answer:
-      'Currently, you can view and analyze reports directly in the platform. We\'re working on adding export functionality for future updates.',
-  },
-  {
-    question: 'How do low stock alerts work?',
-    answer:
-      'When a product\'s quantity falls to or below the reorder level you set, it appears on the dashboard and inventory page with a low stock warning. This helps you maintain optimal inventory levels.',
-  },
+  ['How does profit work?', 'Profit is calculated from recorded sales revenue minus recorded expenses. Accurate results depend on recording both sides consistently.'],
+  ['How do low-stock alerts work?', 'An item is considered low stock when its quantity is at or below the reorder level you set. Increase the quantity after receiving stock and adjust the reorder level when your supply pattern changes.'],
+  ['Can I change my storefront after publishing?', 'Yes. Storefront settings, products, visibility, theme, colors, delivery options, and social links can be updated from the Storefront area.'],
+  ['What happens when I invite a teammate?', 'Vendari sends the address you entered an email containing the business name, role, a one-time code, and an acceptance link. The invite expires after seven days.'],
+  ['What can an invited teammate access?', 'After acceptance, the teammate signs into the same dashboard and receives the Staff or Accountant role selected by the owner. Owners can change that role or remove access from Team.'],
+  ['Why are my dashboard numbers not what I expected?', 'Check the selected date range, confirm every sale and expense was recorded once, and review product prices and quantities in Inventory.'],
 ]
 
 export default function HelpPage() {
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
-      <main className="p-4 md:p-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-white flex items-center gap-3">
-            <HelpCircle className="w-8 h-8 text-blue-400" />
-            Help & Tutorials
-          </h1>
-          <p className="text-slate-400 mt-2">Learn how to use Vendari effectively</p>
-        </div>
+  const [query, setQuery] = useState('')
+  const [topic, setTopic] = useState('all')
+  const filteredGuides = useMemo(() => guides.filter((guide) => {
+    const matchesTopic = topic === 'all' || guide.topic === topic
+    const haystack = `${guide.title} ${guide.summary} ${guide.steps.join(' ')}`.toLowerCase()
+    return matchesTopic && (!query.trim() || haystack.includes(query.trim().toLowerCase()))
+  }), [query, topic])
 
-        {/* Tutorials Section */}
-        <div className="space-y-6 mb-12">
-          {tutorials.map((tutorial) => (
-            <Card key={tutorial.id} className="bg-slate-800/50 border-slate-700 backdrop-blur">
-              <CardHeader className="flex flex-row items-center gap-4">
-                <div className="text-blue-400">{tutorial.icon}</div>
-                <CardTitle className="text-white">{tutorial.title}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-6">
-                  {tutorial.content.map((item) => (
-                    <div key={item.step} className="flex gap-6">
-                      <div className="flex-shrink-0">
-                        <div className="flex items-center justify-center w-8 h-8 rounded-full bg-blue-600 text-white font-semibold text-sm">
-                          {item.step}
-                        </div>
-                      </div>
-                      <div className="flex-1">
-                        <h4 className="text-white font-semibold mb-2">{item.title}</h4>
-                        <p className="text-slate-400 text-sm leading-relaxed">{item.description}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+  return <div className="dashboard-page"><main className="mx-auto max-w-7xl space-y-8">
+    <section className="relative overflow-hidden rounded-2xl border border-blue/20 bg-surface px-6 py-8 shadow-sm sm:px-10 sm:py-10">
+      <div className="relative z-10 max-w-3xl"><p className="text-xs font-semibold uppercase tracking-[0.22em] text-blue">Vendari help center</p><h1 className="mt-3 font-display text-3xl font-semibold text-ink sm:text-5xl">Know what to do next.</h1><p className="mt-4 max-w-2xl text-base leading-7 text-text-secondary">Practical answers for running your business: record the work, keep your stock honest, understand your numbers, and make your storefront easier to trust.</p><div className="relative mt-7 max-w-2xl"><Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-text-muted" /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search guides, inventory, storefront, reports..." className="dashboard-input h-14 w-full rounded-lg pl-12 pr-4 text-sm" aria-label="Search help" /></div></div><div className="absolute -right-16 -top-20 h-64 w-64 rounded-full bg-brand-gradient opacity-10" /></section>
 
-        {/* FAQ Section */}
-        <Card className="bg-slate-800/50 border-slate-700 backdrop-blur mb-8">
-          <CardHeader>
-            <CardTitle className="text-white flex items-center gap-3">
-              <BookOpen className="w-6 h-6 text-blue-400" />
-              Frequently Asked Questions
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Accordion type="single" collapsible className="w-full">
-              {faqs.map((faq, index) => (
-                <AccordionItem key={index} value={`faq-${index}`}>
-                  <AccordionTrigger className="text-white hover:text-blue-400">
-                    {faq.question}
-                  </AccordionTrigger>
-                  <AccordionContent className="text-slate-400">{faq.answer}</AccordionContent>
-                </AccordionItem>
-              ))}
-            </Accordion>
-          </CardContent>
-        </Card>
+    <section><div className="flex items-center justify-between gap-3"><div><p className="text-xs font-semibold uppercase tracking-[0.2em] text-text-muted">Browse by task</p><h2 className="mt-2 font-display text-2xl font-semibold text-ink">Find the answer in context</h2></div><CircleHelp className="h-7 w-7 text-blue" /></div><div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">{topics.map(({ id, label, icon: Icon }) => <button key={id} type="button" onClick={() => setTopic(topic === id ? 'all' : id)} className={`flex min-h-24 flex-col items-start justify-between rounded-xl border p-4 text-left transition-all hover:-translate-y-0.5 hover:shadow-md ${topic === id ? 'border-blue bg-blue/5 text-blue' : 'border-border bg-surface text-text-secondary'}`}><Icon className="h-5 w-5" /><span className="text-sm font-semibold">{label}</span></button>)}</div></section>
 
-        {/* Quick Reference Card */}
-        <Card className="bg-gradient-to-br from-blue-900/30 to-slate-800/50 border-blue-700/30">
-          <CardHeader>
-            <CardTitle className="text-white flex items-center gap-3">
-              <Settings className="w-6 h-6 text-blue-400" />
-              Quick Reference
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <h4 className="text-blue-300 font-semibold mb-3">Main Navigation</h4>
-                <ul className="space-y-2 text-sm text-slate-400">
-                  <li>
-                    <span className="text-white font-medium">Dashboard:</span> Overview of your business
-                  </li>
-                  <li>
-                    <span className="text-white font-medium">Sales:</span> Record and track sales
-                  </li>
-                  <li>
-                    <span className="text-white font-medium">Inventory:</span> Manage products
-                  </li>
-                  <li>
-                    <span className="text-white font-medium">Reports:</span> Profit & loss analysis
-                  </li>
-                </ul>
-              </div>
-              <div>
-                <h4 className="text-blue-300 font-semibold mb-3">Key Metrics</h4>
-                <ul className="space-y-2 text-sm text-slate-400">
-                  <li>
-                    <span className="text-white font-medium">Total Sales:</span> Sum of all revenue
-                  </li>
-                  <li>
-                    <span className="text-white font-medium">Net Profit:</span> Revenue minus expenses
-                  </li>
-                  <li>
-                    <span className="text-white font-medium">Profit Margin:</span> Profit as percentage of sales
-                  </li>
-                  <li>
-                    <span className="text-white font-medium">Stock Level:</span> Current inventory quantity
-                  </li>
-                </ul>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </main>
-    </div>
-  )
+    <section><div className="mb-5 flex items-end justify-between gap-3"><div><p className="text-xs font-semibold uppercase tracking-[0.2em] text-text-muted">Guides</p><h2 className="mt-2 font-display text-2xl font-semibold text-ink">Useful workflows</h2></div><span className="text-sm text-text-muted">{filteredGuides.length} guide{filteredGuides.length === 1 ? '' : 's'}</span></div>{filteredGuides.length ? <div className="grid gap-4 lg:grid-cols-2">{filteredGuides.map((guide) => <article key={guide.id} className="rounded-xl border border-border bg-surface p-5 shadow-sm"><div className="flex items-start justify-between gap-4"><div><h3 className="font-display text-xl font-semibold text-ink">{guide.title}</h3><p className="mt-2 text-sm leading-6 text-text-secondary">{guide.summary}</p></div><ClipboardList className="h-5 w-5 shrink-0 text-blue" /></div><ol className="mt-5 space-y-3">{guide.steps.map((step, index) => <li key={step} className="flex gap-3 text-sm leading-6 text-text-secondary"><span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-blue/10 text-xs font-semibold text-blue">{index + 1}</span><span>{step}</span></li>)}</ol><Link href={guide.href} className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-blue hover:underline">Open {guide.title.split(' ')[0]} <ArrowRight className="h-4 w-4" /></Link></article>)}</div> : <div className="rounded-xl border border-dashed border-border bg-surface px-6 py-12 text-center"><HelpCircle className="mx-auto h-8 w-8 text-text-muted" /><p className="mt-3 font-semibold text-ink">No guide matches that search.</p><button type="button" onClick={() => { setQuery(''); setTopic('all') }} className="mt-2 text-sm font-semibold text-blue hover:underline">Clear search</button></div>}</section>
+
+    <section className="grid gap-6 lg:grid-cols-[1.25fr_0.75fr]"><div className="rounded-xl border border-border bg-surface p-5 shadow-sm sm:p-6"><div className="flex items-center gap-3"><BookOpen className="h-5 w-5 text-blue" /><h2 className="font-display text-2xl font-semibold text-ink">Frequently asked</h2></div><Accordion type="single" collapsible className="mt-4">{faqs.map(([question, answer], index) => <AccordionItem key={question} value={`faq-${index}`}><AccordionTrigger className="text-left text-sm font-semibold text-ink hover:text-blue">{question}</AccordionTrigger><AccordionContent className="text-sm leading-6 text-text-secondary">{answer}</AccordionContent></AccordionItem>)}</Accordion></div><div className="rounded-xl bg-ink p-6 text-white shadow-sm"><p className="text-xs font-semibold uppercase tracking-[0.2em] text-blue">A calm first week</p><h2 className="mt-3 font-display text-2xl font-semibold">Make the numbers useful.</h2><p className="mt-3 text-sm leading-6 text-white/70">Small, consistent updates beat a long catch-up session. Record the sale, log the expense, and check what is low before you close the day.</p><div className="mt-6 space-y-3 text-sm text-white/85"><p className="flex gap-2"><CheckCircle2 className="h-4 w-4 shrink-0 text-blue" />Every sale recorded</p><p className="flex gap-2"><CheckCircle2 className="h-4 w-4 shrink-0 text-blue" />Every expense captured</p><p className="flex gap-2"><CheckCircle2 className="h-4 w-4 shrink-0 text-blue" />Low stock reviewed</p><p className="flex gap-2"><CheckCircle2 className="h-4 w-4 shrink-0 text-blue" />Storefront tested before sharing</p></div><Link href="/dashboard" className="mt-7 inline-flex items-center gap-2 rounded-lg bg-brand-gradient px-4 py-2.5 text-sm font-semibold text-white">See your dashboard <ArrowRight className="h-4 w-4" /></Link></div></section>
+  </main></div>
 }

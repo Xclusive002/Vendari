@@ -256,7 +256,8 @@ class AcceptInviteView(APIView):
         serializer = InviteAcceptSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user, business, membership = serializer.save()
+        tokens = token_pair(user)
         return Response(
-            {'message': 'Invite accepted successfully.', 'business_id': business.id, 'role': membership.role},
+            {'message': 'Invite accepted successfully.', 'business_id': business.id, 'role': membership.role, **tokens},
             status=status.HTTP_201_CREATED,
         )

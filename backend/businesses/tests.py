@@ -10,6 +10,7 @@ from rest_framework.test import APITestCase
 from accounts.models import User
 
 from inventory.models import InventoryItem
+from billing.models import Plan
 
 from .models import Business, ConciergeInquiry, Membership, StorefrontOrder, StorefrontSettings
 
@@ -260,6 +261,28 @@ class BusinessProfileTests(APITestCase):
 		self.assertFalse(out_of_stock_response.data['product']['in_stock'])
 		for item in (hidden, unpriced, other):
 			self.assertEqual(self.client.get(f'/api/storefronts/{storefront.slug}/products/{item.pk}/').status_code, status.HTTP_404_NOT_FOUND)
+
+	@patch('businesses.views.send_team_invite_email', return_value=True)
+	def test_team_invite_emails_recipient_and_acceptance_returns_tokens(self, send_email):
+		plan = Plan.objects.create(name=Plan.PLAN_PRO, interval=Plan.INTERVAL_MONTHLY, feature_flags={'team_members': True})
+		self.business.plan = plan
+		self.business.save(update_fields=['plan'])
+		self.client.force_authenticate(self.user)
+		response = self.client.post(
+			f'/api/businesses/{self.business.pk}/members/',
+			{'email': 'staff@example.com', 'role': 'staff'},
+			format='json',
+		)
+		self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+		send_email.assert_called_once_with('staff@example.com', self.business.name, 'staff', response.data['code'])
+
+		self.client.logout()
+		accepted = self.client.post('/api/auth/accept-invite/', {
+			'token': response.data['code'], 'email': 'staff@example.com', 'password': 'StrongPass123!',
+		}, format='json')
+		self.assertEqual(accepted.status_code, status.HTTP_201_CREATED)
+		self.assertIn('access', accepted.data)
+		self.assertEqual(accepted.data['role'], 'staff')
 
 	def test_unpublished_or_unknown_storefront_is_not_publicly_discoverable(self):
 		StorefrontSettings.objects.create(business=self.business, slug='hiddenstore', is_published=False)

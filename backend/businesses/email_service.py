@@ -44,3 +44,40 @@ def send_storefront_published_email(user_email, business_name, storefront_url):
     except Exception:
         logger.exception('[STOREFRONT_EMAIL] Failed to send publish email to %s', user_email)
         return False
+
+
+def send_team_invite_email(recipient_email, business_name, role, code):
+    if not recipient_email:
+        return False
+    try:
+        from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', '').strip() or 'onboarding@resend.dev'
+        if from_email.lower().endswith('@gmail.com'):
+            from_email = 'onboarding@resend.dev'
+        app_url = getattr(settings, 'DASHBOARD_URL', '').rstrip('/')
+        invite_url = f'{app_url}/accept-invite?token={code}'
+        subject = f'You have been invited to {business_name} on Vendari'
+        text = (
+            f'You have been invited to help manage {business_name} on Vendari.\n\n'
+            f'Role: {role.title()}\n\n'
+            f'Accept your invitation: {invite_url}\n\n'
+            f'Your invitation code is: {code}\n\n'
+            'Use the invited email address when accepting. If you are new to Vendari, create a password. '
+            'If you already have a Vendari account, sign in with your existing account details. '
+            'The invitation expires in 7 days and can only be used once.\n\n'
+            'The Vendari team\n'
+        )
+        html = f'''<div style="font-family:Arial,sans-serif;line-height:1.6;color:#0B1220;max-width:620px;margin:auto;padding:24px">
+<h1>You are invited to {business_name}</h1>
+<p>You have been invited to help manage this business on Vendari.</p>
+<p><strong>Role:</strong> {role.title()}</p>
+<p><a href="{invite_url}" style="display:inline-block;background:#4683EC;color:white;padding:12px 18px;border-radius:8px;text-decoration:none;font-weight:600">Accept invitation</a></p>
+<p>If the button does not work, use this invitation code: <strong>{code}</strong></p>
+<p>Use the invited email address when accepting. New users will create a password; existing users can use their current account details. This invitation expires in 7 days and can only be used once.</p>
+<p>The Vendari team</p></div>'''
+        message = EmailMultiAlternatives(subject=subject, body=text, from_email=from_email, to=[recipient_email])
+        message.attach_alternative(html, 'text/html')
+        message.send(fail_silently=False)
+        return True
+    except Exception:
+        logger.exception('[TEAM_INVITE_EMAIL] Failed to send invite to %s', recipient_email)
+        return False

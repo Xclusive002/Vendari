@@ -46,6 +46,23 @@ export async function login(email: string, password: string) {
   }
 }
 
+export async function acceptInvite(token: string, email: string, password: string) {
+  try {
+    const tokens = await apiJson<{ access: string; refresh: string }>('/auth/accept-invite/', {
+      method: 'POST',
+      body: JSON.stringify({ token, email, password: password || undefined }),
+      skipRefresh: true,
+    })
+    const cookieStore = await cookies()
+    const options = { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax' as const, path: '/' }
+    cookieStore.set('vendari_access', tokens.access, { ...options, maxAge: ACCESS_TOKEN_MAX_AGE })
+    cookieStore.set('vendari_refresh', tokens.refresh, { ...options, maxAge: REFRESH_TOKEN_MAX_AGE })
+    return { success: true }
+  } catch (error) {
+    return { success: false, error: error instanceof Error ? error.message : 'Unable to accept invitation' }
+  }
+}
+
 export async function getCurrentUser() {
   try {
     return await apiJson<{ email: string; has_seen_welcome: boolean }>('/auth/me/')

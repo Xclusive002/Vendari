@@ -71,7 +71,7 @@ export default function ReportsPage() {
     try {
       const businessData = await getBusiness()
       if (!businessData) {
-        window.location.href = '/dashboard/setup'
+        window.location.href = '/dashboard'
         return
       }
 
