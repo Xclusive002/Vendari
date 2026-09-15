@@ -91,7 +91,38 @@ button,
     border: 1px solid var(--border);
     border-radius: 8px;
     background: var(--surface);
-    color: var(--text-primary);
+    color: #000000;
+  }
+
+  .dashboard-input::file-selector-button {
+    margin-right: 0.75rem;
+    border: 0;
+    border-radius: 8px;
+    background: var(--ink);
+    color: #ffffff;
+    cursor: pointer;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    transition: transform 150ms ease-out, background-color 150ms ease-out;
+  }
+
+  .dashboard-input:hover::file-selector-button {
+    background: var(--blue);
+  }
+
+  .dashboard-input:active::file-selector-button {
+    transform: scale(0.97);
+  }
+
+  .dashboard-input:focus-visible::file-selector-button {
+    outline: 2px solid var(--blue);
+    outline-offset: 2px;
+  }
+
+  .dashboard-input:disabled::file-selector-button {
+    cursor: not-allowed;
+    opacity: 0.55;
   }
 
   .dashboard-input:focus-visible {

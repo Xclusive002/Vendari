@@ -371,7 +371,7 @@ export default function SalesPage() {
               </DialogHeader>
               <form onSubmit={handleAddSale} className="space-y-4">
                 <div className="flex justify-between items-center">
-                  <h3 className="font-medium text-slate-300">Enter sale details</h3>
+                  <h3 className="font-medium text-black">Enter sale details</h3>
                   <VoiceInputButton
                     context="sale"
                     businessId={business.id}
@@ -380,7 +380,7 @@ export default function SalesPage() {
                   />
                 </div>
                 <div>
-                  <Label className="text-slate-300">Inventory Item *</Label>
+                  <Label className="text-black">Inventory Item *</Label>
                   <select value={formData.item} onChange={(e) => setFormData({ ...formData, item: e.target.value })} className="dashboard-input mt-1 w-full px-3 py-2" required>
                     <option value="">Select an item</option>
                     {inventory.map((item) => <option key={item.id} value={item.id}>{item.product_name} ({item.quantity_in_stock} in stock)</option>)}
@@ -388,7 +388,7 @@ export default function SalesPage() {
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label className="text-slate-300">Quantity *</Label>
+                    <Label className="text-black">Quantity *</Label>
                     <Input
                       type="number"
                       min="1"
@@ -400,7 +400,7 @@ export default function SalesPage() {
                     />
                   </div>
                   <div>
-                    <Label className="text-slate-300">Unit Price</Label>
+                    <Label className="text-black">Unit Price</Label>
                     <Input
                       value={selectedItem ? `₦${Number(selectedItem.selling_price || 0).toLocaleString()}` : ''}
                       className="dashboard-input mt-1"
@@ -411,7 +411,7 @@ export default function SalesPage() {
                 </div>
                 <p className="text-sm text-text-secondary">Estimated total: <span className="font-mono font-medium text-ink">₦{estimatedTotal.toLocaleString()}</span></p>
                 <div>
-                  <Label className="text-slate-300">Payment Method</Label>
+                  <Label className="text-black">Payment Method</Label>
                   <select
                     value={formData.payment_method}
                     onChange={(e) =>
@@ -426,7 +426,7 @@ export default function SalesPage() {
                   </select>
                 </div>
                 <div>
-                  <Label className="text-slate-300">Order Status</Label>
+                  <Label className="text-black">Order Status</Label>
                   <select
                     value={formData.status}
                     onChange={(e) => setFormData({ ...formData, status: e.target.value })}
@@ -441,7 +441,7 @@ export default function SalesPage() {
                   </select>
                 </div>
                 <div>
-                  <Label className="text-slate-300">Notes</Label>
+                  <Label className="text-black">Notes</Label>
                   <Input
                     value={formData.notes}
                     onChange={(e) =>

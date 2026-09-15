@@ -183,7 +183,7 @@ export default function InventoryPage() {
               </DialogHeader>
               <form onSubmit={handleSave} className="space-y-4 max-h-96 overflow-y-auto">
                 <div className="flex justify-between items-center">
-                  <h3 className="font-medium text-slate-300">Item information</h3>
+                  <h3 className="font-medium text-black">Item information</h3>
                   {!editingId && (
                     <VoiceInputButton
                       context="inventory"
@@ -194,7 +194,7 @@ export default function InventoryPage() {
                   )}
                 </div>
                 <div>
-                  <Label className="text-slate-300">Product Name *</Label>
+                  <Label className="text-black">Product Name *</Label>
                   <Input
                     value={formData.product_name}
                     onChange={(e) =>
@@ -207,7 +207,7 @@ export default function InventoryPage() {
                 </div>
 
                 <div>
-                  <Label className="text-slate-300">Product description</Label>
+                  <Label className="text-black">Product description</Label>
                   <textarea
                     value={formData.description}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
@@ -217,14 +217,14 @@ export default function InventoryPage() {
                 </div>
 
                 <div>
-                  <Label className="text-slate-300">Product photos</Label>
+                  <Label className="text-black">Product photos</Label>
                   <Input type="file" accept="image/*" multiple onChange={(e) => setFormData({ ...formData, images: Array.from(e.target.files || []).slice(0, 6) })} className="dashboard-input mt-1" />
                   <p className="mt-1 text-xs text-text-muted">Choose up to 6 photos. The first photo is the storefront cover.</p>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label className="text-slate-300">Product Code</Label>
+                    <Label className="text-black">Product Code</Label>
                     <Input
                       value={formData.product_code}
                       onChange={(e) =>
@@ -235,7 +235,7 @@ export default function InventoryPage() {
                     />
                   </div>
                   <div>
-                    <Label className="text-slate-300">Category</Label>
+                    <Label className="text-black">Category</Label>
                     <Input
                       value={formData.category}
                       onChange={(e) =>
@@ -249,7 +249,7 @@ export default function InventoryPage() {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label className="text-slate-300">Quantity in Stock</Label>
+                    <Label className="text-black">Quantity in Stock</Label>
                     <Input
                       type="number"
                       value={formData.quantity_in_stock}
@@ -261,7 +261,7 @@ export default function InventoryPage() {
                     />
                   </div>
                   <div>
-                    <Label className="text-slate-300">Reorder Level</Label>
+                    <Label className="text-black">Reorder Level</Label>
                     <Input
                       type="number"
                       value={formData.reorder_level}
@@ -276,7 +276,7 @@ export default function InventoryPage() {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label className="text-slate-300">Unit Cost (₦)</Label>
+                    <Label className="text-black">Unit Cost (₦)</Label>
                     <Input
                       type="number"
                       step="0.01"
@@ -289,7 +289,7 @@ export default function InventoryPage() {
                     />
                   </div>
                   <div>
-                    <Label className="text-slate-300">Selling Price (₦)</Label>
+                    <Label className="text-black">Selling Price (₦)</Label>
                     <Input
                       type="number"
                       step="0.01"
