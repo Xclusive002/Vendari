@@ -3,7 +3,7 @@ from django.db import models
 
 def default_feature_flags():
     return {
-        'ai_insights': False,
+        'ai_insights': True,
         'nl_reporting': False,
         'forecasting': False,
         'voice_entry': False,

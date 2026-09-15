@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { toast } from 'sonner'
-import { checkStorefrontSlug, getBusiness, getStorefrontSettings, launchStorefront, updateStorefrontSettings } from '@/app/actions/business'
+import { checkStorefrontSlug, getBusiness, getStorefrontSettings, launchStorefront, updateBusiness, updateStorefrontSettings, uploadStorefrontBanner } from '@/app/actions/business'
 import { getStorefrontUrl } from '@/lib/storefront'
 
 const VENDARI_BLUE = '#4683EC'
@@ -22,6 +22,7 @@ export default function StorefrontPage() {
   const [slugDraft, setSlugDraft] = useState('')
   const [slugStatus, setSlugStatus] = useState<{ available: boolean; message: string } | null>(null)
   const [checkingSlug, setCheckingSlug] = useState(false)
+  const [uploadingMedia, setUploadingMedia] = useState<'logo' | 'banner' | null>(null)
 
   useEffect(() => {
     async function load() {
@@ -119,6 +120,22 @@ export default function StorefrontPage() {
       toast.success(nextPublished ? 'Storefront published' : 'Storefront unpublished')
     } else if (result.success === false) {
       toast.error(result.error || 'Unable to update storefront status')
+    }
+  }
+
+  const handleMediaUpload = async (kind: 'logo' | 'banner', file: File | undefined) => {
+    if (!business || !file) return
+    setUploadingMedia(kind)
+    const result = kind === 'logo'
+      ? await updateBusiness(business.id, { logo: file })
+      : await uploadStorefrontBanner(business.id, file)
+    setUploadingMedia(null)
+    if (result.success) {
+      const refreshed = await getStorefrontSettings(business.id)
+      if (refreshed.success) setSettings(refreshed.data)
+      toast.success(`${kind === 'logo' ? 'Logo' : 'Banner'} updated`)
+    } else {
+      toast.error(result.error)
     }
   }
 
@@ -226,6 +243,19 @@ export default function StorefrontPage() {
               <div>
                 <label className="text-sm font-medium text-text-secondary">Description</label>
                 <textarea value={settings.description || ''} onChange={(e) => setSettings({ ...settings, description: e.target.value })} className="mt-2 min-h-28 w-full rounded-lg border border-border bg-bg px-3 py-2 text-sm" />
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <label className="text-sm font-medium text-text-secondary">Store logo</label>
+                  <Input type="file" accept="image/*" onChange={(event) => handleMediaUpload('logo', event.target.files?.[0])} disabled={uploadingMedia !== null} className="mt-2" />
+                  {settings.logo && <img src={settings.logo} alt="Store logo" className="mt-3 h-14 w-14 rounded-lg object-cover" />}
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-text-secondary">Store banner</label>
+                  <Input type="file" accept="image/*" onChange={(event) => handleMediaUpload('banner', event.target.files?.[0])} disabled={uploadingMedia !== null} className="mt-2" />
+                  {settings.banner_image && <img src={settings.banner_image} alt="Store banner" className="mt-3 h-14 w-full rounded-lg object-cover" />}
+                </div>
               </div>
 
               <div>

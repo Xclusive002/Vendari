@@ -77,6 +77,7 @@ export default function DashboardPage() {
   const [business, setBusiness] = useState<{ id: string; business_name: string } | null>(null)
   const [summary, setSummary] = useState<DashboardSummary>({ total_sales: 0, orders: 0, total_expenses: 0, profit: 0, trend: [], products: [], low_stock: [] })
   const [insights, setInsights] = useState<any[]>([])
+    const [insightsError, setInsightsError] = useState('')
   const [showWelcome, setShowWelcome] = useState(false)
   const [loading, setLoading] = useState(true)
   const [mobileTodos, setMobileTodos] = useState<MobileTodoItem[]>([])
@@ -145,8 +146,15 @@ export default function DashboardPage() {
           if (currentLoad === loadVersion) setShowWelcome(currentUser?.has_seen_welcome === false)
         })
         getInsights(currentBusiness.id).then((insightResult) => {
-          if (currentLoad === loadVersion) setInsights(insightResult.data || [])
-        }).catch(() => setInsights([]))
+          if (currentLoad !== loadVersion) return
+          setInsights(insightResult.data || [])
+          setInsightsError(insightResult.success ? '' : insightResult.error || 'AI insights are unavailable.')
+        }).catch(() => {
+          if (currentLoad === loadVersion) {
+            setInsights([])
+            setInsightsError('AI insights are temporarily unavailable.')
+          }
+        })
       } finally {
         loadingRequest = false
       }
@@ -346,7 +354,7 @@ export default function DashboardPage() {
                   </div>
                 </>
               ) : (
-                <p className="mt-3 text-sm text-white/70">Insights will appear as more business data is tracked.</p>
+                <p className="mt-3 text-sm text-white/70">{insightsError || 'Insights will appear as more business data is tracked.'}</p>
               )}
             </section>
 

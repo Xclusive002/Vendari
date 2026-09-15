@@ -156,6 +156,15 @@ export async function updateStorefrontSettings(businessId: string, updates: Reco
   })
 }
 
+export async function uploadStorefrontBanner(businessId: string, banner: File) {
+  const formData = new FormData()
+  formData.set('banner_image', banner)
+  return request<any>(`/businesses/${businessId}/storefront-settings/`, {
+    method: 'PATCH',
+    body: formData,
+  })
+}
+
 export async function getDashboardSummary(businessId: string) {
   return request<{
     total_sales: number
@@ -292,7 +301,7 @@ export async function getExpenses(businessId: string, startDate?: string, endDat
 
 export async function getInsights(businessId: string) {
   const result = await request<any[]>(`/businesses/${businessId}/ai-insights/`)
-  return result.success ? { success: true, data: result.data } : { ...result, data: [] }
+  return result.success ? { success: true, data: result.data } : { success: false as const, data: [], error: result.error }
 }
 
 export async function addCustomer(businessId: string, customerData: any): Promise<RequestResult<CustomerResult>> {

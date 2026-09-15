@@ -6,11 +6,13 @@ from .models import Business, ConciergeInquiry, StorefrontSettings
 
 
 class StorefrontSettingsSerializer(serializers.ModelSerializer):
+    logo = serializers.SerializerMethodField()
+
     class Meta:
         model = StorefrontSettings
         fields = [
             'id', 'business', 'slug', 'is_published', 'theme', 'primary_color', 'accent_color',
-            'banner_image', 'description', 'whatsapp_number', 'social_links', 'delivery_option',
+            'logo', 'banner_image', 'description', 'whatsapp_number', 'social_links', 'delivery_option',
             'created_at', 'updated_at',
         ]
         read_only_fields = ('id', 'business', 'created_at', 'updated_at')
@@ -32,6 +34,13 @@ class StorefrontSettingsSerializer(serializers.ModelSerializer):
         if instance.banner_image:
             data['banner_image'] = request.build_absolute_uri(instance.banner_image.url) if request else instance.banner_image.url
         return data
+
+    def get_logo(self, instance):
+        logo = instance.business.logo
+        if not logo:
+            return None
+        request = self.context.get('request')
+        return request.build_absolute_uri(logo.url) if request else logo.url
 
 
 class BusinessSerializer(serializers.ModelSerializer):

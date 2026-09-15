@@ -9,6 +9,7 @@ type StorefrontData = {
   has_payments_enabled: boolean
   storefront: {
     slug: string
+    logo: string | null
     theme: string
     primary_color: string
     accent_color: string
@@ -21,7 +22,7 @@ type StorefrontData = {
     product_name: string
     description: string
     image: string | null
-    selling_price: string | number
+    selling_price: string | number | null
     in_stock: boolean
   }>
 }

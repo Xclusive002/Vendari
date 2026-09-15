@@ -17,6 +17,7 @@ type StorefrontData = {
   business_name: string
   storefront: {
     slug: string
+    logo: string | null
     theme: string
     primary_color: string
     accent_color: string
@@ -101,22 +102,23 @@ export default function StorefrontClient({ data }: { data: StorefrontData }) {
       <header className="relative overflow-hidden" style={{ backgroundColor: primary }}>
         {storefront.banner_image && <img src={storefront.banner_image} alt="" className="absolute inset-0 h-full w-full object-cover opacity-35" />}
         <div className="absolute inset-0 bg-black/25" />
-        <div className="relative mx-auto flex min-h-[19rem] max-w-6xl flex-col justify-end px-5 pb-8 pt-16 text-white sm:min-h-[25rem] sm:px-8 sm:pb-12">
+        <div className="relative mx-auto flex min-h-[19rem] max-w-6xl flex-col justify-end px-4 pb-7 pt-14 text-white sm:min-h-[25rem] sm:px-8 sm:pb-12">
           <div className="max-w-2xl">
+            {storefront.logo && <img src={storefront.logo} alt={`${data.business_name} logo`} className="mb-5 h-16 w-16 rounded-2xl border border-white/40 bg-white object-cover p-1 shadow-lg sm:h-20 sm:w-20" />}
             <p className="mb-3 text-xs font-semibold uppercase tracking-[0.25em] text-white/75">Online shop</p>
-            <h1 className="text-4xl font-bold leading-tight sm:text-6xl">{data.business_name}</h1>
-            {storefront.description && <p className="mt-4 max-w-xl text-base leading-7 text-white/85 sm:text-lg">{storefront.description}</p>}
+            <h1 className="text-3xl font-bold leading-tight sm:text-6xl">{data.business_name}</h1>
+            {storefront.description && <p className="mt-3 max-w-xl text-sm leading-6 text-white/85 sm:mt-4 sm:text-lg sm:leading-7">{storefront.description}</p>}
           </div>
         </div>
       </header>
 
       <section className="mx-auto max-w-6xl px-5 py-10 sm:px-8 sm:py-14">
-        <div className="mb-7 flex items-end justify-between gap-4">
+        <div className="mb-6 flex items-end justify-between gap-3">
           <div><p className="text-sm font-semibold" style={{ color: accent }}>Shop collection</p><h2 className="mt-1 text-2xl font-bold sm:text-3xl">Available products</h2></div>
-          <button type="button" onClick={() => setCartOpen(true)} className="relative flex h-12 w-12 items-center justify-center rounded-full text-white shadow-lg" style={{ backgroundColor: primary }} aria-label={`Open cart with ${cartCount} items`}><ShoppingCart className="h-5 w-5" />{cartCount > 0 && <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-white px-1 text-xs font-bold" style={{ color: primary }}>{cartCount}</span>}</button>
+          <button type="button" onClick={() => setCartOpen(true)} className="sticky top-4 z-10 flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-white shadow-lg" style={{ backgroundColor: primary }} aria-label={`Open cart with ${cartCount} items`}><ShoppingCart className="h-5 w-5" />{cartCount > 0 && <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-white px-1 text-xs font-bold" style={{ color: primary }}>{cartCount}</span>}</button>
         </div>
 
-        {data.items.length === 0 ? <div className="rounded-2xl border border-slate-200 bg-slate-50 px-6 py-16 text-center text-slate-600">No products are available right now.</div> : <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-5 lg:grid-cols-4">{data.items.map((product) => { const hasPrice = product.selling_price !== null && Number(product.selling_price) > 0; return <article key={product.product_name} className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"><div className="aspect-square bg-slate-100">{product.image ? <img src={product.image} alt={product.product_name} className="h-full w-full object-cover" /> : <div className="flex h-full items-center justify-center" style={{ color: primary }}><ShoppingBag className="h-10 w-10 opacity-40" /></div>}</div><div className="p-3 sm:p-4"><div className="mb-2 flex items-start justify-between gap-2"><h3 className="font-semibold leading-tight">{product.product_name}</h3><span className={`shrink-0 rounded-full px-2 py-1 text-[10px] font-semibold ${product.in_stock ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>{product.in_stock ? 'In stock' : 'Out of stock'}</span></div>{product.description && <p className="mb-3 text-xs leading-5 text-slate-500">{excerpt(product.description)}</p>}<p className="text-lg font-bold" style={{ color: primary }}>{hasPrice ? money(product.selling_price) : 'Message us for price'}</p>{hasPrice && product.in_stock && <button type="button" onClick={() => addToCart(product)} className="mt-3 w-full rounded-xl px-3 py-2.5 text-sm font-semibold text-white" style={{ backgroundColor: accent }}>Add to cart</button>}</div></article> })}</div>}
+        {data.items.length === 0 ? <div className="rounded-2xl border border-slate-200 bg-slate-50 px-6 py-16 text-center text-slate-600">No products are available right now.</div> : <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-4">{data.items.map((product) => { const hasPrice = product.selling_price !== null && Number(product.selling_price) > 0; return <article key={product.product_name} className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"><div className="aspect-[4/3] bg-slate-100 sm:aspect-square">{product.image ? <img src={product.image} alt={product.product_name} className="h-full w-full object-cover" /> : <div className="flex h-full items-center justify-center" style={{ color: primary }}><ShoppingBag className="h-10 w-10 opacity-40" /></div>}</div><div className="p-4"><div className="mb-2 flex items-start justify-between gap-2"><h3 className="min-w-0 text-base font-semibold leading-tight">{product.product_name}</h3><span className={`shrink-0 rounded-full px-2 py-1 text-[10px] font-semibold ${product.in_stock ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>{product.in_stock ? 'In stock' : 'Out of stock'}</span></div>{product.description && <p className="mb-3 text-sm leading-5 text-slate-500">{excerpt(product.description)}</p>}<p className="text-lg font-bold" style={{ color: primary }}>{hasPrice ? money(product.selling_price) : 'Message us for price'}</p>{hasPrice && product.in_stock && <button type="button" onClick={() => addToCart(product)} className="mt-3 min-h-11 w-full rounded-xl px-3 py-2.5 text-sm font-semibold text-white" style={{ backgroundColor: accent }}>Add to cart</button>}</div></article> })}</div>}
       </section>
 
       <footer className="border-t border-slate-200 px-5 py-8 text-center text-sm text-slate-500"><a href="https://www.vendari.name.ng" className="font-semibold hover:underline">Powered by Vendari</a></footer>

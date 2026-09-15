@@ -15,6 +15,7 @@ from inventory.models import InventoryItem
 
 from .models import AIInsight
 from .serializers import AIInsightSerializer
+from .tasks import compute_business_insights
 from .query_service import answer_business_question
 from .gemini import GeminiRateLimitError, generate_content, response_text
 
@@ -34,6 +35,9 @@ class BusinessInsightsView(APIView):
 		if not has_feature(business, 'ai_insights'):
 			return Response({'detail': 'AI insights are not enabled for this business plan.'}, status=status.HTTP_403_FORBIDDEN)
 		insights = AIInsight.objects.filter(business=business).order_by('-generated_at')[:10]
+		if not insights.exists():
+			compute_business_insights(business.pk)
+			insights = AIInsight.objects.filter(business=business).order_by('-generated_at')[:10]
 		return Response(AIInsightSerializer(insights, many=True).data)
 
 

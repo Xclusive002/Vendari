@@ -39,7 +39,7 @@ class BusinessViewSet(viewsets.ModelViewSet):
 				'amount': 9999,
 				'interval': Plan.INTERVAL_MONTHLY,
 				'feature_flags': {
-					'ai_insights': False,
+					'ai_insights': True,
 					'nl_reporting': False,
 					'forecasting': False,
 					'voice_entry': False,
