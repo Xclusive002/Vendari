@@ -3,7 +3,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { HeroMotion, ScrollReveal } from "@/components/landing-motion";
+import { HeroMotion, ParallaxMockup, ScrollReveal } from "@/components/landing-motion";
 
 export const metadata: Metadata = {
   title: "Vendari - Business Management Software",
@@ -344,6 +344,53 @@ function InsightCard() {
   );
 }
 
+function StorefrontShowcase() {
+  return (
+    <section className="relative overflow-hidden bg-bg px-5 py-20 sm:px-8 sm:py-28">
+      <div className="absolute left-[-10rem] top-20 h-72 w-72 rounded-full bg-blue/10 blur-3xl" aria-hidden="true" />
+      <div className="relative mx-auto max-w-7xl">
+        <div className="grid items-center gap-12 lg:grid-cols-[0.85fr_1.15fr]">
+          <ScrollReveal direction="left">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-blue">The standout move</p>
+            <h2 className="mt-4 max-w-xl font-display text-4xl font-bold leading-[1.02] text-ink sm:text-6xl">
+              Your business, its own online store — in minutes.
+            </h2>
+            <p className="mt-6 max-w-lg text-base leading-7 text-text-secondary">
+              Turn the inventory you already manage into a storefront customers can browse, trust, and share. No second catalog to maintain.
+            </p>
+            <div className="mt-8 grid gap-4 sm:grid-cols-3 lg:grid-cols-1">
+              {[
+                ["01", "Inventory", "Your products and prices are ready to go."],
+                ["02", "Auto-published store", "A branded shop appears with one clear link."],
+                ["03", "Share anywhere", "Send it straight to customers on WhatsApp."],
+              ].map(([number, title, copy], index) => (
+                <div key={title} className="relative flex gap-3 border-l border-blue/25 pl-4">
+                  <span className="font-mono text-xs text-blue">{number}</span>
+                  <div><p className="font-display text-base font-semibold text-ink">{title}</p><p className="mt-1 text-sm leading-5 text-text-secondary">{copy}</p></div>
+                  {index < 2 && <span className="absolute -bottom-3 left-[-3px] hidden h-6 border-l border-dashed border-blue/30 lg:block" />}
+                </div>
+              ))}
+            </div>
+            <Link href="/register" className="motion-hover mt-8 inline-flex items-center gap-2 rounded-lg bg-brand-gradient px-5 py-3.5 text-sm font-semibold text-white shadow-lg shadow-blue/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue focus-visible:ring-offset-2">Launch your storefront <ArrowRight className="h-4 w-4" /></Link>
+          </ScrollReveal>
+
+          <ScrollReveal direction="right" delay={0.08}>
+            <div className="relative mx-auto max-w-2xl">
+              <div className="rounded-2xl border border-border bg-surface p-3 shadow-[var(--shadow-modal)] sm:p-5">
+                <div className="overflow-hidden rounded-xl border border-border bg-[#f7f9fc]">
+                  <div className="flex items-center justify-between bg-ink px-4 py-3 text-white sm:px-5"><div className="flex items-center gap-2"><span className="flex h-7 w-7 items-center justify-center rounded-full bg-brand-gradient text-xs font-bold">V</span><span className="text-xs font-semibold">Emmanuel&apos;s Store</span></div><span className="rounded-full bg-white/10 px-2 py-1 text-[10px] text-white/70">Open today</span></div>
+                  <div className="p-4 sm:p-6"><div className="flex items-end justify-between gap-3"><div><p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-blue">Fresh arrivals</p><h3 className="mt-2 font-display text-2xl font-bold text-ink sm:text-3xl">Made for your everyday.</h3></div><Store className="h-7 w-7 text-blue" /></div><div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3">{[["Premium Ankara", "₦18,500", "#4683EC"], ["Leather Sandals", "₦24,000", "#4954F1"], ["Gift Box Set", "₦12,500", "#0F1D3D"], ["Cedar Candle", "₦8,900", "#4683EC"], ["Daily Tote", "₦15,000", "#4954F1"], ["Silk Scarf", "₦9,500", "#0F1D3D"]].map(([name, price, color]) => <div key={name} className="overflow-hidden rounded-lg border border-border bg-surface"><div className="h-20 opacity-90" style={{ background: `linear-gradient(135deg, ${color}, #06122B)` }} /><div className="p-2.5"><p className="truncate text-xs font-semibold text-ink">{name}</p><p className="mt-1 font-mono text-xs font-semibold text-blue">{price}</p></div></div>)}</div><div className="mt-5 flex items-center justify-between rounded-lg bg-ink px-4 py-3 text-white"><span className="text-xs text-white/70">3 items in cart</span><span className="inline-flex items-center gap-2 text-xs font-semibold">View cart <ArrowRight className="h-3.5 w-3.5" /></span></div></div>
+                </div>
+              </div>
+              <div className="absolute -bottom-8 -right-2 w-44 rounded-2xl border border-border bg-surface p-3 shadow-[var(--shadow-modal)] sm:-right-8 sm:w-52"><div className="flex items-center gap-2 border-b border-border pb-2"><span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#25D366]/15 text-xs font-bold text-[#25D366]">W</span><span className="text-[10px] font-semibold text-ink">WhatsApp</span></div><p className="mt-3 rounded-lg bg-[#25D366]/10 p-2 text-[10px] leading-4 text-ink">Shop with us online 👉 vendari.name.ng/s/emmanuel-store</p><p className="mt-2 text-right text-[9px] text-text-muted">10:42 AM</p></div>
+            </div>
+          </ScrollReveal>
+        </div>
+      </div>
+    </section>
+  )
+}
+
 export default async function Home() {
   const accessToken = (await cookies()).get("vendari_access")?.value;
 
@@ -420,7 +467,8 @@ export default async function Home() {
       </nav>
 
       <section className="relative bg-surface px-5 pb-16 pt-16 sm:px-8 sm:pb-24 sm:pt-24">
-        <div className="absolute right-[-160px] top-[-160px] h-[420px] w-[420px] rounded-full border-[70px] border-blue/5" />
+        <div className="landing-mesh landing-mesh-one" aria-hidden="true" />
+        <div className="landing-mesh landing-mesh-two" aria-hidden="true" />
         <div className="relative mx-auto max-w-7xl">
           <div className="max-w-3xl">
             <HeroMotion>
@@ -463,12 +511,12 @@ export default async function Home() {
             </HeroMotion>
           </div>
           <HeroMotion delay={0.24} className="mt-14 sm:mt-20">
-            <DashboardMockup />
+            <ParallaxMockup><DashboardMockup /></ParallaxMockup>
           </HeroMotion>
         </div>
       </section>
 
-      <ScrollReveal>
+      <ScrollReveal direction="left">
         <section
           id="how-it-works"
           className="border-y border-border bg-bg px-5 py-20 sm:px-8 sm:py-28"
@@ -489,17 +537,17 @@ export default async function Home() {
               wrong.
             </p>
           </div>
-          <div className="mx-auto mt-14 grid max-w-7xl gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <div className="mx-auto mt-14 grid max-w-7xl gap-4 md:grid-cols-2 lg:grid-cols-12">
             {pillars.map(({ number, title, icon: Icon, copy }) => (
               <article
                 key={title}
-                className="motion-hover rounded-xl border border-border bg-surface p-6"
+                className={`motion-hover rounded-xl border border-border bg-surface p-6 ${title === "Sales" ? "lg:col-span-5 lg:row-span-2" : title === "Inventory" ? "lg:col-span-7" : "lg:col-span-7"}`}
               >
                 <div className="flex items-center justify-between">
                   <span className="font-mono text-xs text-blue">{number}</span>
                   <Icon className="h-5 w-5 text-blue" />
                 </div>
-                <h3 className="mt-12 font-display text-xl font-semibold text-ink">
+                <h3 className="mt-12 font-display text-xl font-semibold text-ink sm:text-2xl">
                   {title}
                 </h3>
                 <p className="mt-3 text-sm leading-6 text-text-secondary">
@@ -511,7 +559,7 @@ export default async function Home() {
         </section>
       </ScrollReveal>
 
-      <ScrollReveal>
+      <ScrollReveal direction="right" delay={0.04}>
         <section className="bg-ink px-5 py-20 text-white sm:px-8 sm:py-28">
           <div className="mx-auto grid max-w-7xl items-center gap-12 lg:grid-cols-[.9fr_1.1fr]">
             <div>
@@ -538,7 +586,7 @@ export default async function Home() {
         </section>
       </ScrollReveal>
 
-      <ScrollReveal>
+      <ScrollReveal direction="up" delay={0.08}>
         <section
           id="features"
           className="bg-surface px-5 py-20 sm:px-8 sm:py-28"
@@ -552,11 +600,11 @@ export default async function Home() {
                 Everything you need, all in one place.
               </h2>
             </div>
-            <div className="mt-12 grid gap-px overflow-hidden rounded-xl border border-border bg-border sm:grid-cols-2 lg:grid-cols-3">
+            <div className="mt-12 grid gap-4 lg:grid-cols-12 lg:grid-rows-2">
               {features.map(([title, copy, Icon]) => (
                 <article
                   key={title}
-                  className="motion-hover bg-surface p-6 sm:p-8"
+                  className={`motion-hover rounded-xl border border-border bg-surface p-6 sm:p-8 ${title === "User-friendly interface" ? "lg:col-span-7 lg:row-span-2" : "lg:col-span-5"}`}
                 >
                   <Icon className="h-5 w-5 text-blue" />
                   <h3 className="mt-8 font-display text-lg font-semibold text-ink">
@@ -570,6 +618,10 @@ export default async function Home() {
             </div>
           </div>
         </section>
+      </ScrollReveal>
+
+      <ScrollReveal direction="left" delay={0.06}>
+        <StorefrontShowcase />
       </ScrollReveal>
 
       <ScrollReveal>
