@@ -30,7 +30,7 @@ export default function BillingPage() {
   const [subscription, setSubscription] = useState<{ plan: string; status: string; renews_at: string | null; trial_active: boolean; trial_ends_at: string | null } | null>(null)
   const [loading, setLoading] = useState(false)
   const [loadingPage, setLoadingPage] = useState(true)
-  const [selectedPlan, setSelectedPlan] = useState<number | null>(null)
+  const [billingInterval, setBillingInterval] = useState<'monthly' | 'yearly'>('monthly')
   const paymentRef = useRef(false)
   const [error, setError] = useState('')
 
@@ -52,8 +52,12 @@ export default function BillingPage() {
     setLoading(true)
     setError('')
     try {
-      if (!selectedPlan) return
-      const result = await initializePayment(businessId, String(selectedPlan))
+      const selectedPlan = plans.find((plan) => plan.name.toLowerCase() === 'pro' && plan.interval === billingInterval)
+      if (!selectedPlan) {
+        setError('This billing interval is not available yet.')
+        return
+      }
+      const result = await initializePayment(businessId, String(selectedPlan.id), billingInterval)
       if ('authorization_url' in result && result.success && result.authorization_url) {
         window.location.href = result.authorization_url
         return
@@ -78,15 +82,15 @@ export default function BillingPage() {
         <CardContent className="space-y-5">
           {loadingPage ? <p className="text-sm text-text-secondary">Loading plans...</p> : <>
           {subscription && <div className="rounded-xl border border-positive/20 bg-positive/5 p-4"><p className="text-xs uppercase tracking-[0.16em] text-positive">Current plan</p><p className="mt-2 text-lg font-semibold capitalize text-ink">{subscription.plan}</p><p className="mt-1 text-sm text-text-secondary">{subscription.trial_active && subscription.trial_ends_at ? `5-day trial · Ends ${new Date(subscription.trial_ends_at).toLocaleDateString()}` : `Status: ${subscription.status}${subscription.renews_at ? ` · Renews ${new Date(subscription.renews_at).toLocaleDateString()}` : ''}`}</p></div>}
-          <div className="grid gap-4 md:grid-cols-2">
-            {plans.map((plan) => {
-              const active = selectedPlan === plan.id
-              const features = plan.name.toLowerCase() === 'pro' ? PRO_FEATURES : []
-              return <button key={plan.id} type="button" onClick={() => setSelectedPlan(plan.id)} className={`rounded-xl border p-5 text-left transition ${active ? 'border-blue bg-blue/5 shadow-md' : 'border-border bg-surface hover:border-blue/40'}`}><p className="font-display text-xl font-semibold capitalize text-ink">{plan.name}</p><p className="mt-2 font-mono text-2xl text-ink">₦{plan.amount.toLocaleString()}<span className="font-body text-sm text-text-secondary">/{plan.interval}</span></p><ul className="mt-4 space-y-2 text-sm text-text-secondary">{features.map((feature) => <li key={feature}>✓ {feature}</li>)}</ul></button>
-            })}
+          <div className="mx-auto flex w-fit rounded-full border border-border bg-bg p-1" role="group" aria-label="Choose billing interval">
+            {(['monthly', 'yearly'] as const).map((option) => <button key={option} type="button" onClick={() => setBillingInterval(option)} aria-pressed={billingInterval === option} className={`rounded-full px-5 py-2.5 text-sm font-semibold capitalize transition-all ${billingInterval === option ? 'bg-brand-gradient text-white shadow-sm' : 'text-text-secondary hover:text-ink'}`}>{option}{option === 'yearly' && <span className="ml-2 text-xs">2 months free</span>}</button>)}
           </div>
+          {(() => {
+            const plan = plans.find((item) => item.name.toLowerCase() === 'pro' && item.interval === billingInterval)
+            return <div className="rounded-xl border border-blue bg-surface p-5 shadow-[var(--shadow-card)]"><div className="flex flex-wrap items-center justify-between gap-3"><div><p className="font-display text-xl font-semibold capitalize text-ink">Pro membership</p><p className="mt-2 font-mono text-2xl text-ink">₦{plan?.amount.toLocaleString() || (billingInterval === 'yearly' ? '99,999' : '9,999')}<span className="font-body text-sm text-text-secondary">/ {billingInterval === 'yearly' ? 'year' : 'month'}</span></p></div>{billingInterval === 'yearly' && <span className="rounded-full bg-positive/10 px-3 py-1 text-sm font-bold text-positive">Save ₦19,989 · 2 months free</span>}</div><ul className="mt-5 grid gap-2 text-sm text-text-secondary sm:grid-cols-2">{PRO_FEATURES.map((feature) => <li key={feature}>✓ {feature}</li>)}</ul></div>
+          })()}
           {error && <p className="text-sm text-negative">{error}</p>}
-          <LoadingButton onClick={startPayment} loading={loading} disabled={!businessId || !selectedPlan} className="dashboard-primary w-full">Become a Member</LoadingButton>
+          <LoadingButton onClick={startPayment} loading={loading} disabled={!businessId || !plans.some((plan) => plan.name.toLowerCase() === 'pro' && plan.interval === billingInterval)} className="dashboard-primary w-full">Become a Member</LoadingButton>
           </>}
         </CardContent>
       </Card>

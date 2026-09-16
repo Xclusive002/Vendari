@@ -1,8 +1,10 @@
 import hashlib
 import hmac
 import json
+from datetime import timedelta
 
 from django.conf import settings
+from django.utils import timezone
 from rest_framework import status
 from rest_framework.test import APITestCase
 
@@ -37,12 +39,37 @@ class PaystackWebhookTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
     def test_webhook_is_idempotent_for_replayed_payload(self):
+        before = timezone.now()
         response = self.client.post(self.url, self.body, content_type='application/json', HTTP_X_PAYSTACK_SIGNATURE=self.signature)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         replay = self.client.post(self.url, self.body, content_type='application/json', HTTP_X_PAYSTACK_SIGNATURE=self.signature)
         self.assertEqual(replay.status_code, status.HTTP_200_OK)
         self.assertEqual(Subscription.objects.filter(paystack_reference='pay_test_123').count(), 1)
-        self.assertEqual(Subscription.objects.get(business=self.business).plan, self.plan)
+        subscription = Subscription.objects.get(business=self.business)
+        self.assertEqual(subscription.plan, self.plan)
+        self.assertGreaterEqual(subscription.renews_at, before + timedelta(days=30) - timedelta(seconds=2))
+        self.assertLessEqual(subscription.renews_at, timezone.now() + timedelta(days=30) + timedelta(seconds=2))
+
+    def test_yearly_webhook_renews_for_365_days(self):
+        yearly_plan = Plan.objects.create(name=Plan.PLAN_PRO, amount='99999.00', interval=Plan.INTERVAL_YEARLY)
+        payload = {
+            'event': 'charge.success',
+            'data': {
+                'reference': 'pay_yearly_123',
+                'metadata': {'business_id': self.business.pk, 'plan_id': yearly_plan.pk, 'billing_interval': 'yearly'},
+            },
+        }
+        body = json.dumps(payload).encode()
+        signature = hmac.new(settings.PAYSTACK_SECRET_KEY.encode(), body, hashlib.sha512).hexdigest()
+        before = timezone.now()
+
+        response = self.client.post(self.url, body, content_type='application/json', HTTP_X_PAYSTACK_SIGNATURE=signature)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        subscription = Subscription.objects.get(business=self.business)
+        self.assertEqual(subscription.plan, yearly_plan)
+        self.assertGreaterEqual(subscription.renews_at, before + timedelta(days=365) - timedelta(seconds=2))
+        self.assertLessEqual(subscription.renews_at, timezone.now() + timedelta(days=365) + timedelta(seconds=2))
 
     def test_storefront_payment_creates_snapshot_sale_once(self):
         storefront = StorefrontSettings.objects.create(

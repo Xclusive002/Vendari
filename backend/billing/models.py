@@ -29,6 +29,7 @@ class Plan(models.Model):
     name = models.CharField(max_length=20, choices=PLAN_CHOICES)
     amount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     interval = models.CharField(max_length=20, choices=INTERVAL_CHOICES, default=INTERVAL_MONTHLY)
+    paystack_plan_code = models.CharField(max_length=100, blank=True, default='')
     feature_flags = models.JSONField(default=default_feature_flags)
     limits = models.JSONField(default=dict)
 

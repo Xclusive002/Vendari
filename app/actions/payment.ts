@@ -4,7 +4,7 @@ import { apiJson } from '@/lib/api-client'
 
 export async function getPlans() {
   try {
-    return { success: true, data: await apiJson<Array<{ id: number; name: string; amount: number; interval: string; feature_flags: Record<string, boolean>; limits: Record<string, number> }>>('/billing/plans/') }
+    return { success: true, data: await apiJson<Array<{ id: number; name: string; amount: number; interval: 'monthly' | 'yearly'; feature_flags: Record<string, boolean>; limits: Record<string, number> }>>('/billing/plans/') }
   } catch (error) {
     return { success: false, error: error instanceof Error ? error.message : 'Unable to load plans', data: [] }
   }
@@ -12,17 +12,17 @@ export async function getPlans() {
 
 export async function getSubscription(businessId: string) {
   try {
-    return { success: true, data: await apiJson<{ plan: string; plan_id: number | null; status: string; renews_at: string | null; trial_active: boolean; trial_ends_at: string | null; feature_flags: Record<string, boolean> }>(`/businesses/${businessId}/subscription/`) }
+    return { success: true, data: await apiJson<{ plan: string; plan_id: number | null; billing_interval: 'monthly' | 'yearly'; status: string; renews_at: string | null; trial_active: boolean; trial_ends_at: string | null; feature_flags: Record<string, boolean> }>(`/businesses/${businessId}/subscription/`) }
   } catch (error) {
     return { success: false, error: error instanceof Error ? error.message : 'Unable to load subscription' }
   }
 }
 
-export async function initializePayment(business_id: string, plan_id: string) {
+export async function initializePayment(business_id: string, plan_id: string | null, billing_interval: 'monthly' | 'yearly') {
   try {
     const data = await apiJson<{ authorization_url: string; reference: string }>('/billing/paystack/initialize/', {
       method: 'POST',
-      body: JSON.stringify({ business_id: Number(business_id), plan_id: Number(plan_id) }),
+      body: JSON.stringify({ business_id: Number(business_id), ...(plan_id ? { plan_id: Number(plan_id) } : {}), billing_interval }),
     })
     return { success: true, ...data }
   } catch (error) {

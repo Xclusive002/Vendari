@@ -168,8 +168,10 @@ class PaystackInitializeView(APIView):
             'amount': int(plan.amount * 100),
             'currency': 'NGN',
             'callback_url': f'{settings.DASHBOARD_URL.rstrip("/")}/payment/success',
-            'metadata': {'business_id': business.pk, 'plan_id': plan.pk},
+            'metadata': {'business_id': business.pk, 'plan_id': plan.pk, 'billing_interval': plan.interval},
         }
+        if plan.paystack_plan_code:
+            payload['plan'] = plan.paystack_plan_code
         data = paystack_request('transaction/initialize', payload, method='POST')
         if not data:
             return Response({'error': 'Unable to initialize Paystack transaction.'}, status=status.HTTP_502_BAD_GATEWAY)

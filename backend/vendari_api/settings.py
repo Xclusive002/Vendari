@@ -44,6 +44,8 @@ CORS_ALLOWED_ORIGINS = env.list(
     default=['http://localhost:3000', 'http://localhost:3002', 'http://127.0.0.1:3000', 'http://127.0.0.1:3002'],
 )
 PAYSTACK_SECRET_KEY = env('PAYSTACK_SECRET_KEY', default='')
+PAYSTACK_MONTHLY_PLAN_CODE = env('PAYSTACK_MONTHLY_PLAN_CODE', default='')
+PAYSTACK_YEARLY_PLAN_CODE = env('PAYSTACK_YEARLY_PLAN_CODE', default='')
 GEMINI_API_KEY = env('GEMINI_API_KEY', default='')
 GEMINI_MODEL = env('GEMINI_MODEL', default='gemini-2.5-flash')
 WHATSAPP_ACCESS_TOKEN = env('WHATSAPP_ACCESS_TOKEN', default='')

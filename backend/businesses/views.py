@@ -2,6 +2,7 @@ from datetime import timedelta
 from decimal import Decimal, InvalidOperation
 from urllib.parse import quote
 
+from django.conf import settings
 from django.db import transaction
 from django.db.models import F, Sum
 from django.utils import timezone
@@ -39,6 +40,7 @@ class BusinessViewSet(viewsets.ModelViewSet):
 			default_plan, _ = Plan.objects.get_or_create(name=Plan.PLAN_PRO, interval=Plan.INTERVAL_MONTHLY, defaults={
 				'amount': 9999,
 				'interval': Plan.INTERVAL_MONTHLY,
+				'paystack_plan_code': settings.PAYSTACK_MONTHLY_PLAN_CODE,
 				'feature_flags': {
 					'ai_insights': True,
 					'nl_reporting': False,
@@ -98,6 +100,7 @@ class BusinessSubscriptionView(APIView):
 		return Response({
 			'plan': business.plan.name if business.plan else 'pro',
 			'plan_id': business.plan_id,
+			'billing_interval': business.plan.interval if business.plan else Plan.INTERVAL_MONTHLY,
 			'status': subscription.status if subscription else ('trial' if business.trial_active else 'expired'),
 			'renews_at': subscription.renews_at if subscription else None,
 			'trial_active': business.trial_active,
