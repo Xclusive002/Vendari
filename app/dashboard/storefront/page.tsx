@@ -217,9 +217,14 @@ export default function StorefrontPage() {
           </Button>
         </div>
 
-        <Link href="/dashboard/storefront/products" className="inline-flex items-center gap-2 text-sm font-semibold text-blue hover:underline">
-          Manage storefront products <ExternalLink className="h-4 w-4" />
-        </Link>
+        <div className="flex flex-wrap gap-4">
+          <Link href="/dashboard/storefront/products" className="inline-flex items-center gap-2 text-sm font-semibold text-blue hover:underline">
+            Manage storefront products <ExternalLink className="h-4 w-4" />
+          </Link>
+          <Link href="/dashboard/storefront/payouts" className="inline-flex items-center gap-2 text-sm font-semibold text-blue hover:underline">
+            Payout history <ExternalLink className="h-4 w-4" />
+          </Link>
+        </div>
 
         <div className="rounded-xl border border-blue/20 bg-surface p-4 shadow-sm">
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-text-muted">Storefront link</p>

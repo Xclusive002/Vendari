@@ -18,6 +18,20 @@ import { PageSkeleton } from '@/components/ui/skeleton'
 import { VoiceInputButton } from '@/components/voice-input-button'
 import { QuickSaleGrid } from '@/components/quick-sale-grid'
 
+function PaymentBadge({ storefrontOrderId }: { storefrontOrderId?: number | null }) {
+  if (storefrontOrderId) {
+    return <span className="inline-flex items-center rounded-full bg-warning/10 px-2.5 py-1 text-xs font-semibold text-warning">Payment confirmed</span>
+  }
+
+  return <span className="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600">Cash sale</span>
+}
+
+function PayoutBadge({ status }: { status?: 'pending' | 'settled' | 'failed' | null }) {
+  if (status === 'settled') return <span className="inline-flex items-center gap-1 rounded-full bg-positive/10 px-2.5 py-1 text-xs font-semibold text-positive"><CheckCircle2 className="h-3.5 w-3.5" />Paid to your account</span>
+  if (status === 'failed') return <span className="inline-flex items-center gap-1 rounded-full bg-negative/10 px-2.5 py-1 text-xs font-semibold text-negative"><AlertTriangle className="h-3.5 w-3.5" />Payout failed</span>
+  return <span title="Payouts typically arrive within 1 business day" className="inline-flex items-center gap-1 rounded-full bg-warning/10 px-2.5 py-1 text-xs font-semibold text-warning"><Clock3 className="h-3.5 w-3.5" />Payout pending</span>
+}
+
 export default function SalesPage() {
   const router = useRouter()
   const [business, setBusiness] = useState<any>(null)
@@ -484,6 +498,8 @@ export default function SalesPage() {
                       <th className="text-right py-3 px-4 font-semibold">Unit Price</th>
                       <th className="text-right py-3 px-4 font-semibold">Total</th>
                       <th className="text-left py-3 px-4 font-semibold">Method</th>
+                      <th className="text-left py-3 px-4 font-semibold">Payment</th>
+                      <th className="text-left py-3 px-4 font-semibold">Payout</th>
                       <th className="text-left py-3 px-4 font-semibold">Status</th>
                       <th className="text-left py-3 px-4 font-semibold">Receipt</th>
                     </tr>
@@ -501,9 +517,15 @@ export default function SalesPage() {
                           ₦{Number(sale.total || 0).toLocaleString()}
                         </td>
                         <td className="py-3 px-4 text-xs">
-                            <span className="rounded bg-blue/10 px-2 py-1 text-blue">
+                          <span className="rounded bg-blue/10 px-2 py-1 text-blue">
                             {sale.payment_method}
                           </span>
+                        </td>
+                        <td className="py-3 px-4 text-xs">
+                          <PaymentBadge storefrontOrderId={sale.storefront_order_id ?? sale.storefront_order?.id ?? null} />
+                        </td>
+                        <td className="py-3 px-4 text-xs">
+                          {sale.storefront_order_id ? <PayoutBadge status={sale.payout_status ?? 'pending'} /> : <span className="text-text-muted">—</span>}
                         </td>
                         <td className="py-3 px-4 text-xs">
                           <select
@@ -520,10 +542,10 @@ export default function SalesPage() {
                           </select>
                         </td>
                         <td className="py-3 px-4">
-                                  <LoadingButton type="button" onClick={() => handleGenerateReceipt(sale)} size="sm" variant="ghost" className="text-blue-400 hover:bg-blue-500/10" loading={receiptLoadingId === String(sale.id)} aria-label="Generate receipt">
+                          <LoadingButton type="button" onClick={() => handleGenerateReceipt(sale)} size="sm" variant="ghost" className="text-blue-400 hover:bg-blue-500/10" loading={receiptLoadingId === String(sale.id)} aria-label="Generate receipt">
                             <Receipt className="h-4 w-4" />
                             <span className="sr-only">{receiptLoadingId === String(sale.id) ? 'Generating receipt' : 'Generate receipt'}</span>
-                                  </LoadingButton>
+                          </LoadingButton>
                         </td>
                       </tr>
                     ))}

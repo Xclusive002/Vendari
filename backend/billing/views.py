@@ -19,6 +19,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from businesses.models import Business, Membership, StorefrontOrder
+from businesses.email_service import send_storefront_sale_email
 from invoices.models import Invoice, InvoicePayment
 
 from .models import Plan, Subscription
@@ -197,7 +198,22 @@ class PaystackWebhookView(APIView):
             payload = json.loads(request.body)
         except json.JSONDecodeError:
             return Response({'error': 'Invalid JSON payload.'}, status=status.HTTP_400_BAD_REQUEST)
-        if payload.get('event') != 'charge.success':
+        event = payload.get('event')
+        data = payload.get('data') or {}
+        if event in ('transfer.success', 'transfer.failed'):
+            subaccount_code = str(data.get('recipient', {}).get('subaccount_code') or data.get('subaccount_code') or '').strip()
+            if not subaccount_code:
+                return Response({'status': 'ignored'})
+            businesses = Business.objects.filter(paystack_subaccount_code=subaccount_code)
+            if not businesses.exists():
+                return Response({'status': 'ignored'})
+            payout_status = StorefrontOrder.PAYOUT_SETTLED if event == 'transfer.success' else StorefrontOrder.PAYOUT_FAILED
+            update_fields = {'payout_status': payout_status}
+            if payout_status == StorefrontOrder.PAYOUT_SETTLED:
+                update_fields['settled_at'] = timezone.now()
+            StorefrontOrder.objects.filter(business__in=businesses, status=StorefrontOrder.STATUS_PAID).update(**update_fields)
+            return Response({'status': 'processed', 'payout_status': payout_status})
+        if event != 'charge.success':
             return Response({'status': 'ignored'})
         data = payload.get('data') or {}
         reference = data.get('reference')
@@ -228,12 +244,13 @@ class PaystackWebhookView(APIView):
                         'item': line.inventory_item_id,
                         'quantity': line.quantity,
                         'payment_method': 'paystack',
-                    }, context={'business': order.business, 'storefront_unit_price': line.unit_price})
+                    }, context={'business': order.business, 'storefront_unit_price': line.unit_price, 'storefront_order': order})
                     serializer.is_valid(raise_exception=True)
                     serializer.save()
                 order.status = StorefrontOrder.STATUS_PAID
                 order.paystack_reference = reference or order.paystack_reference
                 order.save(update_fields=('status', 'paystack_reference'))
+                send_storefront_sale_email(order.business, order)
             return Response({'status': 'processed', 'order_id': order.pk})
         business_id = metadata.get('business_id')
         plan_id = metadata.get('plan_id')

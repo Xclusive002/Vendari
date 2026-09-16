@@ -2,7 +2,7 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from rest_framework import serializers
 
-from .models import Business, ConciergeInquiry, StorefrontSettings
+from .models import Business, ConciergeInquiry, StorefrontOrder, StorefrontSettings
 
 
 class StorefrontSettingsSerializer(serializers.ModelSerializer):
@@ -83,6 +83,20 @@ class BusinessSerializer(serializers.ModelSerializer):
             data['logo'] = request.build_absolute_uri(instance.logo.url) if request else instance.logo.url
         data['has_payments_enabled'] = instance.has_payments_enabled
         return data
+
+
+class StorefrontOrderSerializer(serializers.ModelSerializer):
+    line_items = serializers.SerializerMethodField()
+
+    class Meta:
+        model = StorefrontOrder
+        fields = ('id', 'customer_name', 'customer_phone', 'customer_address', 'delivery_option', 'status', 'payout_status', 'settled_at', 'created_at', 'total', 'paystack_reference', 'line_items')
+
+    def get_line_items(self, instance):
+        return [
+            {'product_name': line.inventory_item.product_name, 'quantity': line.quantity, 'unit_price': line.unit_price, 'line_total': line.line_total}
+            for line in instance.line_items.select_related('inventory_item').all()
+        ]
 
 
 class ConciergeInquirySerializer(serializers.ModelSerializer):

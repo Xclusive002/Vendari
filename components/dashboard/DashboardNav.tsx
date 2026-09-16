@@ -22,6 +22,7 @@ export function DashboardNav() {
     { href: '/dashboard/expenses', label: 'Expenses', icon: Receipt },
     { href: '/dashboard/help', label: 'Help', icon: HelpCircle },
     { href: '/dashboard/storefront', label: 'Storefront', icon: Store },
+    { href: '/dashboard/storefront/payouts', label: 'Payouts', icon: CreditCard },
     { href: '/dashboard/ask', label: 'Ask', icon: MessageCircleQuestion },
     { href: '/dashboard/settings', label: 'Settings', icon: Settings },
     { href: '/dashboard/team', label: 'Team', icon: Users },

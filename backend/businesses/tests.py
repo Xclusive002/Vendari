@@ -209,6 +209,43 @@ class BusinessProfileTests(APITestCase):
 		)
 		self.assertEqual(send_email.call_count, 1)
 
+	@patch('businesses.views.paystack_request')
+	def test_business_payout_history_filters_to_subaccount_and_is_rate_limited(self, mock_paystack_request):
+		self.business.paystack_subaccount_code = 'ACCT_100'
+		self.business.save(update_fields=['paystack_subaccount_code'])
+		mock_paystack_request.return_value = {
+			'status': True,
+			'data': [
+				{'id': 'set_1', 'amount': 50000, 'status': 'success', 'created_at': '2025-01-01T00:00:00.000Z', 'settled_at': '2025-01-02T00:00:00.000Z', 'currency': 'NGN', 'reference': 'ref-1', 'recipient': {'subaccount_code': 'ACCT_100'}},
+				{'id': 'set_2', 'amount': 25000, 'status': 'pending', 'created_at': '2025-01-03T00:00:00.000Z', 'settled_at': None, 'currency': 'NGN', 'reference': 'ref-2', 'recipient': {'subaccount_code': 'ACCT_999'}},
+			],
+		}
+
+		response = self.client.get(f'/api/businesses/{self.business.pk}/payouts/')
+		self.assertEqual(response.status_code, status.HTTP_200_OK)
+		self.assertEqual(len(response.data['payouts']), 1)
+		self.assertEqual(response.data['summary']['total_settled'], 500.0)
+		self.assertEqual(response.data['payouts'][0]['subaccount_code'], 'ACCT_100')
+
+		second = self.client.get(f'/api/businesses/{self.business.pk}/payouts/')
+		self.assertEqual(second.status_code, status.HTTP_429_TOO_MANY_REQUESTS)
+		self.assertIn('rate limit', second.data['detail'].lower())
+
+	@patch('businesses.views.paystack_request')
+	def test_business_payout_history_rejects_other_business_access(self, mock_paystack_request):
+		other_user = User.objects.create_user('other@test.local', 'password123')
+		other_business = Business.objects.create(owner=other_user, name='Other Shop')
+		Membership.objects.create(user=other_user, business=other_business, role='owner')
+		self.business.paystack_subaccount_code = 'ACCT_100'
+		self.business.save(update_fields=['paystack_subaccount_code'])
+		other_business.paystack_subaccount_code = 'ACCT_200'
+		other_business.save(update_fields=['paystack_subaccount_code'])
+		mock_paystack_request.return_value = {'status': True, 'data': []}
+
+		self.client.force_authenticate(other_user)
+		response = self.client.get(f'/api/businesses/{self.business.pk}/payouts/')
+		self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
 	def test_public_storefront_includes_business_logo_and_banner_urls(self):
 		storefront = StorefrontSettings.objects.create(
 			business=self.business,

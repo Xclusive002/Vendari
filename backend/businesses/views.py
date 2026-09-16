@@ -1,8 +1,10 @@
+from .email_service import send_storefront_published_email, send_team_invite_email
 from datetime import timedelta
 from decimal import Decimal, InvalidOperation
 from urllib.parse import quote
 
 from django.conf import settings
+from django.core.cache import cache
 from django.db import transaction
 from django.db.models import F, Sum
 from django.utils import timezone
@@ -17,7 +19,7 @@ from billing.utils import has_feature
 
 from .models import Business, InviteCode, Membership, StorefrontOrder, StorefrontOrderLineItem, StorefrontSettings
 from .email_service import send_storefront_published_email, send_team_invite_email
-from .serializers import BusinessSerializer, ConciergeInquirySerializer, StorefrontSettingsSerializer
+from .serializers import BusinessSerializer, ConciergeInquirySerializer, StorefrontOrderSerializer, StorefrontSettingsSerializer
 from expenses.models import Expense
 from inventory.models import InventoryItem
 from inventory.serializers import PublicInventoryItemSerializer
@@ -106,6 +108,74 @@ class BusinessSubscriptionView(APIView):
 			'trial_active': business.trial_active,
 			'trial_ends_at': business.trial_ends_at,
 			'feature_flags': business.plan.feature_flags if business.plan else {},
+		})
+
+
+class BusinessStorefrontOrdersView(APIView):
+	permission_classes = [IsBusinessMember]
+
+	def get(self, request, business_id):
+		orders = StorefrontOrder.objects.filter(business_id=business_id).prefetch_related('line_items__inventory_item').order_by('-created_at')
+		return Response(StorefrontOrderSerializer(orders, many=True, context={'request': request}).data)
+
+
+class BusinessPayoutsView(APIView):
+	permission_classes = [IsBusinessMember]
+
+	def get(self, request, business_id):
+		business = Business.objects.filter(pk=business_id).first()
+		if business is None:
+			return Response({'detail': 'Business not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+		cache_key = f'payouts:business:{business_id}:user:{request.user.pk}:last_request'
+		last_request = cache.get(cache_key)
+		if last_request is not None:
+			seconds_since = (timezone.now() - last_request).total_seconds()
+			if seconds_since < 30:
+				return Response({'detail': 'Rate limit exceeded. Please wait a moment before refreshing payout history.'}, status=status.HTTP_429_TOO_MANY_REQUESTS)
+		cache.set(cache_key, timezone.now(), timeout=30)
+
+		subaccount_code = str(getattr(business, 'paystack_subaccount_code', '') or '').strip()
+		if not subaccount_code:
+			return Response({'summary': {'total_settled': 0, 'total_pending': 0, 'count': 0}, 'payouts': []})
+
+		data = paystack_request(f'settlement?subaccount={quote(subaccount_code)}')
+		if not data or not data.get('status'):
+			return Response({'detail': 'We could not load payout history from Paystack right now.'}, status=status.HTTP_502_BAD_GATEWAY)
+
+		items = list(data.get('data') or [])
+		filtered = []
+		for item in items:
+			recipient = item.get('recipient') or {}
+			subcode = str(item.get('subaccount_code') or recipient.get('subaccount_code') or recipient.get('code') or '').strip()
+			if subcode and subcode != subaccount_code:
+				continue
+			if not subcode and item.get('recipient') is not None:
+				continue
+			amount_value = item.get('amount', 0) or 0
+			status_value = str(item.get('status') or 'pending').lower()
+			filtered.append({
+				'id': item.get('id') or item.get('reference') or item.get('settlement_id'),
+				'amount': float(amount_value) / 100 if amount_value and amount_value > 1000000 else float(amount_value) / 100 if amount_value else 0.0,
+				'status': status_value,
+				'created_at': item.get('created_at') or item.get('date') or None,
+				'paid_at': item.get('settled_at') or item.get('paid_at') or None,
+				'settlement_date': item.get('settled_at') or item.get('payment_date') or None,
+				'reference': item.get('reference') or item.get('transaction_reference') or None,
+				'subaccount_code': subaccount_code,
+				'currency': item.get('currency') or 'NGN',
+			})
+
+		filtered.sort(key=lambda payout: payout['created_at'] or '', reverse=True)
+		total_settled = sum(float(item['amount']) for item in filtered if str(item['status']).lower() in {'success', 'settled'})
+		total_pending = sum(float(item['amount']) for item in filtered if str(item['status']).lower() not in {'success', 'settled'})
+		return Response({
+			'summary': {
+				'total_settled': total_settled,
+				'total_pending': total_pending,
+				'count': len(filtered),
+			},
+			'payouts': filtered,
 		})
 
 

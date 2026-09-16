@@ -21,7 +21,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 from rest_framework_nested import routers
 
-from businesses.views import BusinessDashboardSummaryView, BusinessViewSet, BusinessMembersView, BusinessPlansView, BusinessSubscriptionView, ConciergeInquiryView, PublicStorefrontCheckoutView, PublicStorefrontProductView, PublicStorefrontView, StorefrontSettingsView, StorefrontSlugCheckView
+from businesses.views import BusinessDashboardSummaryView, BusinessPayoutsView, BusinessStorefrontOrdersView, BusinessViewSet, BusinessMembersView, BusinessPlansView, BusinessSubscriptionView, ConciergeInquiryView, PublicStorefrontCheckoutView, PublicStorefrontProductView, PublicStorefrontView, StorefrontSettingsView, StorefrontSlugCheckView
 from inventory.views import InventoryItemViewSet, TopProductsView
 from sales.views import SaleViewSet
 from expenses.views import ExpenseViewSet
@@ -60,6 +60,8 @@ urlpatterns = [
     path('api/storefronts/<slug>/products/<int:product_id>/', PublicStorefrontProductView.as_view()),
     path('api/storefronts/<slug>/checkout/', PublicStorefrontCheckoutView.as_view()),
     path('api/businesses/<int:business_id>/subscription/', BusinessSubscriptionView.as_view()),
+    path('api/businesses/<int:business_id>/storefront-orders/', BusinessStorefrontOrdersView.as_view()),
+    path('api/businesses/<int:business_id>/payouts/', BusinessPayoutsView.as_view()),
     path('api/businesses/<int:business_id>/members/', BusinessMembersView.as_view()),
     path('api/businesses/<int:business_id>/storefront-settings/', StorefrontSettingsView.as_view()),
     path('api/businesses/<int:business_id>/dashboard-summary/', BusinessDashboardSummaryView.as_view()),

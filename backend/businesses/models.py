@@ -136,6 +136,14 @@ class StorefrontOrder(models.Model):
         (STATUS_PAID, 'Paid'),
         (STATUS_CANCELLED, 'Cancelled'),
     ]
+    PAYOUT_PENDING = 'pending'
+    PAYOUT_SETTLED = 'settled'
+    PAYOUT_FAILED = 'failed'
+    PAYOUT_STATUS_CHOICES = [
+        (PAYOUT_PENDING, 'Pending'),
+        (PAYOUT_SETTLED, 'Settled'),
+        (PAYOUT_FAILED, 'Failed'),
+    ]
 
     business = models.ForeignKey('Business', related_name='storefront_orders', on_delete=models.CASCADE)
     customer_name = models.CharField(max_length=255)
@@ -146,6 +154,8 @@ class StorefrontOrder(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     total = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal('0.00'))
     paystack_reference = models.CharField(max_length=255, unique=True, null=True, blank=True)
+    payout_status = models.CharField(max_length=20, choices=PAYOUT_STATUS_CHOICES, default=PAYOUT_PENDING)
+    settled_at = models.DateTimeField(null=True, blank=True)
 
 
 class StorefrontOrderLineItem(models.Model):

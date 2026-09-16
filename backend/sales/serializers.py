@@ -9,6 +9,14 @@ from .models import Sale
 
 class SaleSerializer(serializers.ModelSerializer):
     status = serializers.ChoiceField(choices=Sale.STATUS_CHOICES, required=False, default=Sale.STATUS_PENDING)
+    payout_status = serializers.SerializerMethodField()
+    settled_at = serializers.SerializerMethodField()
+
+    def get_payout_status(self, instance):
+        return instance.storefront_order.payout_status if instance.storefront_order_id else None
+
+    def get_settled_at(self, instance):
+        return instance.storefront_order.settled_at if instance.storefront_order_id else None
 
     class Meta:
         model = Sale
@@ -39,6 +47,8 @@ class SaleSerializer(serializers.ModelSerializer):
             unit_price=unit_price,
             total=unit_price * quantity,
         )
+        if self.context.get('storefront_order') is not None:
+            validated_data['storefront_order'] = self.context['storefront_order']
         item.qty_in_stock -= quantity
         item.save(update_fields=('qty_in_stock', 'updated_at'))
         return Sale.objects.create(**validated_data)

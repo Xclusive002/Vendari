@@ -81,3 +81,32 @@ def send_team_invite_email(recipient_email, business_name, role, code):
     except Exception:
         logger.exception('[TEAM_INVITE_EMAIL] Failed to send invite to %s', recipient_email)
         return False
+
+
+def send_storefront_sale_email(business, order):
+    recipient_email = getattr(business.owner, 'email', '')
+    if not recipient_email:
+        return False
+    try:
+        from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', '').strip() or 'onboarding@resend.dev'
+        if from_email.lower().endswith('@gmail.com'):
+            from_email = 'onboarding@resend.dev'
+        items = list(order.line_items.select_related('inventory_item').all())
+        summary = '\n'.join(f'- {line.inventory_item.product_name} x {line.quantity}' for line in items)
+        html_summary = ''.join(f'<li>{line.inventory_item.product_name} x {line.quantity}</li>' for line in items)
+        subject = f'Payment confirmed for storefront order #{order.pk}'
+        text = (
+            f'Payment confirmed for {business.name}.\n\n'
+            f'Order: #{order.pk}\n{summary}\n\n'
+            f'Amount: N{order.total:,.2f}\n\n'
+            'The customer payment is confirmed. Your payout is pending and typically arrives within 1 business day.\n\n'
+            'The Vendari team\n'
+        )
+        html = f'''<div style="font-family:Arial,sans-serif;line-height:1.6;color:#0B1220;max-width:620px;margin:auto;padding:24px"><h1>Payment confirmed</h1><p>A customer payment for {business.name} has been confirmed.</p><p><strong>Order:</strong> #{order.pk}</p><ul>{html_summary}</ul><p><strong>Amount:</strong> N{order.total:,.2f}</p><p style="padding:14px;border-radius:8px;background:#FFF7E6;color:#7A4B00"><strong>Payout pending:</strong> Your money typically arrives within 1 business day.</p><p>The Vendari team</p></div>'''
+        message = EmailMultiAlternatives(subject, text, from_email, [recipient_email])
+        message.attach_alternative(html, 'text/html')
+        message.send(fail_silently=False)
+        return True
+    except Exception:
+        logger.exception('[STOREFRONT_SALE_EMAIL] Failed for order=%s', getattr(order, 'pk', None))
+        return False
