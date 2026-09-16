@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { ArrowLeft, ShoppingBag, ShoppingCart } from 'lucide-react'
+import { ArrowLeft, Minus, Plus, ShoppingBag, ShoppingCart, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { getStorefrontCartKey } from '@/lib/storefront'
 
@@ -43,6 +43,7 @@ export default function ProductDetailClient({ data }: { data: DetailData }) {
     }
   })
   const [added, setAdded] = useState(false)
+  const [cartOpen, setCartOpen] = useState(false)
   const primary = storefront.primary_color || '#1d4ed8'
   const accent = storefront.accent_color || primary
   const isBold = storefront.theme === 'bold'
@@ -60,6 +61,15 @@ export default function ProductDetailClient({ data }: { data: DetailData }) {
         : [...current, { ...product, quantity: 1 }]
     })
     setAdded(true)
+    setCartOpen(true)
+  }
+
+  const updateQuantity = (name: string, delta: number) => {
+    setCart((current) => current.flatMap((item) => {
+      if (item.product_name !== name) return [item]
+      const quantity = item.quantity + delta
+      return quantity > 0 ? [{ ...item, quantity }] : []
+    }))
   }
 
   useEffect(() => {
@@ -71,7 +81,13 @@ export default function ProductDetailClient({ data }: { data: DetailData }) {
       <header className={`border-b border-slate-200 ${isMinimal ? 'bg-white' : 'text-white'}`} style={{ backgroundColor: isMinimal ? undefined : primary }}>
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-5 py-5 sm:px-8">
           <Link href={`/s/${encodeURIComponent(storefront.slug)}`} className="inline-flex items-center gap-2 text-sm font-semibold hover:opacity-75"><ArrowLeft className="h-4 w-4" /> Back to store</Link>
-          <span className="text-sm font-semibold">{data.business_name}</span>
+          <div className="flex items-center gap-3">
+            <button type="button" onClick={() => setCartOpen(true)} className="relative flex h-10 w-10 items-center justify-center rounded-full border border-white/20 bg-white/10 text-white shadow-sm transition hover:bg-white/15" aria-label={`Open cart with ${cartCount} items`}>
+              <ShoppingCart className="h-4 w-4" />
+              {cartCount > 0 && <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-white px-1 text-[10px] font-bold text-slate-900">{cartCount}</span>}
+            </button>
+            <span className="text-sm font-semibold">{data.business_name}</span>
+          </div>
         </div>
       </header>
       <section className="mx-auto grid max-w-5xl gap-8 px-5 py-10 sm:px-8 sm:py-16 md:grid-cols-2 md:items-center">
@@ -88,6 +104,42 @@ export default function ProductDetailClient({ data }: { data: DetailData }) {
           {cartCount > 0 && <p className="mt-4 text-sm text-slate-500">Shared cart: {cartCount} item{cartCount === 1 ? '' : 's'} · {money(cartTotal)}</p>}
         </div>
       </section>
+
+      {cartOpen && (
+        <div className="fixed inset-0 z-50">
+          <button type="button" aria-label="Close cart" className="absolute inset-0 bg-slate-950/45" onClick={() => setCartOpen(false)} />
+          <aside className="absolute right-0 top-0 flex h-full w-full max-w-md flex-col bg-white p-5 shadow-2xl">
+            <div className="flex items-center justify-between border-b border-slate-200 pb-4">
+              <div>
+                <h2 className="text-xl font-bold">Your cart</h2>
+                <p className="text-sm text-slate-500">{cartCount} item{cartCount === 1 ? '' : 's'}</p>
+              </div>
+              <button type="button" onClick={() => setCartOpen(false)} className="rounded-full p-2 hover:bg-slate-100" aria-label="Close cart"><X className="h-5 w-5" /></button>
+            </div>
+            <div className="flex-1 space-y-4 overflow-y-auto py-5">
+              {cart.length === 0 ? <p className="py-10 text-center text-slate-500">Your cart is empty.</p> : cart.map((item) => (
+                <div key={`${item.product_name}-${item.selling_price}`} className="flex items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="truncate font-semibold">{item.product_name}</p>
+                    <p className="text-sm text-slate-500">{money(item.selling_price)}</p>
+                  </div>
+                  <div className="flex items-center gap-2 rounded-full border border-slate-200 px-2 py-1">
+                    <button type="button" onClick={() => updateQuantity(item.product_name, -1)} aria-label={`Remove one ${item.product_name}`}><Minus className="h-4 w-4" /></button>
+                    <span className="w-5 text-center text-sm">{item.quantity}</span>
+                    <button type="button" onClick={() => updateQuantity(item.product_name, 1)} aria-label={`Add one ${item.product_name}`}><Plus className="h-4 w-4" /></button>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="border-t border-slate-200 pt-4">
+              <div className="flex justify-between text-lg font-bold"><span>Total</span><span style={{ color: primary }}>{money(cartTotal)}</span></div>
+              <Link href={`/s/${encodeURIComponent(storefront.slug)}`} onClick={() => setCartOpen(false)} className="mt-4 flex w-full items-center justify-center rounded-xl px-4 py-3 font-semibold text-white" style={{ backgroundColor: accent }}>
+                Review cart & checkout
+              </Link>
+            </div>
+          </aside>
+        </div>
+      )}
     </main>
   )
 }

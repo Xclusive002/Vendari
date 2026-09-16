@@ -3,6 +3,8 @@ import logging
 from django.conf import settings
 from django.core.mail import EmailMultiAlternatives
 
+from notifications.models import Notification
+
 logger = logging.getLogger(__name__)
 
 
@@ -94,18 +96,48 @@ def send_storefront_sale_email(business, order):
         items = list(order.line_items.select_related('inventory_item').all())
         summary = '\n'.join(f'- {line.inventory_item.product_name} x {line.quantity}' for line in items)
         html_summary = ''.join(f'<li>{line.inventory_item.product_name} x {line.quantity}</li>' for line in items)
-        subject = f'Payment confirmed for storefront order #{order.pk}'
-        text = (
-            f'Payment confirmed for {business.name}.\n\n'
-            f'Order: #{order.pk}\n{summary}\n\n'
+
+        delivery_label = dict(getattr(order, 'delivery_option', 'pickup') or 'pickup') if False else None
+        delivery_mode = str(getattr(order, 'delivery_option', '') or 'pickup').lower()
+        if delivery_mode == 'delivery':
+            delivery_text = f'Delivery address: {order.customer_address or "Not provided"}'
+            delivery_html = f'<p><strong>Delivery address:</strong> {order.customer_address or "Not provided"}</p>'
+        elif delivery_mode == 'pickup':
+            delivery_text = 'Pickup order: the customer will collect their order from your storefront or business location.'
+            if order.customer_address:
+                delivery_text += f' Pickup details: {order.customer_address}'
+            delivery_html = f'<p><strong>Pickup:</strong> {order.customer_address or "Pickup arrangement is pending; use the customer contact details shown in the dashboard."}</p>'
+        else:
+            delivery_text = f'Order type: {delivery_mode.title() or "Checkout"}'
+            if order.customer_address:
+                delivery_text += f' Details: {order.customer_address}'
+            delivery_html = f'<p><strong>Customer details:</strong> {order.customer_address or "No extra delivery information provided."}</p>'
+
+        title = f'New storefront order #{order.pk}'
+        message = (
+            f'New storefront order for {business.name}.\n\n'
+            f'Order: #{order.pk}\n'
+            f'Customer: {order.customer_name} ({order.customer_phone})\n'
+            f'{delivery_text}\n\n'
+            f'{summary}\n\n'
             f'Amount: N{order.total:,.2f}\n\n'
             'The customer payment is confirmed. Your payout is pending and typically arrives within 1 business day.\n\n'
             'The Vendari team\n'
         )
-        html = f'''<div style="font-family:Arial,sans-serif;line-height:1.6;color:#0B1220;max-width:620px;margin:auto;padding:24px"><h1>Payment confirmed</h1><p>A customer payment for {business.name} has been confirmed.</p><p><strong>Order:</strong> #{order.pk}</p><ul>{html_summary}</ul><p><strong>Amount:</strong> N{order.total:,.2f}</p><p style="padding:14px;border-radius:8px;background:#FFF7E6;color:#7A4B00"><strong>Payout pending:</strong> Your money typically arrives within 1 business day.</p><p>The Vendari team</p></div>'''
-        message = EmailMultiAlternatives(subject, text, from_email, [recipient_email])
-        message.attach_alternative(html, 'text/html')
-        message.send(fail_silently=False)
+        html = f'''<div style="font-family:Arial,sans-serif;line-height:1.6;color:#0B1220;max-width:620px;margin:auto;padding:24px"><h1>Payment confirmed</h1><p>A customer payment for {business.name} has been confirmed.</p><p><strong>Order:</strong> #{order.pk}</p><p><strong>Customer:</strong> {order.customer_name} ({order.customer_phone})</p>{delivery_html}<ul>{html_summary}</ul><p><strong>Amount:</strong> N{order.total:,.2f}</p><p style="padding:14px;border-radius:8px;background:#FFF7E6;color:#7A4B00"><strong>Payout pending:</strong> Your money typically arrives within 1 business day.</p><p>The Vendari team</p></div>'''
+        notification_message = (
+            f'Customer {order.customer_name} placed an order for {business.name}. '
+            f'{delivery_text}'
+        )
+        Notification.objects.create(
+            business=business,
+            title=title,
+            message=notification_message,
+            link='/dashboard/storefront/orders',
+        )
+        message_obj = EmailMultiAlternatives(f'Payment confirmed for storefront order #{order.pk}', message, from_email, [recipient_email])
+        message_obj.attach_alternative(html, 'text/html')
+        message_obj.send(fail_silently=False)
         return True
     except Exception:
         logger.exception('[STOREFRONT_SALE_EMAIL] Failed for order=%s', getattr(order, 'pk', None))
