@@ -58,8 +58,7 @@ export default function LoginPage() {
       const result = await login(trimmedEmail, password)
 
       if (result.success) {
-        router.replace('/dashboard')
-        router.refresh()
+        window.location.assign('/dashboard')
         return
       }
 

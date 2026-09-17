@@ -4,9 +4,26 @@ import { NextResponse } from 'next/server'
 const authRoutes = ['/login', '/register', '/verify-email']
 const protectedRoutes = ['/dashboard']
 
+function hasValidAccessCookie(value?: string) {
+  if (!value) return false
+  try {
+    const payload = JSON.parse(atob(value.split('.')[1].replace(/-/g, '+').replace(/_/g, '/'))) as { exp?: number }
+    return typeof payload.exp === 'number' && payload.exp * 1000 > Date.now()
+  } catch {
+    return false
+  }
+}
+
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
-  const hasAccess = Boolean(request.cookies.get('vendari_access')?.value)
+  const accessCookie = request.cookies.get('vendari_access')?.value
+  const hasAccess = hasValidAccessCookie(accessCookie)
+  const response = NextResponse.next()
+
+  if (accessCookie && !hasAccess) {
+    response.cookies.delete('vendari_access')
+    response.cookies.delete('vendari_refresh')
+  }
 
   if (pathname === '/' && hasAccess) {
     return NextResponse.redirect(new URL('/dashboard', request.url))
@@ -20,7 +37,7 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL('/login', request.url))
   }
 
-  return NextResponse.next()
+  return response
 }
 
 export const config = {

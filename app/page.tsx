@@ -396,8 +396,17 @@ function StorefrontShowcase() {
 
 export default async function Home() {
   const accessToken = (await cookies()).get("vendari_access")?.value;
-
+  let hasValidSession = false;
   if (accessToken) {
+    try {
+      const payload = JSON.parse(Buffer.from(accessToken.split('.')[1], 'base64url').toString()) as { exp?: number };
+      hasValidSession = typeof payload.exp === 'number' && payload.exp * 1000 > Date.now();
+    } catch {
+      hasValidSession = false;
+    }
+  }
+
+  if (hasValidSession) {
     redirect("/dashboard");
   }
 
