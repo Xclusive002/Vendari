@@ -6,6 +6,8 @@ import StorefrontClient from './StorefrontClient'
 
 type StorefrontData = {
   business_name: string
+  address: string
+  phone: string
   has_payments_enabled: boolean
   storefront: {
     slug: string
@@ -18,6 +20,8 @@ type StorefrontData = {
     description: string
     whatsapp_number: string
     delivery_option: string
+    opening_hours: Record<string, string>
+    business_type_hint: 'products' | 'services' | 'both' | ''
   }
   items: Array<{
     id: number
@@ -28,6 +32,17 @@ type StorefrontData = {
     selling_price: string | number | null
     in_stock: boolean
   }>
+  services: Array<{
+    name: string
+    description: string
+    price: string | number | null
+    image: string | null
+  }>
+  gallery_images: Array<{
+    image: string
+    caption: string
+  }>
+  opening_hours: Record<string, string>
 }
 
 async function getStorefront(slug: string): Promise<StorefrontData | null> {

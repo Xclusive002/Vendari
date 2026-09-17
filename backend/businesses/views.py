@@ -335,6 +335,8 @@ class PublicStorefrontView(APIView):
 		gallery_images = GalleryImage.objects.filter(business=storefront.business).order_by('display_order', 'id')
 		return Response({
 			'business_name': storefront.business.name,
+			'address': storefront.business.address,
+			'phone': storefront.business.phone,
 			'has_payments_enabled': storefront.business.has_payments_enabled,
 			'storefront': PublicStorefrontSerializer(storefront, context={'request': request}).data,
 			'items': PublicInventoryItemSerializer(items, many=True, context={'request': request}).data,
