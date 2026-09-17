@@ -90,7 +90,7 @@ export default function SettingsPage() {
   }, [accountNumber, bankCode, businessId, linkedPayment.accountNumber])
 
   const selectedBankName = banks.find((bank) => bank.code === (linkedPayment.bankCode || bankCode))?.name || linkedPayment.bankCode
-  const maskedAccountNumber = linkedPayment.accountNumber ? `••••••${linkedPayment.accountNumber.slice(-4)}` : ''
+  const maskedAccountNumber = linkedPayment.accountNumber
 
   const startPaymentSetup = () => {
     setShowPaymentForm(true)

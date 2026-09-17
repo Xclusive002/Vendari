@@ -170,6 +170,10 @@ class BusinessSerializer(serializers.ModelSerializer):
         if instance.logo:
             request = self.context.get('request')
             data['logo'] = request.build_absolute_uri(instance.logo.url) if request else instance.logo.url
+        data['bank_code'] = instance.bank_code
+        data['bank_account_name'] = instance.bank_account_name
+        data['bank_account_number'] = f'••••••{instance.bank_account_number[-4:]}' if instance.bank_account_number else ''
+        data['paystack_subaccount_code'] = instance.paystack_subaccount_code
         data['has_payments_enabled'] = instance.has_payments_enabled
         return data
 

@@ -56,6 +56,25 @@ class BusinessProfileTests(APITestCase):
 		self.assertEqual(self.business.phone, '08012345678')
 		self.assertTrue(self.business.logo.name.startswith('business_logos/'))
 
+	def test_business_response_keeps_payment_summary_after_profile_update(self):
+		self.business.bank_code = '058'
+		self.business.bank_account_number = '1234567890'
+		self.business.bank_account_name = 'Ada Ventures'
+		self.business.paystack_subaccount_code = 'ACCT_test123'
+		self.business.save(update_fields=('bank_code', 'bank_account_number', 'bank_account_name', 'paystack_subaccount_code'))
+
+		response = self.client.patch(
+			f'/api/businesses/{self.business.pk}/',
+			{'address': '2 Updated Street'},
+			format='json',
+		)
+
+		self.assertEqual(response.status_code, status.HTTP_200_OK)
+		self.assertEqual(response.data['bank_code'], '058')
+		self.assertEqual(response.data['bank_account_name'], 'Ada Ventures')
+		self.assertEqual(response.data['bank_account_number'], '••••••7890')
+		self.assertEqual(response.data['paystack_subaccount_code'], 'ACCT_test123')
+
 	def test_concierge_inquiry_is_publicly_saved(self):
 		self.client.logout()
 		response = self.client.post('/api/concierge-inquiries/', {
