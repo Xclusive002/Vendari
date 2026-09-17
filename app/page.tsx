@@ -4,6 +4,8 @@ import Image from "next/image";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { HeroMotion, ParallaxMockup, ScrollReveal } from "@/components/landing-motion";
+import { Skiper26 } from "@/components/ui/skiper-ui/skiper26";
+import { Skiper50 } from "@/components/ui/skiper-ui/skiper50";
 
 export const metadata: Metadata = {
   title: "Vendari - Business Management Software",
@@ -345,6 +347,12 @@ function InsightCard() {
 }
 
 function StorefrontShowcase() {
+  const showcaseImages = [
+    { src: "/vendari-logo-png.png", alt: "Vendari storefront preview", title: "A storefront customers can trust", detail: "Turn the products you already manage into a branded shop with one shareable link." },
+    { src: "/vendari-dark-blue-bg.png", alt: "Vendari storefront checkout preview", title: "Checkout without the back-and-forth", detail: "Customers can browse, choose delivery or pickup, and pay from the same storefront." },
+    { src: "/vendari-logo-png.png", alt: "Vendari storefront operations preview", title: "Orders flow back into the business", detail: "Confirmed orders, customer details, and payout status stay connected to your daily work." },
+  ]
+
   return (
     <section className="relative overflow-hidden bg-bg px-5 py-20 sm:px-8 sm:py-28">
       <div className="absolute left-[-10rem] top-20 h-72 w-72 rounded-full bg-blue/10 blur-3xl" aria-hidden="true" />
@@ -376,13 +384,8 @@ function StorefrontShowcase() {
 
           <ScrollReveal direction="right" delay={0.08}>
             <div className="relative mx-auto max-w-2xl">
-              <div className="rounded-2xl border border-border bg-surface p-3 shadow-[var(--shadow-modal)] sm:p-5">
-                <div className="overflow-hidden rounded-xl border border-border bg-[#f7f9fc]">
-                  <div className="flex items-center justify-between bg-ink px-4 py-3 text-white sm:px-5"><div className="flex items-center gap-2"><span className="flex h-7 w-7 items-center justify-center rounded-full bg-brand-gradient text-xs font-bold">V</span><span className="text-xs font-semibold">Emmanuel&apos;s Store</span></div><span className="rounded-full bg-white/10 px-2 py-1 text-[10px] text-white/70">Open today</span></div>
-                  <div className="p-4 sm:p-6"><div className="flex items-end justify-between gap-3"><div><p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-blue">Fresh arrivals</p><h3 className="mt-2 font-display text-2xl font-bold text-ink sm:text-3xl">Made for your everyday.</h3></div><Store className="h-7 w-7 text-blue" /></div><div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3">{[["Premium Ankara", "₦18,500", "#4683EC"], ["Leather Sandals", "₦24,000", "#4954F1"], ["Gift Box Set", "₦12,500", "#0F1D3D"], ["Cedar Candle", "₦8,900", "#4683EC"], ["Daily Tote", "₦15,000", "#4954F1"], ["Silk Scarf", "₦9,500", "#0F1D3D"]].map(([name, price, color]) => <div key={name} className="overflow-hidden rounded-lg border border-border bg-surface"><div className="h-20 opacity-90" style={{ background: `linear-gradient(135deg, ${color}, #06122B)` }} /><div className="p-2.5"><p className="truncate text-xs font-semibold text-ink">{name}</p><p className="mt-1 font-mono text-xs font-semibold text-blue">{price}</p></div></div>)}</div><div className="mt-5 flex items-center justify-between rounded-lg bg-ink px-4 py-3 text-white"><span className="text-xs text-white/70">3 items in cart</span><span className="inline-flex items-center gap-2 text-xs font-semibold">View cart <ArrowRight className="h-3.5 w-3.5" /></span></div></div>
-                </div>
-              </div>
-              <div className="absolute -bottom-8 -right-2 w-44 rounded-2xl border border-border bg-surface p-3 shadow-[var(--shadow-modal)] sm:-right-8 sm:w-52"><div className="flex items-center gap-2 border-b border-border pb-2"><span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#25D366]/15 text-xs font-bold text-[#25D366]">W</span><span className="text-[10px] font-semibold text-ink">WhatsApp</span></div><p className="mt-3 rounded-lg bg-[#25D366]/10 p-2 text-[10px] leading-4 text-ink">Shop with us online 👉 vendari.name.ng/s/emmanuel-store</p><p className="mt-2 text-right text-[9px] text-text-muted">10:42 AM</p></div>
+              <Skiper50 images={showcaseImages} />
+              <div className="sr-only">Interactive storefront examples</div>
             </div>
           </ScrollReveal>
         </div>
@@ -601,10 +604,18 @@ export default async function Home() {
               </h2>
             </div>
             <div className="mt-12 grid gap-4 lg:grid-cols-12 lg:grid-rows-2">
-              {features.map(([title, copy, Icon]) => (
+              <Skiper26
+                eyebrow="The daily rhythm"
+                title="User-friendly interface"
+                copy="Move from a sale to a stock check without needing a manual beside you. Vendari keeps the next useful action close at hand."
+                image="/vendari-logo-png.png"
+                alt="Vendari interface preview"
+                className="lg:col-span-7 lg:row-span-2"
+              />
+              {features.slice(1).map(([title, copy, Icon]) => (
                 <article
                   key={title}
-                  className={`motion-hover rounded-xl border border-border bg-surface p-6 sm:p-8 ${title === "User-friendly interface" ? "lg:col-span-7 lg:row-span-2" : "lg:col-span-5"}`}
+                  className="motion-hover rounded-xl border border-border bg-surface p-6 sm:p-8 lg:col-span-5"
                 >
                   <Icon className="h-5 w-5 text-blue" />
                   <h3 className="mt-8 font-display text-lg font-semibold text-ink">
