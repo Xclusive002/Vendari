@@ -8,6 +8,14 @@ from decimal import Decimal
 
 
 class StorefrontSettings(models.Model):
+    BUSINESS_TYPE_PRODUCTS = 'products'
+    BUSINESS_TYPE_SERVICES = 'services'
+    BUSINESS_TYPE_BOTH = 'both'
+    BUSINESS_TYPE_CHOICES = [
+        (BUSINESS_TYPE_PRODUCTS, 'Products'),
+        (BUSINESS_TYPE_SERVICES, 'Services'),
+        (BUSINESS_TYPE_BOTH, 'Both'),
+    ]
     SOCIAL_LINK_KEYS = ('instagram', 'facebook', 'tiktok', 'twitter')
     DELIVERY_PICKUP = 'pickup'
     DELIVERY_DELIVERY = 'delivery'
@@ -37,6 +45,8 @@ class StorefrontSettings(models.Model):
     whatsapp_number = models.CharField(max_length=30, blank=True, default='')
     social_links = models.JSONField(default=dict, blank=True)
     delivery_option = models.CharField(max_length=20, choices=DELIVERY_CHOICES, default=DELIVERY_BOTH)
+    opening_hours = models.JSONField(default=dict, blank=True)
+    business_type_hint = models.CharField(max_length=20, choices=BUSINESS_TYPE_CHOICES, blank=True, default='')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -123,6 +133,29 @@ class StorefrontSettings(models.Model):
             settings.slug = cls.generate_unique_slug_for_business(business)
             settings.save(update_fields=['slug'])
         return settings
+
+
+class Service(models.Model):
+    business = models.ForeignKey('Business', related_name='services', on_delete=models.CASCADE)
+    name = models.CharField(max_length=255)
+    description = models.TextField(blank=True)
+    price = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
+    image = models.ImageField(upload_to='services/', blank=True, null=True)
+    is_visible_on_storefront = models.BooleanField(default=True)
+    display_order = models.IntegerField(default=0)
+
+    class Meta:
+        ordering = ('display_order', 'id')
+
+
+class GalleryImage(models.Model):
+    business = models.ForeignKey('Business', related_name='gallery_images', on_delete=models.CASCADE)
+    image = models.ImageField(upload_to='gallery/',)
+    caption = models.CharField(max_length=255, blank=True)
+    display_order = models.IntegerField(default=0)
+
+    class Meta:
+        ordering = ('display_order', 'id')
 
 
 class StorefrontOrder(models.Model):

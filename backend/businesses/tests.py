@@ -12,7 +12,7 @@ from accounts.models import User
 from inventory.models import InventoryItem
 from billing.models import Plan
 
-from .models import Business, ConciergeInquiry, Membership, StorefrontOrder, StorefrontSettings
+from .models import Business, ConciergeInquiry, GalleryImage, Membership, Service, StorefrontOrder, StorefrontSettings
 
 
 def image_file():
@@ -134,6 +134,36 @@ class BusinessProfileTests(APITestCase):
 		self.assertEqual([item['product_name'] for item in response.data['items']], ['Unpriced', visible.product_name])
 		self.assertEqual(set(response.data['items'][0]), {'id', 'product_name', 'description', 'image', 'images', 'selling_price', 'in_stock'})
 		self.assertIsNone(response.data['items'][0]['selling_price'])
+
+	def test_public_storefront_returns_services_gallery_hours_and_empty_arrays(self):
+		storefront = StorefrontSettings.objects.create(
+			business=self.business,
+			slug='servicebusiness',
+			is_published=True,
+			opening_hours={'monday': '9am - 6pm'},
+			business_type_hint=StorefrontSettings.BUSINESS_TYPE_SERVICES,
+		)
+		Service.objects.create(business=self.business, name='Consultation', description='A useful session', price=None, display_order=1)
+		Service.objects.create(business=self.business, name='Premium setup', price='25000.00', display_order=2, is_visible_on_storefront=False)
+
+		self.client.logout()
+		response = self.client.get(f'/api/storefronts/{storefront.slug}/')
+
+		self.assertEqual(response.status_code, status.HTTP_200_OK)
+		self.assertEqual(response.data['opening_hours'], {'monday': '9am - 6pm'})
+		self.assertEqual(response.data['storefront']['business_type_hint'], StorefrontSettings.BUSINESS_TYPE_SERVICES)
+		self.assertEqual(len(response.data['services']), 1)
+		self.assertEqual(response.data['services'][0]['name'], 'Consultation')
+		self.assertIsNone(response.data['services'][0]['price'])
+		self.assertEqual(response.data['gallery_images'], [])
+
+	def test_public_storefront_with_no_services_or_gallery_returns_empty_arrays(self):
+		storefront = StorefrontSettings.objects.create(business=self.business, slug='emptybusiness', is_published=True)
+		self.client.logout()
+		response = self.client.get(f'/api/storefronts/{storefront.slug}/')
+		self.assertEqual(response.status_code, status.HTTP_200_OK)
+		self.assertEqual(response.data['services'], [])
+		self.assertEqual(response.data['gallery_images'], [])
 
 	def test_storefront_social_links_persist_and_validate(self):
 		response = self.client.patch(

@@ -18,9 +18,9 @@ from billing.models import Plan
 from billing.utils import has_feature
 from vendari_api.rate_limits import rate_limited, too_many_requests
 
-from .models import Business, InviteCode, Membership, StorefrontOrder, StorefrontOrderLineItem, StorefrontSettings
+from .models import Business, GalleryImage, InviteCode, Membership, Service, StorefrontOrder, StorefrontOrderLineItem, StorefrontSettings
 from .email_service import send_storefront_published_email, send_team_invite_email
-from .serializers import BusinessSerializer, ConciergeInquirySerializer, PublicStorefrontSerializer, StorefrontOrderSerializer, StorefrontSettingsSerializer
+from .serializers import BusinessSerializer, ConciergeInquirySerializer, GalleryImageSerializer, PublicGalleryImageSerializer, PublicServiceSerializer, PublicStorefrontSerializer, ServiceSerializer, StorefrontOrderSerializer, StorefrontSettingsSerializer
 from expenses.models import Expense
 from inventory.models import InventoryItem
 from inventory.serializers import PublicInventoryItemSerializer
@@ -61,6 +61,32 @@ class BusinessViewSet(viewsets.ModelViewSet):
 			business.trial_ends_at = trial_started_at + timedelta(days=5)
 			business.save(update_fields=['plan', 'trial_started_at', 'trial_ends_at'])
 		business.membership_set.create(user=self.request.user, role='owner')
+
+
+class BusinessScopedContentViewSet(viewsets.ModelViewSet):
+	permission_classes = [IsBusinessMember]
+
+	def get_queryset(self):
+		business_id = self.kwargs.get('business_pk', self.kwargs.get('business_id'))
+		memberships = Membership.objects.filter(user=self.request.user).values('business_id')
+		return self.model.objects.filter(business_id=business_id, business_id__in=memberships)
+
+	def perform_create(self, serializer):
+		business_id = self.kwargs.get('business_pk', self.kwargs.get('business_id'))
+		business = Business.objects.filter(pk=business_id).first()
+		if business is None:
+			return Response({'detail': 'Business not found.'}, status=status.HTTP_404_NOT_FOUND)
+		serializer.save(business=business)
+
+
+class ServiceViewSet(BusinessScopedContentViewSet):
+	model = Service
+	serializer_class = ServiceSerializer
+
+
+class GalleryImageViewSet(BusinessScopedContentViewSet):
+	model = GalleryImage
+	serializer_class = GalleryImageSerializer
 
 
 class ConciergeInquiryView(APIView):
@@ -305,11 +331,16 @@ class PublicStorefrontView(APIView):
 			business=storefront.business,
 			is_visible_on_storefront=True,
 		).order_by('product_name')
+		services = Service.objects.filter(business=storefront.business, is_visible_on_storefront=True).order_by('display_order', 'id')
+		gallery_images = GalleryImage.objects.filter(business=storefront.business).order_by('display_order', 'id')
 		return Response({
 			'business_name': storefront.business.name,
 			'has_payments_enabled': storefront.business.has_payments_enabled,
 			'storefront': PublicStorefrontSerializer(storefront, context={'request': request}).data,
 			'items': PublicInventoryItemSerializer(items, many=True, context={'request': request}).data,
+			'services': PublicServiceSerializer(services, many=True, context={'request': request}).data,
+			'gallery_images': PublicGalleryImageSerializer(gallery_images, many=True, context={'request': request}).data,
+			'opening_hours': storefront.opening_hours or {},
 		})
 
 

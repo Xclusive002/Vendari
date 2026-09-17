@@ -21,7 +21,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 from rest_framework_nested import routers
 
-from businesses.views import BusinessDashboardSummaryView, BusinessPayoutsView, BusinessStorefrontOrdersView, BusinessViewSet, BusinessMembersView, BusinessPlansView, BusinessSubscriptionView, ConciergeInquiryView, PublicStorefrontCheckoutView, PublicStorefrontProductView, PublicStorefrontView, StorefrontSettingsView, StorefrontSlugCheckView
+from businesses.views import BusinessDashboardSummaryView, BusinessPayoutsView, BusinessStorefrontOrdersView, BusinessViewSet, BusinessMembersView, BusinessPlansView, BusinessSubscriptionView, ConciergeInquiryView, GalleryImageViewSet, PublicStorefrontCheckoutView, PublicStorefrontProductView, PublicStorefrontView, ServiceViewSet, StorefrontSettingsView, StorefrontSlugCheckView
 from inventory.views import InventoryItemViewSet, TopProductsView
 from sales.views import SaleViewSet
 from expenses.views import ExpenseViewSet
@@ -44,6 +44,10 @@ customers_router = routers.NestedSimpleRouter(business_router, 'businesses', loo
 customers_router.register('customers', CustomerViewSet, basename='business-customers')
 invoices_router = routers.NestedSimpleRouter(business_router, 'businesses', lookup='business')
 invoices_router.register('invoices', InvoiceViewSet, basename='business-invoices')
+services_router = routers.NestedSimpleRouter(business_router, 'businesses', lookup='business')
+services_router.register('services', ServiceViewSet, basename='business-services')
+gallery_router = routers.NestedSimpleRouter(business_router, 'businesses', lookup='business')
+gallery_router.register('gallery-images', GalleryImageViewSet, basename='business-gallery-images')
 
 
 def health_check(request):
@@ -85,6 +89,8 @@ urlpatterns = [
     path('api/', include(expenses_router.urls)),
     path('api/', include(customers_router.urls)),
     path('api/', include(invoices_router.urls)),
+    path('api/', include(services_router.urls)),
+    path('api/', include(gallery_router.urls)),
 ]
 
 if settings.DEBUG:

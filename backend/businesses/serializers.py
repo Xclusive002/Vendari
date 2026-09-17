@@ -2,7 +2,7 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from rest_framework import serializers
 
-from .models import Business, ConciergeInquiry, StorefrontOrder, StorefrontSettings
+from .models import Business, ConciergeInquiry, GalleryImage, Service, StorefrontOrder, StorefrontSettings
 
 MAX_IMAGE_SIZE = 5 * 1024 * 1024
 
@@ -23,7 +23,7 @@ class StorefrontSettingsSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'business', 'slug', 'is_published', 'theme', 'primary_color', 'accent_color',
             'logo', 'banner_image', 'description', 'whatsapp_number', 'social_links', 'delivery_option',
-            'created_at', 'updated_at',
+            'opening_hours', 'business_type_hint', 'created_at', 'updated_at',
         ]
         read_only_fields = ('id', 'business', 'created_at', 'updated_at')
 
@@ -75,7 +75,7 @@ class PublicStorefrontSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = StorefrontSettings
-        fields = ('slug', 'theme', 'primary_color', 'accent_color', 'logo', 'banner_image', 'description', 'whatsapp_number', 'social_links', 'delivery_option')
+        fields = ('slug', 'theme', 'primary_color', 'accent_color', 'logo', 'banner_image', 'description', 'whatsapp_number', 'social_links', 'delivery_option', 'opening_hours', 'business_type_hint')
 
     def _absolute_url(self, value):
         if not value:
@@ -88,6 +88,61 @@ class PublicStorefrontSerializer(serializers.ModelSerializer):
 
     def get_banner_image(self, instance):
         return self._absolute_url(instance.banner_image)
+
+
+class ServiceSerializer(serializers.ModelSerializer):
+    image = serializers.ImageField(required=False, allow_null=True)
+
+    class Meta:
+        model = Service
+        fields = ('id', 'business', 'name', 'description', 'price', 'image', 'is_visible_on_storefront', 'display_order')
+        read_only_fields = ('id', 'business')
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        if instance.image:
+            request = self.context.get('request')
+            data['image'] = request.build_absolute_uri(instance.image.url) if request else instance.image.url
+        return data
+
+
+class GalleryImageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = GalleryImage
+        fields = ('id', 'business', 'image', 'caption', 'display_order')
+        read_only_fields = ('id', 'business')
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        request = self.context.get('request')
+        data['image'] = request.build_absolute_uri(instance.image.url) if request else instance.image.url
+        return data
+
+
+class PublicServiceSerializer(serializers.ModelSerializer):
+    image = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Service
+        fields = ('name', 'description', 'price', 'image')
+
+    def get_image(self, instance):
+        if not instance.image:
+            return None
+        request = self.context.get('request')
+        return request.build_absolute_uri(instance.image.url) if request else instance.image.url
+
+
+class PublicGalleryImageSerializer(serializers.ModelSerializer):
+    image = serializers.SerializerMethodField()
+
+    class Meta:
+        model = GalleryImage
+        fields = ('image', 'caption')
+
+    def get_image(self, instance):
+        request = self.context.get('request')
+        return request.build_absolute_uri(instance.image.url) if request else instance.image.url
 
 
 class BusinessSerializer(serializers.ModelSerializer):
