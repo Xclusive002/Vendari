@@ -23,6 +23,7 @@ type StorefrontData = {
     delivery_option: string
     opening_hours: Record<string, string>
     business_type_hint: 'products' | 'services' | 'both' | ''
+    product_display_mode: 'flexed' | 'block'
   }
   items: Array<{
     id: number

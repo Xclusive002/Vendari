@@ -143,6 +143,7 @@ export default function StorefrontPage() {
       social_links: settings.social_links || {},
       opening_hours: settings.opening_hours || {},
       business_type_hint: settings.business_type_hint || '',
+      product_display_mode: settings.product_display_mode || 'flexed',
     }
     const result = await updateStorefrontSettings(business.id, payload)
     setSaving(false)
@@ -315,6 +316,15 @@ export default function StorefrontPage() {
                   })}
                 </div>
                 <Link href="/dashboard/storefront/themes" className="mt-3 inline-flex text-sm font-semibold text-blue hover:underline">See all premium themes →</Link>
+              </div>
+
+              <div>
+                <label htmlFor="product-display-mode" className="text-sm font-medium text-text-secondary">Product display</label>
+                <select id="product-display-mode" value={settings.product_display_mode || 'flexed'} onChange={(event) => setSettings({ ...settings, product_display_mode: event.target.value })} className="dashboard-input mt-2 min-h-11 w-full px-3 py-2 text-sm">
+                  <option value="flexed">Flexed grid - multiple products per row</option>
+                  <option value="block">Block list - one product per row</option>
+                </select>
+                <p className="mt-1 text-xs text-text-muted">This controls how products appear on both mobile and desktop storefront views.</p>
               </div>
 
               <div>

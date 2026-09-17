@@ -153,6 +153,7 @@ class BusinessProfileTests(APITestCase):
 
 		self.assertEqual(response.status_code, status.HTTP_200_OK)
 		self.assertEqual(response.data['opening_hours'], {'monday': '9am - 6pm'})
+		self.assertEqual(response.data['storefront']['product_display_mode'], StorefrontSettings.PRODUCT_DISPLAY_FLEXED)
 		self.assertEqual(response.data['storefront']['description'], 'Short hero tagline')
 		self.assertEqual(response.data['storefront']['about'], 'Our team has served this community for years.')
 		self.assertEqual(response.data['storefront']['business_type_hint'], StorefrontSettings.BUSINESS_TYPE_SERVICES)

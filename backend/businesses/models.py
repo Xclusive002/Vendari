@@ -48,6 +48,13 @@ class StorefrontSettings(models.Model):
     delivery_option = models.CharField(max_length=20, choices=DELIVERY_CHOICES, default=DELIVERY_BOTH)
     opening_hours = models.JSONField(default=dict, blank=True)
     business_type_hint = models.CharField(max_length=20, choices=BUSINESS_TYPE_CHOICES, blank=True, default='')
+    PRODUCT_DISPLAY_FLEXED = 'flexed'
+    PRODUCT_DISPLAY_BLOCK = 'block'
+    PRODUCT_DISPLAY_CHOICES = [
+        (PRODUCT_DISPLAY_FLEXED, 'Flexed grid'),
+        (PRODUCT_DISPLAY_BLOCK, 'Block list'),
+    ]
+    product_display_mode = models.CharField(max_length=20, choices=PRODUCT_DISPLAY_CHOICES, default=PRODUCT_DISPLAY_FLEXED)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
