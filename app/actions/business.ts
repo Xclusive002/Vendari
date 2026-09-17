@@ -139,14 +139,14 @@ export async function getStorefrontSettings(businessId: string) {
   return request<any>(`/businesses/${businessId}/storefront-settings/`)
 }
 
-export async function launchStorefront(businessId: string) {
+export async function launchStorefront(businessId: string, businessTypeHint = '') {
   const result = await getStorefrontSettings(businessId)
   if (result.success && result.data?.slug) return result
 
   const autoSlug = `shop${Math.random().toString(36).slice(2, 7)}`
   return request<any>(`/businesses/${businessId}/storefront-settings/`, {
     method: 'PATCH',
-    body: JSON.stringify({ slug: autoSlug, is_published: true }),
+    body: JSON.stringify({ slug: autoSlug, is_published: true, business_type_hint: businessTypeHint }),
   })
 }
 
@@ -169,6 +169,52 @@ export async function uploadStorefrontBanner(businessId: string, banner: File) {
     body: formData,
   })
 }
+
+export type ServiceRecord = {
+  id: number
+  name: string
+  description: string
+  price: string | number | null
+  image: string | null
+  is_visible_on_storefront: boolean
+  display_order: number
+}
+
+export type GalleryRecord = {
+  id: number
+  image: string
+  caption: string
+  display_order: number
+}
+
+function serviceFormData(data: Partial<ServiceRecord> & { imageFile?: File | null }) {
+  const formData = new FormData()
+  if (data.name !== undefined) formData.set('name', data.name)
+  if (data.description !== undefined) formData.set('description', data.description)
+  if (data.price !== undefined && data.price !== null) formData.set('price', String(data.price))
+  if (data.is_visible_on_storefront !== undefined) formData.set('is_visible_on_storefront', String(data.is_visible_on_storefront))
+  if (data.display_order !== undefined) formData.set('display_order', String(data.display_order))
+  if (data.imageFile) formData.set('image', data.imageFile)
+  return formData
+}
+
+export async function getServices(businessId: string) { return request<ServiceRecord[]>(`/businesses/${businessId}/services/`) }
+export async function createService(businessId: string, data: Partial<ServiceRecord> & { imageFile?: File | null }) { return request<ServiceRecord>(`/businesses/${businessId}/services/`, { method: 'POST', body: serviceFormData(data) }) }
+export async function updateService(businessId: string, serviceId: number, data: Partial<ServiceRecord> & { imageFile?: File | null }) { return request<ServiceRecord>(`/businesses/${businessId}/services/${serviceId}/`, { method: 'PATCH', body: serviceFormData(data) }) }
+export async function deleteService(businessId: string, serviceId: number) { return request<unknown>(`/businesses/${businessId}/services/${serviceId}/`, { method: 'DELETE' }) }
+
+function galleryFormData(data: Partial<GalleryRecord> & { imageFile?: File | null }) {
+  const formData = new FormData()
+  if (data.caption !== undefined) formData.set('caption', data.caption)
+  if (data.display_order !== undefined) formData.set('display_order', String(data.display_order))
+  if (data.imageFile) formData.set('image', data.imageFile)
+  return formData
+}
+
+export async function getGalleryImages(businessId: string) { return request<GalleryRecord[]>(`/businesses/${businessId}/gallery-images/`) }
+export async function createGalleryImage(businessId: string, data: Partial<GalleryRecord> & { imageFile: File }) { return request<GalleryRecord>(`/businesses/${businessId}/gallery-images/`, { method: 'POST', body: galleryFormData(data) }) }
+export async function updateGalleryImage(businessId: string, imageId: number, data: Partial<GalleryRecord> & { imageFile?: File | null }) { return request<GalleryRecord>(`/businesses/${businessId}/gallery-images/${imageId}/`, { method: 'PATCH', body: galleryFormData(data) }) }
+export async function deleteGalleryImage(businessId: string, imageId: number) { return request<unknown>(`/businesses/${businessId}/gallery-images/${imageId}/`, { method: 'DELETE' }) }
 
 export async function getDashboardSummary(businessId: string) {
   return request<{

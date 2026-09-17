@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
-import { AlertCircle, Check, Copy, ExternalLink, Facebook, Globe, ImagePlus, Instagram, KeyRound, Music2, Rocket, Store, Wand2 } from 'lucide-react'
+import { AlertCircle, Check, Copy, ExternalLink, Facebook, Globe, ImagePlus, Instagram, KeyRound, Link2, Music2, Rocket, Store, Wand2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -116,8 +116,13 @@ export default function StorefrontPage() {
 
   const handleLaunch = async () => {
     if (!business) return
+    const hint = window.prompt('Do you sell products, offer services, or both? Enter products, services, or both.', 'products')?.trim().toLowerCase()
+    if (!hint || !['products', 'services', 'both'].includes(hint)) {
+      toast.error('Choose products, services, or both to continue.')
+      return
+    }
     setLaunching(true)
-    const result = await launchStorefront(business.id)
+    const result = await launchStorefront(business.id, hint)
     setLaunching(false)
     if (result.success && result.data) {
       setSettings(result.data)
@@ -140,6 +145,8 @@ export default function StorefrontPage() {
       theme: settings.theme || 'classic',
       is_published: Boolean(settings.is_published),
       social_links: settings.social_links || {},
+      opening_hours: settings.opening_hours || {},
+      business_type_hint: settings.business_type_hint || '',
     }
     const result = await updateStorefrontSettings(business.id, payload)
     setSaving(false)
@@ -221,6 +228,7 @@ export default function StorefrontPage() {
           <Link href="/dashboard/storefront/products" className="inline-flex items-center gap-2 text-sm font-semibold text-blue hover:underline">
             Manage storefront products <ExternalLink className="h-4 w-4" />
           </Link>
+          <Link href="/dashboard/settings" className="inline-flex items-center gap-2 text-sm font-semibold text-blue hover:underline">Edit business info <Link2 className="h-4 w-4" /></Link>
           <Link href="/dashboard/storefront/payouts" className="inline-flex items-center gap-2 text-sm font-semibold text-blue hover:underline">
             Payout history <ExternalLink className="h-4 w-4" />
           </Link>
@@ -355,6 +363,22 @@ export default function StorefrontPage() {
                   <option value="delivery">Delivery</option>
                   <option value="both">Both</option>
                 </select>
+              </div>
+
+              <div>
+                <label className="text-sm font-medium text-text-secondary">Business type hint</label>
+                <select value={settings.business_type_hint || ''} onChange={(e) => setSettings({ ...settings, business_type_hint: e.target.value })} className="dashboard-input mt-2 min-h-11 w-full px-3 py-2 text-sm">
+                  <option value="">Choose later</option><option value="products">Products</option><option value="services">Services</option><option value="both">Products and services</option>
+                </select>
+                <p className="mt-1 text-xs text-text-muted">This only suggests a starting order. It never hides products or services.</p>
+              </div>
+
+              <div>
+                <p className="text-sm font-medium text-text-secondary">Business info and opening hours</p>
+                <p className="mt-1 text-xs text-text-muted">Address and phone are managed in Settings. Add the hours customers should see on your storefront.</p>
+                <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                  {['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'].map((day) => <label key={day} className="text-xs font-semibold capitalize text-text-secondary">{day}<Input value={settings.opening_hours?.[day] || ''} onChange={(event) => setSettings({ ...settings, opening_hours: { ...(settings.opening_hours || {}), [day]: event.target.value } })} placeholder="Closed" className="mt-1" /></label>)}
+                </div>
               </div>
 
               <Button onClick={handleSave} disabled={saving} className="w-full bg-brand-gradient text-white">{saving ? 'Saving…' : 'Save storefront'}</Button>
