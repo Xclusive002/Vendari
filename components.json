@@ -17,8 +17,5 @@
     "lib": "@/lib",
     "hooks": "@/hooks"
   },
-  "iconLibrary": "lucide",
-  "registries": {
-    "@skiper-ui": "https://skiper-ui.com/registry/{name}.json"
-  }
+  "iconLibrary": "lucide"
 }

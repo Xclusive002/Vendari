@@ -4,8 +4,6 @@ import Image from "next/image";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { HeroMotion, ParallaxMockup, ScrollReveal } from "@/components/landing-motion";
-import { Skiper26 } from "@/components/ui/skiper-ui/skiper26";
-import { Skiper50 } from "@/components/ui/skiper-ui/skiper50";
 
 export const metadata: Metadata = {
   title: "Vendari - Business Management Software",
@@ -347,12 +345,6 @@ function InsightCard() {
 }
 
 function StorefrontShowcase() {
-  const showcaseImages = [
-    { src: "/vendari-logo-png.png", alt: "Vendari storefront preview", title: "A storefront customers can trust", detail: "Turn the products you already manage into a branded shop with one shareable link." },
-    { src: "/vendari-dark-blue-bg.png", alt: "Vendari storefront checkout preview", title: "Checkout without the back-and-forth", detail: "Customers can browse, choose delivery or pickup, and pay from the same storefront." },
-    { src: "/vendari-logo-png.png", alt: "Vendari storefront operations preview", title: "Orders flow back into the business", detail: "Confirmed orders, customer details, and payout status stay connected to your daily work." },
-  ]
-
   return (
     <section className="relative overflow-hidden bg-bg px-5 py-20 sm:px-8 sm:py-28">
       <div className="absolute left-[-10rem] top-20 h-72 w-72 rounded-full bg-blue/10 blur-3xl" aria-hidden="true" />
@@ -384,8 +376,13 @@ function StorefrontShowcase() {
 
           <ScrollReveal direction="right" delay={0.08}>
             <div className="relative mx-auto max-w-2xl">
-              <Skiper50 images={showcaseImages} />
-              <div className="sr-only">Interactive storefront examples</div>
+              <div className="rounded-2xl border border-border bg-surface p-3 shadow-[var(--shadow-modal)] sm:p-5">
+                <div className="overflow-hidden rounded-xl border border-border bg-[#f7f9fc]">
+                  <div className="flex items-center justify-between bg-ink px-4 py-3 text-white sm:px-5"><div className="flex items-center gap-2"><span className="flex h-7 w-7 items-center justify-center rounded-full bg-brand-gradient text-xs font-bold">V</span><span className="text-xs font-semibold">Emmanuel&apos;s Store</span></div><span className="rounded-full bg-white/10 px-2 py-1 text-[10px] text-white/70">Open today</span></div>
+                  <div className="p-4 sm:p-6"><div className="flex items-end justify-between gap-3"><div><p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-blue">Fresh arrivals</p><h3 className="mt-2 font-display text-2xl font-bold text-ink sm:text-3xl">Made for your everyday.</h3></div><Store className="h-7 w-7 text-blue" /></div><div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3">{[["Premium Ankara", "₦18,500", "#4683EC"], ["Leather Sandals", "₦24,000", "#4954F1"], ["Gift Box Set", "₦12,500", "#0F1D3D"], ["Cedar Candle", "₦8,900", "#4683EC"], ["Daily Tote", "₦15,000", "#4954F1"], ["Silk Scarf", "₦9,500", "#0F1D3D"]].map(([name, price, color]) => <div key={name} className="overflow-hidden rounded-lg border border-border bg-surface"><div className="h-20 opacity-90" style={{ background: `linear-gradient(135deg, ${color}, #06122B)` }} /><div className="p-2.5"><p className="truncate text-xs font-semibold text-ink">{name}</p><p className="mt-1 font-mono text-xs font-semibold text-blue">{price}</p></div></div>)}</div><div className="mt-5 flex items-center justify-between rounded-lg bg-ink px-4 py-3 text-white"><span className="text-xs text-white/70">3 items in cart</span><span className="inline-flex items-center gap-2 text-xs font-semibold">View cart <ArrowRight className="h-3.5 w-3.5" /></span></div></div>
+                </div>
+              </div>
+              <div className="absolute -bottom-8 -right-2 w-44 rounded-2xl border border-border bg-surface p-3 shadow-[var(--shadow-modal)] sm:-right-8 sm:w-52"><div className="flex items-center gap-2 border-b border-border pb-2"><span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#25D366]/15 text-xs font-bold text-[#25D366]">W</span><span className="text-[10px] font-semibold text-ink">WhatsApp</span></div><p className="mt-3 rounded-lg bg-[#25D366]/10 p-2 text-[10px] leading-4 text-ink">Shop with us online 👉 vendari.name.ng/s/emmanuel-store</p><p className="mt-2 text-right text-[9px] text-text-muted">10:42 AM</p></div>
             </div>
           </ScrollReveal>
         </div>
@@ -396,22 +393,13 @@ function StorefrontShowcase() {
 
 export default async function Home() {
   const accessToken = (await cookies()).get("vendari_access")?.value;
-  let hasValidSession = false;
-  if (accessToken) {
-    try {
-      const payload = JSON.parse(Buffer.from(accessToken.split('.')[1], 'base64url').toString()) as { exp?: number };
-      hasValidSession = typeof payload.exp === 'number' && payload.exp * 1000 > Date.now();
-    } catch {
-      hasValidSession = false;
-    }
-  }
 
-  if (hasValidSession) {
+  if (accessToken) {
     redirect("/dashboard");
   }
 
   return (
-    <main className="min-h-screen overflow-x-clip bg-bg text-text-primary">
+    <main className="min-h-screen overflow-hidden bg-bg text-text-primary">
       <nav
         className="border-b border-border bg-surface/90"
         aria-label="Main navigation"
@@ -478,7 +466,7 @@ export default async function Home() {
         </div>
       </nav>
 
-      <section className="relative overflow-visible bg-surface px-4 pb-16 pt-12 sm:px-8 sm:pb-24 sm:pt-24">
+      <section className="relative bg-surface px-5 pb-16 pt-16 sm:px-8 sm:pb-24 sm:pt-24">
         <div className="landing-mesh landing-mesh-one" aria-hidden="true" />
         <div className="landing-mesh landing-mesh-two" aria-hidden="true" />
         <div className="relative mx-auto max-w-7xl">
@@ -488,7 +476,7 @@ export default async function Home() {
                 <Sparkles className="h-3.5 w-3.5" /> Clarity for the work behind
                 the work
               </p>
-              <h1 className="max-w-2xl break-words font-display text-[clamp(2.75rem,12vw,4.5rem)] font-bold leading-[1.02] tracking-tight text-ink sm:text-7xl">
+              <h1 className="max-w-2xl font-display text-5xl font-bold leading-[1.02] tracking-tight text-ink sm:text-7xl">
                 Business operations.{" "}
                 <span className="bg-brand-gradient bg-clip-text text-transparent">
                   Simplified.
@@ -505,17 +493,17 @@ export default async function Home() {
               </p>
             </HeroMotion>
             <HeroMotion delay={0.16}>
-              <div className="mt-8 flex flex-col items-start gap-3 sm:flex-row">
+              <div className="mt-8 flex flex-col gap-3 sm:flex-row">
                 <Link
                   href="/register"
-                  className="motion-hover inline-flex min-h-12 self-start items-center justify-center gap-2 rounded-full bg-brand-gradient px-6 py-3.5 text-sm font-semibold text-white shadow-lg shadow-blue/20 ring-4 ring-blue/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue focus-visible:ring-offset-2"
+                  className="motion-hover inline-flex items-center justify-center gap-2 rounded-lg bg-brand-gradient px-5 py-3.5 text-sm font-semibold text-white shadow-lg shadow-blue/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue focus-visible:ring-offset-2"
                 >
                   Start 5-day trial{" "}
                   <ArrowRight className="h-4 w-4" />
                 </Link>
                 <a
                   href="#how-it-works"
-                  className="motion-hover inline-flex min-h-12 self-start items-center justify-center gap-2 rounded-full border border-ink px-6 py-3.5 text-sm font-semibold text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue focus-visible:ring-offset-2"
+                  className="motion-hover inline-flex items-center justify-center gap-2 rounded-lg border border-ink px-5 py-3.5 text-sm font-semibold text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue focus-visible:ring-offset-2"
                 >
                   See how it works <ChevronRight className="h-4 w-4" />
                 </a>
@@ -613,18 +601,10 @@ export default async function Home() {
               </h2>
             </div>
             <div className="mt-12 grid gap-4 lg:grid-cols-12 lg:grid-rows-2">
-              <Skiper26
-                eyebrow="The daily rhythm"
-                title="User-friendly interface"
-                copy="Move from a sale to a stock check without needing a manual beside you. Vendari keeps the next useful action close at hand."
-                image="/vendari-logo-png.png"
-                alt="Vendari interface preview"
-                className="lg:col-span-7 lg:row-span-2"
-              />
-              {features.slice(1).map(([title, copy, Icon]) => (
+              {features.map(([title, copy, Icon]) => (
                 <article
                   key={title}
-                  className="motion-hover rounded-xl border border-border bg-surface p-6 sm:p-8 lg:col-span-5"
+                  className={`motion-hover rounded-xl border border-border bg-surface p-6 sm:p-8 ${title === "User-friendly interface" ? "lg:col-span-7 lg:row-span-2" : "lg:col-span-5"}`}
                 >
                   <Icon className="h-5 w-5 text-blue" />
                   <h3 className="mt-8 font-display text-lg font-semibold text-ink">

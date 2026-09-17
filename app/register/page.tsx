@@ -5,7 +5,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { ArrowRight, MailCheck } from 'lucide-react'
-import { getCurrentUser, register } from '@/app/actions/auth'
+import { register } from '@/app/actions/auth'
 import { LoadingButton } from '@/components/ui/loading-button'
 import LoadingSpinner from '@/components/ui/loading-spinner'
 
@@ -13,17 +13,7 @@ export default function RegisterPage() {
   const router = useRouter()
 
   useEffect(() => {
-    let isMounted = true
-
-    getCurrentUser().then((currentUser) => {
-      if (isMounted && currentUser) {
-        router.replace('/dashboard')
-      }
-    })
-
-    return () => {
-      isMounted = false
-    }
+    router.prefetch('/verify-email')
   }, [router])
 
   const [email, setEmail] = useState('')
