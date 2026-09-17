@@ -22,14 +22,14 @@ class RegisterSerializer(serializers.Serializer):
     def validate_email(self, value):
         existing_user = User.objects.filter(email__iexact=value).first()
         if existing_user:
-            raise serializers.ValidationError('A user with this email already exists.')
+            raise serializers.ValidationError('Registration could not be completed with these details.')
         return value.lower()
 
     @transaction.atomic
     def create(self, validated_data):
         existing_user = User.objects.filter(email__iexact=validated_data['email']).first()
         if existing_user:
-            raise serializers.ValidationError('A user with this email already exists.')
+            raise serializers.ValidationError('Registration could not be completed with these details.')
 
         user = User.objects.create_user(
             email=validated_data['email'],
@@ -83,6 +83,16 @@ class LoginSerializer(serializers.Serializer):
             raise serializers.ValidationError('Please verify your email before logging in.')
         attrs['user'] = user
         return attrs
+
+
+class PasswordResetRequestSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+
+
+class PasswordResetConfirmSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    code = serializers.CharField(min_length=6, max_length=12, trim_whitespace=True)
+    password = serializers.CharField(write_only=True, min_length=8)
 
 
 class InviteAcceptSerializer(serializers.Serializer):

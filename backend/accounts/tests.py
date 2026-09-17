@@ -1,17 +1,63 @@
 import importlib
+from datetime import timedelta
 from unittest.mock import patch
 
 from django.conf import settings
+from django.contrib.auth.hashers import check_password
 from django.core.mail import EmailMultiAlternatives
+from django.utils import timezone
 from rest_framework import status
 from rest_framework.test import APITestCase
 
 from vendari_api.resend_backend import ResendBackend
-from .models import User
+from .models import PasswordResetCode, User
 from .views import send_welcome_email
 
 
 class WelcomeStateTests(APITestCase):
+	@patch('accounts.views.send_password_reset_email')
+	def test_password_reset_request_is_generic_and_hashes_code(self, send_email):
+		user = User.objects.create_user('reset@example.com', 'OldPassword123!', is_verified=True)
+		response = self.client.post('/api/auth/password-reset/request/', {'email': user.email}, format='json')
+
+		self.assertEqual(response.status_code, status.HTTP_200_OK)
+		self.assertEqual(response.data['message'], 'If an account matches that email, a password reset code has been sent.')
+		send_email.assert_called_once()
+		reset = PasswordResetCode.objects.get(user=user)
+		code = send_email.call_args.args[1]
+		self.assertNotEqual(reset.code_hash, code)
+		self.assertTrue(check_password(code, reset.code_hash))
+
+		unknown = self.client.post('/api/auth/password-reset/request/', {'email': 'unknown@example.com'}, format='json')
+		self.assertEqual(unknown.status_code, status.HTTP_200_OK)
+		self.assertEqual(unknown.data, response.data)
+
+	@patch('accounts.views.send_password_reset_email')
+	def test_password_reset_is_single_use_and_expires(self, send_email):
+		user = User.objects.create_user('reset-once@example.com', 'OldPassword123!', is_verified=True)
+		self.client.post('/api/auth/password-reset/request/', {'email': user.email}, format='json')
+		code = send_email.call_args.args[1]
+
+		response = self.client.post('/api/auth/password-reset/confirm/', {
+			'email': user.email, 'code': code, 'password': 'NewPassword123!',
+		}, format='json')
+		self.assertEqual(response.status_code, status.HTTP_200_OK)
+		login = self.client.post('/api/auth/login/', {'email': user.email, 'password': 'NewPassword123!'}, format='json')
+		self.assertEqual(login.status_code, status.HTTP_200_OK)
+
+		reused = self.client.post('/api/auth/password-reset/confirm/', {
+			'email': user.email, 'code': code, 'password': 'AnotherPassword123!',
+		}, format='json')
+		self.assertEqual(reused.status_code, status.HTTP_400_BAD_REQUEST)
+
+		reset = PasswordResetCode.objects.get(user=user)
+		reset.used_at = None
+		reset.expires_at = timezone.now() - timedelta(minutes=1)
+		reset.save(update_fields=['used_at', 'expires_at'])
+		expired = self.client.post('/api/auth/password-reset/confirm/', {
+			'email': user.email, 'code': code, 'password': 'ExpiredPassword123!',
+		}, format='json')
+		self.assertEqual(expired.status_code, status.HTTP_400_BAD_REQUEST)
 	def test_new_users_start_unseen_and_can_mark_welcome_seen(self):
 		user = User.objects.create_user('welcome@test.local', 'password123')
 		self.assertFalse(user.has_seen_welcome)

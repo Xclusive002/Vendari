@@ -4,9 +4,19 @@ from rest_framework import serializers
 
 from .models import Business, ConciergeInquiry, StorefrontOrder, StorefrontSettings
 
+MAX_IMAGE_SIZE = 5 * 1024 * 1024
+
+
+class BoundedImageField(serializers.ImageField):
+    def to_internal_value(self, data):
+        if getattr(data, 'size', 0) > MAX_IMAGE_SIZE:
+            raise serializers.ValidationError('Images must be 5 MB or smaller.')
+        return super().to_internal_value(data)
+
 
 class StorefrontSettingsSerializer(serializers.ModelSerializer):
     logo = serializers.SerializerMethodField()
+    banner_image = BoundedImageField(required=False, allow_null=True)
 
     class Meta:
         model = StorefrontSettings
@@ -59,8 +69,29 @@ class StorefrontSettingsSerializer(serializers.ModelSerializer):
         return request.build_absolute_uri(logo.url) if request else logo.url
 
 
+class PublicStorefrontSerializer(serializers.ModelSerializer):
+    logo = serializers.SerializerMethodField()
+    banner_image = serializers.SerializerMethodField()
+
+    class Meta:
+        model = StorefrontSettings
+        fields = ('slug', 'theme', 'primary_color', 'accent_color', 'logo', 'banner_image', 'description', 'whatsapp_number', 'social_links', 'delivery_option')
+
+    def _absolute_url(self, value):
+        if not value:
+            return None
+        request = self.context.get('request')
+        return request.build_absolute_uri(value.url) if request else value.url
+
+    def get_logo(self, instance):
+        return self._absolute_url(instance.business.logo)
+
+    def get_banner_image(self, instance):
+        return self._absolute_url(instance.banner_image)
+
+
 class BusinessSerializer(serializers.ModelSerializer):
-    logo = serializers.ImageField(required=False, allow_null=True)
+    logo = BoundedImageField(required=False, allow_null=True)
     has_complete_profile = serializers.BooleanField(read_only=True)
     whatsapp_service_number = serializers.SerializerMethodField()
 
@@ -73,7 +104,10 @@ class BusinessSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Business
-        fields = '__all__'
+        fields = tuple(
+            field.name for field in Business._meta.fields
+            if field.name not in {'bank_code', 'bank_account_number', 'bank_account_name', 'paystack_subaccount_code'}
+        ) + ('has_complete_profile', 'whatsapp_service_number')
         read_only_fields = ('owner', 'created_at', 'updated_at', 'bank_code', 'bank_account_number', 'bank_account_name', 'paystack_subaccount_code', 'platform_fee_percentage')
 
     def to_representation(self, instance):

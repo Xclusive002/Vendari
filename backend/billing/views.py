@@ -211,7 +211,17 @@ class PaystackWebhookView(APIView):
             update_fields = {'payout_status': payout_status}
             if payout_status == StorefrontOrder.PAYOUT_SETTLED:
                 update_fields['settled_at'] = timezone.now()
-            StorefrontOrder.objects.filter(business__in=businesses, status=StorefrontOrder.STATUS_PAID).update(**update_fields)
+            order_id = data.get('metadata', {}).get('storefront_order_id') or data.get('storefront_order_id')
+            reference = data.get('reference') or data.get('transaction_reference')
+            orders = StorefrontOrder.objects.filter(business__in=businesses, status=StorefrontOrder.STATUS_PAID)
+            if order_id:
+                orders = orders.filter(pk=order_id)
+            elif reference:
+                orders = orders.filter(paystack_reference=reference)
+            else:
+                logger.warning('Ignoring uncorrelated Paystack transfer event=%s subaccount=%s', event, subaccount_code)
+                return Response({'status': 'ignored'})
+            orders.update(**update_fields)
             return Response({'status': 'processed', 'payout_status': payout_status})
         if event != 'charge.success':
             return Response({'status': 'ignored'})

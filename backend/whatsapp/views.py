@@ -21,6 +21,7 @@ from customers.models import Customer
 from inventory.models import InventoryItem
 from sales.models import Sale
 from sales.serializers import SaleSerializer
+from vendari_api.rate_limits import rate_limited, too_many_requests
 
 from .models import WhatsAppPendingAction
 
@@ -233,6 +234,8 @@ class WhatsAppWebhookView(APIView):
         sender, text, media = get_message(payload)
         if not sender:
             return Response({'status': 'ignored'})
+        if rate_limited(request, 'whatsapp-webhook', limit=30, window=60, identifier=sender):
+            return too_many_requests('Too many messages. Please try again later.')
         business = Business.objects.filter(whatsapp_number=sender).first()
         if business is None:
             send_whatsapp_message(sender, 'This WhatsApp number is not linked to a Vendari business. Add your number in Vendari Settings first.')

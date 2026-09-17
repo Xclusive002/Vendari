@@ -6,7 +6,7 @@ from urllib.parse import quote
 from django.conf import settings
 from django.core.cache import cache
 from django.db import transaction
-from django.db.models import F, Sum
+from django.db.models import F, Q, Sum
 from django.utils import timezone
 from rest_framework import status, viewsets
 from rest_framework.response import Response
@@ -16,10 +16,11 @@ from rest_framework.permissions import IsAuthenticated
 from accounts.permissions import IsBusinessMember
 from billing.models import Plan
 from billing.utils import has_feature
+from vendari_api.rate_limits import rate_limited, too_many_requests
 
 from .models import Business, InviteCode, Membership, StorefrontOrder, StorefrontOrderLineItem, StorefrontSettings
 from .email_service import send_storefront_published_email, send_team_invite_email
-from .serializers import BusinessSerializer, ConciergeInquirySerializer, StorefrontOrderSerializer, StorefrontSettingsSerializer
+from .serializers import BusinessSerializer, ConciergeInquirySerializer, PublicStorefrontSerializer, StorefrontOrderSerializer, StorefrontSettingsSerializer
 from expenses.models import Expense
 from inventory.models import InventoryItem
 from inventory.serializers import PublicInventoryItemSerializer
@@ -33,7 +34,7 @@ class BusinessViewSet(viewsets.ModelViewSet):
 	serializer_class = BusinessSerializer
 
 	def get_queryset(self):
-		return Business.objects.filter(membership__user=self.request.user).distinct()
+		return Business.objects.filter(Q(membership__user=self.request.user) | Q(owner=self.request.user)).distinct()
 
 	def perform_create(self, serializer):
 		business = serializer.save(owner=self.request.user)
@@ -148,9 +149,7 @@ class BusinessPayoutsView(APIView):
 		for item in items:
 			recipient = item.get('recipient') or {}
 			subcode = str(item.get('subaccount_code') or recipient.get('subaccount_code') or recipient.get('code') or '').strip()
-			if subcode and subcode != subaccount_code:
-				continue
-			if not subcode and item.get('recipient') is not None:
+			if subcode != subaccount_code:
 				continue
 			amount_value = item.get('amount', 0) or 0
 			status_value = str(item.get('status') or 'pending').lower()
@@ -244,6 +243,8 @@ class StorefrontSlugCheckView(APIView):
     permission_classes = []
 
     def get(self, request):
+        if rate_limited(request, 'storefront-slug', limit=30, window=60):
+            return too_many_requests('Too many slug checks. Please try again later.')
         slug = request.query_params.get('slug', '').strip()
         normalized = StorefrontSettings.normalize_slug(slug)
         if not normalized:
@@ -307,7 +308,7 @@ class PublicStorefrontView(APIView):
 		return Response({
 			'business_name': storefront.business.name,
 			'has_payments_enabled': storefront.business.has_payments_enabled,
-			'storefront': StorefrontSettingsSerializer(storefront, context={'request': request}).data,
+			'storefront': PublicStorefrontSerializer(storefront, context={'request': request}).data,
 			'items': PublicInventoryItemSerializer(items, many=True, context={'request': request}).data,
 		})
 
@@ -331,7 +332,7 @@ class PublicStorefrontProductView(APIView):
 			return Response({'detail': 'Product not found.'}, status=status.HTTP_404_NOT_FOUND)
 		return Response({
 			'business_name': storefront.business.name,
-			'storefront': StorefrontSettingsSerializer(storefront, context={'request': request}).data,
+			'storefront': PublicStorefrontSerializer(storefront, context={'request': request}).data,
 			'product': PublicInventoryItemSerializer(item, context={'request': request}).data,
 		})
 
@@ -340,6 +341,8 @@ class PublicStorefrontCheckoutView(APIView):
 	permission_classes = []
 
 	def post(self, request, slug):
+		if rate_limited(request, 'storefront-checkout', limit=10, window=60, identifier=StorefrontSettings.normalize_slug(slug)):
+			return too_many_requests('Too many checkout attempts. Please try again later.')
 		storefront = StorefrontSettings.objects.select_related('business').filter(
 			slug=StorefrontSettings.normalize_slug(slug), is_published=True,
 		).first()

@@ -32,16 +32,18 @@ AUTH_USER_MODEL = 'accounts.User'
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 DEBUG = env.bool('DEBUG', default=False)
+if DEBUG and (env('RENDER', default='') or env('RENDER_SERVICE_ID', default='')):
+    raise ImproperlyConfigured('DEBUG must be False in the Render environment')
 SECRET_KEY = env('SECRET_KEY', default='')
 if not SECRET_KEY:
     if DEBUG:
         SECRET_KEY = 'dev-only-secret-key'
     else:
         raise ImproperlyConfigured('SECRET_KEY must be set when DEBUG is False')
-ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=['localhost', '127.0.0.1', '0.0.0.0'])
+ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=['localhost', '127.0.0.1', '0.0.0.0'] if DEBUG else [])
 CORS_ALLOWED_ORIGINS = env.list(
     'CORS_ALLOWED_ORIGINS',
-    default=['http://localhost:3000', 'http://localhost:3002', 'http://127.0.0.1:3000', 'http://127.0.0.1:3002'],
+    default=['http://localhost:3000', 'http://localhost:3002', 'http://127.0.0.1:3000', 'http://127.0.0.1:3002'] if DEBUG else [],
 )
 PAYSTACK_SECRET_KEY = env('PAYSTACK_SECRET_KEY', default='')
 PAYSTACK_MONTHLY_PLAN_CODE = env('PAYSTACK_MONTHLY_PLAN_CODE', default='')

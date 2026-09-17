@@ -1,10 +1,14 @@
 import logging
 import random
+import secrets
 import threading
+from datetime import timedelta
 
 from django.conf import settings
 from django.core.mail import EmailMultiAlternatives
 from django.db import transaction
+from django.contrib.auth.hashers import check_password, make_password
+from django.utils import timezone
 from rest_framework import status
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
@@ -12,8 +16,9 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from businesses.models import Business
-from .models import EmailVerificationToken
-from .serializers import InviteAcceptSerializer, LoginSerializer, RegisterSerializer, VerifyEmailSerializer
+from vendari_api.rate_limits import rate_limited, too_many_requests
+from .models import EmailVerificationToken, PasswordResetCode, User
+from .serializers import InviteAcceptSerializer, LoginSerializer, PasswordResetConfirmSerializer, PasswordResetRequestSerializer, RegisterSerializer, VerifyEmailSerializer
 from .serializers_profile import CurrentUserSerializer
 
 logger = logging.getLogger(__name__)
@@ -56,6 +61,21 @@ This code expires soon. If you did not create this account, you can ignore this 
         to=[user_email],
     )
     message.attach_alternative(html_content, 'text/html')
+    return message.send(fail_silently=False)
+
+
+def send_password_reset_email(user_email, code):
+    from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', 'onboarding@resend.dev').strip() or 'onboarding@resend.dev'
+    subject = 'Reset your Vendari password'
+    body = f'''We received a request to reset your Vendari password.
+
+Your reset code is: {code}
+
+This code expires in 10 minutes and can only be used once. If you did not request this, you can ignore this email.
+'''
+    html = f'''<div style="font-family:Arial,sans-serif;line-height:1.6;color:#0B1220;max-width:560px;margin:auto;padding:24px"><h2>Reset your Vendari password</h2><p>Use this code to choose a new password:</p><p style="font-size:32px;letter-spacing:8px;font-weight:700;padding:18px;text-align:center;background:#eef3ff;border-radius:8px;color:#1d4ed8">{code}</p><p>This code expires in 10 minutes and can only be used once. If you did not request this, you can ignore this email.</p></div>'''
+    message = EmailMultiAlternatives(subject=subject, body=body, from_email=from_email, to=[user_email])
+    message.attach_alternative(html, 'text/html')
     return message.send(fail_silently=False)
 
 
@@ -170,6 +190,8 @@ class RegisterView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request):
+        if rate_limited(request, 'auth-register', limit=5, window=900):
+            return too_many_requests('Too many registration attempts. Please try again later.')
         serializer = RegisterSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
@@ -227,9 +249,68 @@ class LoginView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request):
+        if rate_limited(request, 'auth-login', limit=10, window=300):
+            return too_many_requests('Too many login attempts. Please try again later.')
         serializer = LoginSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         return Response(token_pair(serializer.validated_data['user']))
+
+
+class PasswordResetRequestView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        generic_response = {'message': 'If an account matches that email, a password reset code has been sent.'}
+        if rate_limited(request, 'password-reset-request', limit=3, window=900):
+            return too_many_requests()
+        serializer = PasswordResetRequestSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(generic_response, status=status.HTTP_200_OK)
+        email = serializer.validated_data['email'].lower()
+        if rate_limited(request, 'password-reset-request-email', limit=3, window=900, identifier=email):
+            return Response(generic_response, status=status.HTTP_200_OK)
+        user = User.objects.filter(email__iexact=email, is_active=True).first()
+        if user is None:
+            return Response(generic_response, status=status.HTTP_200_OK)
+        code = f'{secrets.randbelow(100000000):08d}'
+        PasswordResetCode.objects.update_or_create(
+            user=user,
+            defaults={
+                'code_hash': make_password(code),
+                'expires_at': timezone.now() + timedelta(minutes=10),
+                'attempts': 0,
+                'used_at': None,
+            },
+        )
+        try:
+            send_password_reset_email(user.email, code)
+        except Exception:
+            logger.exception('Password reset email failed for user=%s', user.pk)
+        return Response(generic_response, status=status.HTTP_200_OK)
+
+
+class PasswordResetConfirmView(APIView):
+    permission_classes = [AllowAny]
+
+    @transaction.atomic
+    def post(self, request):
+        serializer = PasswordResetConfirmSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        email = serializer.validated_data['email'].lower()
+        reset = PasswordResetCode.objects.select_for_update().select_related('user').filter(user__email__iexact=email).first()
+        invalid = {'detail': 'The reset code is invalid or expired.'}
+        if reset is None or reset.used_at or reset.expires_at <= timezone.now() or reset.attempts >= 5:
+            return Response(invalid, status=status.HTTP_400_BAD_REQUEST)
+        if not check_password(serializer.validated_data['code'], reset.code_hash):
+            reset.attempts += 1
+            reset.save(update_fields=['attempts'])
+            return Response(invalid, status=status.HTTP_400_BAD_REQUEST)
+        user = reset.user
+        user.set_password(serializer.validated_data['password'])
+        user.save(update_fields=['password'])
+        reset.used_at = timezone.now()
+        reset.save(update_fields=['used_at'])
+        return Response({'message': 'Your password has been reset. You can now log in.'})
 
 
 class CurrentUserView(APIView):

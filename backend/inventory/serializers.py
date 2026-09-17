@@ -2,10 +2,20 @@ from rest_framework import serializers
 
 from .models import InventoryItem, InventoryItemImage
 
+MAX_IMAGE_SIZE = 5 * 1024 * 1024
+
+
+class BoundedImageField(serializers.ImageField):
+    def to_internal_value(self, data):
+        if getattr(data, 'size', 0) > MAX_IMAGE_SIZE:
+            raise serializers.ValidationError('Images must be 5 MB or smaller.')
+        return super().to_internal_value(data)
+
 
 class InventoryItemSerializer(serializers.ModelSerializer):
+    image = BoundedImageField(required=False, allow_null=True)
     is_low_stock = serializers.SerializerMethodField()
-    images = serializers.ListField(child=serializers.ImageField(), required=False, write_only=True)
+    images = serializers.ListField(child=BoundedImageField(), required=False, write_only=True)
     gallery = serializers.SerializerMethodField(read_only=True)
 
     class Meta:

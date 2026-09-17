@@ -61,3 +61,15 @@ class EmailVerificationToken(models.Model):
 
     def __str__(self):
         return f'Email verification for {self.user.email}'
+
+
+class PasswordResetCode(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='password_reset_code')
+    code_hash = models.CharField(max_length=128)
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField()
+    attempts = models.PositiveSmallIntegerField(default=0)
+    used_at = models.DateTimeField(null=True, blank=True)
+
+    def __str__(self):
+        return f'Password reset for {self.user.email}'
