@@ -384,7 +384,7 @@ class PublicStorefrontCheckoutView(APIView):
 			business=storefront.business, is_visible_on_storefront=True,
 		))
 		by_name = {item.product_name.casefold(): item for item in items}
-		if len(by_name) != len(requested):
+		if any(normalized_name not in by_name for normalized_name in requested):
 			return Response({'detail': 'One or more products are no longer available.'}, status=status.HTTP_409_CONFLICT)
 		total = Decimal('0.00')
 		validated_lines = []

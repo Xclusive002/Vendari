@@ -345,6 +345,35 @@ class BusinessProfileTests(APITestCase):
 		self.assertIn('wa.me/2348012345678?text=', response.data['whatsapp_url'])
 		self.assertEqual(StorefrontOrder.objects.get(pk=response.data['order_id']).status, StorefrontOrder.STATUS_PENDING_WHATSAPP)
 
+	@patch('businesses.views.paystack_request')
+	def test_storefront_pay_now_accepts_selected_product_when_other_products_are_visible(self, mock_paystack_request):
+		storefront = StorefrontSettings.objects.create(
+			business=self.business, slug='paynowbusiness', is_published=True,
+		)
+		self.business.paystack_subaccount_code = 'ACCT_100'
+		self.business.save(update_fields=['paystack_subaccount_code'])
+		InventoryItem.objects.create(
+			business=self.business, product_name='Selected product', qty_in_stock=3, cost_price=10,
+			selling_price=20, is_visible_on_storefront=True,
+		)
+		InventoryItem.objects.create(
+			business=self.business, product_name='Another available product', qty_in_stock=3, cost_price=15,
+			selling_price=30, is_visible_on_storefront=True,
+		)
+		mock_paystack_request.return_value = {
+			'status': True,
+			'data': {'authorization_url': 'https://paystack.test/authorize', 'reference': 'ref-selected'},
+		}
+
+		self.client.logout()
+		response = self.client.post(f'/api/storefronts/{storefront.slug}/checkout/', {
+			'customer_name': 'Ada', 'customer_phone': '08012345678', 'delivery_option': 'pickup',
+			'checkout_method': 'pay_now', 'items': [{'product_name': 'Selected product', 'quantity': 1}],
+		}, format='json')
+
+		self.assertEqual(response.status_code, status.HTTP_200_OK)
+		self.assertEqual(response.data['authorization_url'], 'https://paystack.test/authorize')
+
 	def test_pay_now_requires_payment_setup(self):
 		storefront = StorefrontSettings.objects.create(business=self.business, slug='profilebusiness', is_published=True)
 		self.client.logout()
