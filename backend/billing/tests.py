@@ -91,6 +91,8 @@ class PaystackWebhookTests(APITestCase):
             'event': 'charge.success',
             'data': {
                 'reference': 'store_pay_123',
+                'status': 'success',
+                'currency': 'NGN',
                 'amount': 4000,
                 'metadata': {'payment_type': 'storefront_order', 'storefront_order_id': order.pk, 'business_id': self.business.pk},
             },
@@ -113,3 +115,38 @@ class PaystackWebhookTests(APITestCase):
         self.assertEqual(Sale.objects.filter(business=self.business, item=item).count(), 1)
         item.refresh_from_db()
         self.assertEqual(item.qty_in_stock, 3)
+
+    def test_storefront_payment_rejects_unverified_charge(self):
+        storefront = StorefrontSettings.objects.create(
+            business=self.business, slug='unverified-storefront', is_published=True,
+        )
+        item = InventoryItem.objects.create(
+            business=self.business, product_name='Beans', qty_in_stock=5,
+            cost_price='10.00', selling_price='20.00', is_visible_on_storefront=True,
+        )
+        order = StorefrontOrder.objects.create(
+            business=self.business, customer_name='Ada', customer_phone='0800',
+            delivery_option='pickup', status=StorefrontOrder.STATUS_PENDING_PAYMENT,
+            total='20.00', paystack_reference='expected_reference',
+        )
+        StorefrontOrderLineItem.objects.create(order=order, inventory_item=item, quantity=1, unit_price='20.00')
+        payload = {
+            'event': 'charge.success',
+            'data': {
+                'reference': 'wrong_reference',
+                'status': 'success',
+                'currency': 'NGN',
+                'amount': 2000,
+                'metadata': {'payment_type': 'storefront_order', 'storefront_order_id': order.pk, 'business_id': self.business.pk},
+            },
+        }
+        body = json.dumps(payload).encode()
+        signature = hmac.new(settings.PAYSTACK_SECRET_KEY.encode(), body, hashlib.sha512).hexdigest()
+
+        response = self.client.post(self.url, body, content_type='application/json', HTTP_X_PAYSTACK_SIGNATURE=signature)
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        order.refresh_from_db()
+        item.refresh_from_db()
+        self.assertEqual(order.status, StorefrontOrder.STATUS_PENDING_PAYMENT)
+        self.assertEqual(item.qty_in_stock, 5)

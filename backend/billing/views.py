@@ -245,6 +245,14 @@ class PaystackWebhookView(APIView):
             ).first()
             if order is None:
                 return Response({'error': 'Invalid storefront order metadata.'}, status=status.HTTP_400_BAD_REQUEST)
+            if (
+                str(data.get('status', '')).lower() != 'success'
+                or str(data.get('currency', 'NGN')).upper() != 'NGN'
+                or str(reference or '') != str(order.paystack_reference or '')
+                or Decimal(str(data.get('amount', 0))) != order.total * Decimal('100')
+            ):
+                logger.warning('Rejecting invalid storefront payment event for order=%s reference=%s', order.pk, reference)
+                return Response({'error': 'Paystack payment could not be verified.'}, status=status.HTTP_400_BAD_REQUEST)
             with transaction.atomic():
                 order = StorefrontOrder.objects.select_for_update().prefetch_related('line_items').get(pk=order.pk)
                 if order.status == StorefrontOrder.STATUS_PAID:
