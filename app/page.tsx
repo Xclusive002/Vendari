@@ -36,6 +36,7 @@ import {
   Wallet,
   Zap,
 } from "lucide-react";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
 const navItems = [
   { label: "Dashboard", icon: LayoutDashboard, active: true },
@@ -138,6 +139,9 @@ function DashboardMockup() {
         <span className="ml-2 text-[10px] font-medium tracking-[0.18em] text-white/40">
           VENDARI / OVERVIEW
         </span>
+      </div>
+      <div className="border-b border-warning/20 bg-warning/10 px-4 py-2 text-center text-[10px] font-semibold text-warning sm:px-5">
+        Sample data for illustration
       </div>
       <div className="grid min-h-[430px] grid-cols-1 sm:grid-cols-[190px_1fr]">
         <aside
@@ -377,6 +381,7 @@ function StorefrontShowcase() {
           <ScrollReveal direction="right" delay={0.08}>
             <div className="relative mx-auto max-w-2xl">
               <div className="rounded-2xl border border-border bg-surface p-3 shadow-[var(--shadow-modal)] sm:p-5">
+                <p className="mb-3 text-center text-[10px] font-semibold uppercase tracking-[0.14em] text-text-muted">Sample storefront content</p>
                 <div className="overflow-hidden rounded-xl border border-border bg-[#f7f9fc]">
                   <div className="flex items-center justify-between bg-ink px-4 py-3 text-white sm:px-5"><div className="flex items-center gap-2"><span className="flex h-7 w-7 items-center justify-center rounded-full bg-brand-gradient text-xs font-bold">V</span><span className="text-xs font-semibold">Emmanuel&apos;s Store</span></div><span className="rounded-full bg-white/10 px-2 py-1 text-[10px] text-white/70">Open today</span></div>
                   <div className="p-4 sm:p-6"><div className="flex items-end justify-between gap-3"><div><p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-blue">Fresh arrivals</p><h3 className="mt-2 font-display text-2xl font-bold text-ink sm:text-3xl">Made for your everyday.</h3></div><Store className="h-7 w-7 text-blue" /></div><div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3">{[["Premium Ankara", "₦18,500", "#4683EC"], ["Leather Sandals", "₦24,000", "#4954F1"], ["Gift Box Set", "₦12,500", "#0F1D3D"], ["Cedar Candle", "₦8,900", "#4683EC"], ["Daily Tote", "₦15,000", "#4954F1"], ["Silk Scarf", "₦9,500", "#0F1D3D"]].map(([name, price, color]) => <div key={name} className="overflow-hidden rounded-lg border border-border bg-surface"><div className="h-20 opacity-90" style={{ background: `linear-gradient(135deg, ${color}, #06122B)` }} /><div className="p-2.5"><p className="truncate text-xs font-semibold text-ink">{name}</p><p className="mt-1 font-mono text-xs font-semibold text-blue">{price}</p></div></div>)}</div><div className="mt-5 flex items-center justify-between rounded-lg bg-ink px-4 py-3 text-white"><span className="text-xs text-white/70">3 items in cart</span><span className="inline-flex items-center gap-2 text-xs font-semibold">View cart <ArrowRight className="h-3.5 w-3.5" /></span></div></div>
@@ -441,6 +446,12 @@ export default async function Home() {
               className="rounded-md transition-colors hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue"
             >
               Pricing
+            </Link>
+            <Link
+              href="/about"
+              className="rounded-md transition-colors hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue"
+            >
+              About
             </Link>
           </div>
           <div className="flex items-center gap-3">
@@ -729,6 +740,23 @@ export default async function Home() {
 
       <ConciergeOverview />
 
+      <section id="faq" className="border-t border-border bg-bg px-5 py-20 sm:px-8 sm:py-28">
+        <div className="mx-auto grid max-w-7xl gap-12 lg:grid-cols-[0.75fr_1.25fr]">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-blue">Straight answers</p>
+            <h2 className="mt-4 font-display text-3xl font-semibold leading-tight text-ink sm:text-5xl">Questions worth asking before you trust a platform.</h2>
+            <p className="mt-5 max-w-md text-base leading-7 text-text-secondary">No vague promises. Here is how Vendari handles the practical concerns that matter when your business records move online.</p>
+          </div>
+          <Accordion type="single" collapsible className="rounded-xl border border-border bg-surface px-5 sm:px-7">
+            <AccordionItem value="safe"><AccordionTrigger className="text-left text-ink">Is my sales and business data safe?</AccordionTrigger><AccordionContent className="leading-6 text-text-secondary">Vendari sends authenticated requests over HTTPS and restricts business records to authorized business members. We do not sell your business data. You should still use a strong password, keep access private, and contact us if you suspect unauthorized access.</AccordionContent></AccordionItem>
+            <AccordionItem value="payments"><AccordionTrigger className="text-left text-ink">Where does my customer&apos;s payment actually go?</AccordionTrigger><AccordionContent className="leading-6 text-text-secondary">For Paystack payments, the money goes to the business&apos;s own linked bank account through Paystack. Vendari never holds customer payment funds. Paystack handles the payment processing and settlement timing.</AccordionContent></AccordionItem>
+            <AccordionItem value="stop"><AccordionTrigger className="text-left text-ink">What happens to my data if I stop paying?</AccordionTrigger><AccordionContent className="leading-6 text-text-secondary">Your subscription access can expire, which stops access to paid workspace features. Your records are not transferred to another business and we do not claim ownership of them. Contact Vendari before cancelling if you need an export or have a retention question.</AccordionContent></AccordionItem>
+            <AccordionItem value="trial"><AccordionTrigger className="text-left text-ink">Is there really a free trial, and what happens after?</AccordionTrigger><AccordionContent className="leading-6 text-text-secondary">Yes. New businesses receive a 5-day trial of the Vendari membership. After the trial, you choose monthly or yearly billing to keep the workspace active. Pricing is shown on the <Link href="/pricing" className="font-semibold text-blue hover:underline">pricing page</Link>; there is no automatic claim that the service stays free.</AccordionContent></AccordionItem>
+            <AccordionItem value="built"><AccordionTrigger className="text-left text-ink">Who built this?</AccordionTrigger><AccordionContent className="leading-6 text-text-secondary">Vendari is an independent product built by the Vendari team for retailers and service businesses. Read the <Link href="/about" className="font-semibold text-blue hover:underline">About page</Link> for the product&apos;s purpose and the people behind it.</AccordionContent></AccordionItem>
+          </Accordion>
+        </div>
+      </section>
+
       <ScrollReveal>
         <section className="bg-brand-gradient px-5 py-20 sm:px-8 sm:py-24">
           <div className="mx-auto flex max-w-7xl flex-col items-start justify-between gap-8 sm:flex-row sm:items-end">
@@ -770,6 +798,8 @@ export default async function Home() {
               Business operations, with less guesswork. One clear place for the
               work behind the work.
             </p>
+            <a href="tel:09016615446" className="mt-5 inline-flex text-lg font-semibold text-white hover:text-blue">0901 661 5446</a>
+            <p className="mt-1 text-xs text-white/45">Talk to the Vendari team</p>
             <div className="mt-6 flex items-center gap-3">
               <a
                 href="https://www.tiktok.com/@vendari_ng?_r=1&_t=ZS-99dm8ICiMdT"
@@ -823,6 +853,8 @@ export default async function Home() {
               >
                 Become a member
               </Link>
+              <a href="#faq" className="transition-colors hover:text-white">FAQ</a>
+              <Link href="/about" className="transition-colors hover:text-white">About Vendari</Link>
             </nav>
           </div>
           <div>
@@ -853,7 +885,7 @@ export default async function Home() {
         </div>
         <div className="mx-auto mt-10 flex max-w-7xl flex-col gap-2 border-t border-white/10 pt-5 text-xs text-white/40 sm:flex-row sm:items-center sm:justify-between">
           <p>© 2026 Vendari</p>
-          <p>Built for retailers and service businesses.</p>
+          <div className="flex flex-col gap-2 text-left sm:items-end"><a href="tel:09016615446" className="text-sm font-semibold text-white hover:text-blue">Call Vendari: 0901 661 5446</a><p>Built for retailers and service businesses.</p></div>
         </div>
       </footer>
     </main>

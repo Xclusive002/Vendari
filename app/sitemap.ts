@@ -17,6 +17,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.8,
     },
     {
+      url: 'https://www.vendari.name.ng/about',
+      lastModified: now,
+      changeFrequency: 'monthly',
+      priority: 0.6,
+    },
+    {
       url: 'https://www.vendari.name.ng/login',
       lastModified: now,
       changeFrequency: 'monthly',
