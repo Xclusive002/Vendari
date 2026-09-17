@@ -30,19 +30,47 @@ export async function verifyEmail(email: string, code: string) {
 const ACCESS_TOKEN_MAX_AGE = 15 * 60
 const REFRESH_TOKEN_MAX_AGE = 30 * 24 * 60 * 60
 
-export async function login(email: string, password: string) {
+const authCookieOptions = { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax' as const, path: '/' }
+
+export async function login(email: string, password: string, rememberMe = false) {
   try {
     const tokens = await apiJson<{ access: string; refresh: string }>('/auth/login/', { method: 'POST', body: JSON.stringify({ email, password }), skipRefresh: true })
     const cookieStore = await cookies()
-    const options = { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax' as const, path: '/' }
-    cookieStore.set('vendari_access', tokens.access, { ...options, maxAge: ACCESS_TOKEN_MAX_AGE })
-    cookieStore.set('vendari_refresh', tokens.refresh, { ...options, maxAge: REFRESH_TOKEN_MAX_AGE })
+    cookieStore.set('vendari_access', tokens.access, { ...authCookieOptions, maxAge: ACCESS_TOKEN_MAX_AGE })
+    cookieStore.set('vendari_refresh', tokens.refresh, rememberMe ? { ...authCookieOptions, maxAge: REFRESH_TOKEN_MAX_AGE } : authCookieOptions)
+    cookieStore.set('vendari_remember', rememberMe ? '1' : '0', rememberMe ? { ...authCookieOptions, httpOnly: false, maxAge: REFRESH_TOKEN_MAX_AGE } : { ...authCookieOptions, httpOnly: false })
     return { success: true }
   } catch (error) {
     const cookieStore = await cookies()
     cookieStore.delete('vendari_access')
     cookieStore.delete('vendari_refresh')
     return { success: false, error: error instanceof Error ? error.message : 'Login failed' }
+  }
+}
+
+export async function restoreRememberedSession() {
+  const cookieStore = await cookies()
+  if (cookieStore.get('vendari_remember')?.value !== '1') return { success: false as const }
+  const refresh = cookieStore.get('vendari_refresh')?.value
+  if (!refresh) return { success: false as const }
+
+  try {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL?.replace(/\/+$/, '')}/auth/token/refresh/`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refresh }),
+      cache: 'no-store',
+    })
+    if (!response.ok) throw new Error('Refresh token expired')
+    const tokens = await response.json() as { access: string; refresh?: string }
+    cookieStore.set('vendari_access', tokens.access, { ...authCookieOptions, maxAge: ACCESS_TOKEN_MAX_AGE })
+    if (tokens.refresh) cookieStore.set('vendari_refresh', tokens.refresh, { ...authCookieOptions, maxAge: REFRESH_TOKEN_MAX_AGE })
+    return { success: true as const }
+  } catch {
+    cookieStore.delete('vendari_access')
+    cookieStore.delete('vendari_refresh')
+    cookieStore.delete('vendari_remember')
+    return { success: false as const }
   }
 }
 
@@ -92,5 +120,6 @@ export async function logout() {
   const cookieStore = await cookies()
   cookieStore.delete('vendari_access')
   cookieStore.delete('vendari_refresh')
+  cookieStore.delete('vendari_remember')
   redirect('/login')
 }

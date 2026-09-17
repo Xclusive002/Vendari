@@ -22,7 +22,6 @@ export async function proxy(request: NextRequest) {
 
   if (accessCookie && !hasAccess) {
     response.cookies.delete('vendari_access')
-    response.cookies.delete('vendari_refresh')
   }
 
   if (pathname === '/' && hasAccess) {

@@ -6,7 +6,7 @@ import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { ArrowRight, LockKeyhole } from 'lucide-react'
 import { toast } from 'sonner'
-import { login } from '@/app/actions/auth'
+import { login, restoreRememberedSession } from '@/app/actions/auth'
 import { LoadingButton } from '@/components/ui/loading-button'
 import LoadingSpinner from '@/components/ui/loading-spinner'
 
@@ -21,11 +21,23 @@ export default function LoginPage() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [rememberMe, setRememberMe] = useState(true)
+  const [restoring, setRestoring] = useState(true)
   const [resetOpen, setResetOpen] = useState(false)
   const [resetStep, setResetStep] = useState<'request' | 'confirm'>('request')
   const [resetCode, setResetCode] = useState('')
   const [resetPassword, setResetPassword] = useState('')
   const [resetMessage, setResetMessage] = useState('')
+
+  useEffect(() => {
+    let active = true
+    restoreRememberedSession().then((result) => {
+      if (active && result.success) window.location.replace('/dashboard')
+    }).finally(() => {
+      if (active) setRestoring(false)
+    })
+    return () => { active = false }
+  }, [])
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -44,7 +56,7 @@ export default function LoginPage() {
     setLoading(true)
 
     try {
-      const result = await login(trimmedEmail, password)
+      const result = await login(trimmedEmail, password, rememberMe)
 
       if (result.success) {
         window.location.assign('/dashboard')
@@ -121,7 +133,7 @@ export default function LoginPage() {
         <section className="relative overflow-hidden border-t border-border bg-surface">
           <div className="absolute right-0 top-0 h-24 w-24 rounded-bl-full bg-blue/5" />
           <div className="auth-inner">
-            {loading ? (
+            {loading || restoring ? (
               <LoadingSpinner />
             ) : (
               <>
@@ -162,6 +174,11 @@ export default function LoginPage() {
                 <label htmlFor="login-password" className="text-sm font-medium text-text-secondary">Password</label>
                 <input id="login-password" type="password" autoComplete="current-password" value={password} onChange={(event) => setPassword(event.target.value)} className="dashboard-input mt-2 w-full px-3 py-2.5" disabled={loading} />
               </div>
+
+              <label htmlFor="remember-me" className="flex cursor-pointer items-center gap-2 text-sm text-text-secondary">
+                <input id="remember-me" type="checkbox" checked={rememberMe} onChange={(event) => setRememberMe(event.target.checked)} className="h-4 w-4 rounded border-border text-blue focus:ring-blue" disabled={loading} />
+                Remember me on this device
+              </label>
 
               {error && <p role="alert" className="rounded-lg border border-negative/20 bg-negative/5 px-3 py-2.5 text-sm text-negative">{error}</p>}
 
