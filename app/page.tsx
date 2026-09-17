@@ -402,7 +402,7 @@ export default async function Home() {
   }
 
   return (
-    <main className="min-h-screen overflow-hidden bg-bg text-text-primary">
+    <main className="min-h-screen overflow-x-clip bg-bg text-text-primary">
       <nav
         className="border-b border-border bg-surface/90"
         aria-label="Main navigation"
@@ -469,7 +469,7 @@ export default async function Home() {
         </div>
       </nav>
 
-      <section className="relative bg-surface px-5 pb-16 pt-16 sm:px-8 sm:pb-24 sm:pt-24">
+      <section className="relative overflow-visible bg-surface px-4 pb-16 pt-12 sm:px-8 sm:pb-24 sm:pt-24">
         <div className="landing-mesh landing-mesh-one" aria-hidden="true" />
         <div className="landing-mesh landing-mesh-two" aria-hidden="true" />
         <div className="relative mx-auto max-w-7xl">
@@ -479,7 +479,7 @@ export default async function Home() {
                 <Sparkles className="h-3.5 w-3.5" /> Clarity for the work behind
                 the work
               </p>
-              <h1 className="max-w-2xl font-display text-5xl font-bold leading-[1.02] tracking-tight text-ink sm:text-7xl">
+              <h1 className="max-w-2xl break-words font-display text-[clamp(2.75rem,12vw,4.5rem)] font-bold leading-[1.02] tracking-tight text-ink sm:text-7xl">
                 Business operations.{" "}
                 <span className="bg-brand-gradient bg-clip-text text-transparent">
                   Simplified.
@@ -496,17 +496,17 @@ export default async function Home() {
               </p>
             </HeroMotion>
             <HeroMotion delay={0.16}>
-              <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+              <div className="mt-8 flex flex-col items-start gap-3 sm:flex-row">
                 <Link
                   href="/register"
-                  className="motion-hover inline-flex items-center justify-center gap-2 rounded-lg bg-brand-gradient px-5 py-3.5 text-sm font-semibold text-white shadow-lg shadow-blue/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue focus-visible:ring-offset-2"
+                  className="motion-hover inline-flex min-h-12 self-start items-center justify-center gap-2 rounded-full bg-brand-gradient px-6 py-3.5 text-sm font-semibold text-white shadow-lg shadow-blue/20 ring-4 ring-blue/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue focus-visible:ring-offset-2"
                 >
                   Start 5-day trial{" "}
                   <ArrowRight className="h-4 w-4" />
                 </Link>
                 <a
                   href="#how-it-works"
-                  className="motion-hover inline-flex items-center justify-center gap-2 rounded-lg border border-ink px-5 py-3.5 text-sm font-semibold text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue focus-visible:ring-offset-2"
+                  className="motion-hover inline-flex min-h-12 self-start items-center justify-center gap-2 rounded-full border border-ink px-6 py-3.5 text-sm font-semibold text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue focus-visible:ring-offset-2"
                 >
                   See how it works <ChevronRight className="h-4 w-4" />
                 </a>
