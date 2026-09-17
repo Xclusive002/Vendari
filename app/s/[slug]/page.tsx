@@ -18,6 +18,7 @@ type StorefrontData = {
     accent_color: string
     banner_image: string | null
     description: string
+    about: string
     whatsapp_number: string
     delivery_option: string
     opening_hours: Record<string, string>

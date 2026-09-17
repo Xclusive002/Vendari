@@ -10,6 +10,7 @@ import { toast } from 'sonner'
 import { checkStorefrontSlug, getBusiness, getStorefrontSettings, launchStorefront, updateBusiness, updateStorefrontSettings, uploadStorefrontBanner } from '@/app/actions/business'
 import { getStorefrontUrl } from '@/lib/storefront'
 import { PageSkeleton } from '@/components/ui/skeleton'
+import { getStorefrontTheme, STOREFRONT_THEMES } from '@/lib/storefront-themes'
 
 const VENDARI_BLUE = '#4683EC'
 const SOCIAL_PLATFORMS = [
@@ -18,16 +19,10 @@ const SOCIAL_PLATFORMS = [
   { key: 'tiktok', label: 'TikTok', icon: Music2 },
   { key: 'twitter', label: 'Twitter/X', icon: Globe },
 ] as const
-const THEME_PRESETS = [
-  { key: 'classic', label: 'Classic', description: 'Warm, balanced shop layout', accent: '#4683EC', surface: '#F8FAFC', radius: 'rounded-lg' },
-  { key: 'bold', label: 'Bold', description: 'High-contrast, expressive storefront', accent: '#F97316', surface: '#FFF7ED', radius: 'rounded-2xl' },
-  { key: 'minimal', label: 'Minimal', description: 'Quiet, clean product-first layout', accent: '#111827', surface: '#FFFFFF', radius: 'rounded-none' },
-] as const
-
 function StorefrontPreview({ business, settings }: { business: any; settings: any }) {
   const primary = settings.primary_color || '#4683EC'
   const accent = settings.accent_color || primary
-  const theme = THEME_PRESETS.find((preset) => preset.key === settings.theme) || THEME_PRESETS[0]
+  const theme = getStorefrontTheme(settings.theme)
   const isBold = theme.key === 'bold'
   const isMinimal = theme.key === 'minimal'
   return (
@@ -139,6 +134,7 @@ export default function StorefrontPage() {
     const payload = {
       slug: slugDraft,
       description: settings.description || '',
+      about: settings.about || '',
       whatsapp_number: settings.whatsapp_number || '',
       delivery_option: settings.delivery_option || 'both',
       primary_color: settings.primary_color || VENDARI_BLUE,
@@ -228,6 +224,7 @@ export default function StorefrontPage() {
           <Link href="/dashboard/storefront/products" className="inline-flex items-center gap-2 text-sm font-semibold text-blue hover:underline">
             Manage storefront products <ExternalLink className="h-4 w-4" />
           </Link>
+          <Link href="/dashboard/storefront/themes" className="inline-flex items-center gap-2 text-sm font-semibold text-blue hover:underline">Browse premium themes <ExternalLink className="h-4 w-4" /></Link>
           <Link href="/dashboard/settings" className="inline-flex items-center gap-2 text-sm font-semibold text-blue hover:underline">Edit business info <Link2 className="h-4 w-4" /></Link>
           <Link href="/dashboard/storefront/payouts" className="inline-flex items-center gap-2 text-sm font-semibold text-blue hover:underline">
             Payout history <ExternalLink className="h-4 w-4" />
@@ -294,22 +291,30 @@ export default function StorefrontPage() {
               <div>
                 <label className="text-sm font-medium text-text-secondary">Description</label>
                 <textarea value={settings.description || ''} onChange={(e) => setSettings({ ...settings, description: e.target.value })} className="dashboard-input mt-2 min-h-28 w-full px-3 py-2 text-sm" />
+                <p className="mt-1 text-xs text-text-muted">A short tagline for the hero area.</p>
+              </div>
+
+              <div>
+                <label className="text-sm font-medium text-text-secondary">About your business</label>
+                <textarea value={settings.about || ''} onChange={(e) => setSettings({ ...settings, about: e.target.value })} placeholder="Tell customers your story, approach, or what makes you different." className="dashboard-input mt-2 min-h-36 w-full px-3 py-2 text-sm" />
+                <p className="mt-1 text-xs text-text-muted">This appears in the dedicated About section when filled.</p>
               </div>
 
               <div>
                 <p className="text-sm font-medium text-text-secondary">Storefront theme</p>
                 <div className="mt-3 grid gap-3 sm:grid-cols-3">
-                  {THEME_PRESETS.map((preset) => {
+                  {STOREFRONT_THEMES.slice(0, 3).map((preset) => {
                     const selected = (settings.theme || 'classic') === preset.key
                     return <button key={preset.key} type="button" onClick={() => setSettings({ ...settings, theme: preset.key })} className={`text-left transition ${selected ? 'ring-2 ring-blue ring-offset-2' : 'hover:-translate-y-0.5'}`}>
                       <div className={`overflow-hidden rounded-lg border ${selected ? 'border-blue ring-2 ring-blue ring-offset-2' : 'border-border'}`}>
-                        <div className="h-7" style={{ backgroundColor: preset.accent }} />
+                        <div className={`h-7 ${preset.preview}`} />
                         <div className="space-y-2 bg-white p-2"><div className="h-2 w-2/3 rounded-full bg-slate-200" /><div className="grid grid-cols-3 gap-1"><span className="h-8 rounded-sm bg-slate-100" /><span className="h-8 rounded-sm bg-slate-200" /><span className="h-8 rounded-sm bg-slate-100" /></div></div>
                       </div>
                       <p className="mt-2 text-xs font-semibold text-ink">{preset.label}</p><p className="mt-0.5 text-[10px] leading-4 text-text-muted">{preset.description}</p>
                     </button>
                   })}
                 </div>
+                <Link href="/dashboard/storefront/themes" className="mt-3 inline-flex text-sm font-semibold text-blue hover:underline">See all premium themes →</Link>
               </div>
 
               <div>

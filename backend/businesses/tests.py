@@ -140,6 +140,8 @@ class BusinessProfileTests(APITestCase):
 			business=self.business,
 			slug='servicebusiness',
 			is_published=True,
+			description='Short hero tagline',
+			about='Our team has served this community for years.',
 			opening_hours={'monday': '9am - 6pm'},
 			business_type_hint=StorefrontSettings.BUSINESS_TYPE_SERVICES,
 		)
@@ -151,6 +153,8 @@ class BusinessProfileTests(APITestCase):
 
 		self.assertEqual(response.status_code, status.HTTP_200_OK)
 		self.assertEqual(response.data['opening_hours'], {'monday': '9am - 6pm'})
+		self.assertEqual(response.data['storefront']['description'], 'Short hero tagline')
+		self.assertEqual(response.data['storefront']['about'], 'Our team has served this community for years.')
 		self.assertEqual(response.data['storefront']['business_type_hint'], StorefrontSettings.BUSINESS_TYPE_SERVICES)
 		self.assertEqual(len(response.data['services']), 1)
 		self.assertEqual(response.data['services'][0]['name'], 'Consultation')

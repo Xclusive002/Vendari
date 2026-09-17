@@ -22,7 +22,7 @@ class StorefrontSettingsSerializer(serializers.ModelSerializer):
         model = StorefrontSettings
         fields = [
             'id', 'business', 'slug', 'is_published', 'theme', 'primary_color', 'accent_color',
-            'logo', 'banner_image', 'description', 'whatsapp_number', 'social_links', 'delivery_option',
+            'logo', 'banner_image', 'description', 'about', 'whatsapp_number', 'social_links', 'delivery_option',
             'opening_hours', 'business_type_hint', 'created_at', 'updated_at',
         ]
         read_only_fields = ('id', 'business', 'created_at', 'updated_at')
@@ -75,7 +75,7 @@ class PublicStorefrontSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = StorefrontSettings
-        fields = ('slug', 'theme', 'primary_color', 'accent_color', 'logo', 'banner_image', 'description', 'whatsapp_number', 'social_links', 'delivery_option', 'opening_hours', 'business_type_hint')
+        fields = ('slug', 'theme', 'primary_color', 'accent_color', 'logo', 'banner_image', 'description', 'about', 'whatsapp_number', 'social_links', 'delivery_option', 'opening_hours', 'business_type_hint')
 
     def _absolute_url(self, value):
         if not value:

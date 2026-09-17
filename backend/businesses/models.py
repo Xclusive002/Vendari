@@ -42,6 +42,7 @@ class StorefrontSettings(models.Model):
     accent_color = models.CharField(max_length=32, blank=True, default='')
     banner_image = models.ImageField(upload_to='storefront_banners/', blank=True, null=True)
     description = models.TextField(blank=True)
+    about = models.TextField(blank=True)
     whatsapp_number = models.CharField(max_length=30, blank=True, default='')
     social_links = models.JSONField(default=dict, blank=True)
     delivery_option = models.CharField(max_length=20, choices=DELIVERY_CHOICES, default=DELIVERY_BOTH)
