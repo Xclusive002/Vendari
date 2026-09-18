@@ -442,6 +442,12 @@ export default async function Home() {
               For every business
             </a>
             <Link
+              href="/pricing"
+              className="rounded-md transition-colors hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue"
+            >
+              Pricing
+            </Link>
+            <Link
               href="/about"
               className="rounded-md transition-colors hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue"
             >
