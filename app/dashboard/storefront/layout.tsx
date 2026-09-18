@@ -6,6 +6,7 @@ import { LayoutDashboard, Palette, Package, Image, Scissors, ShoppingBag, Credit
 
 const links = [
   { href: '/dashboard/storefront', label: 'Overview', icon: LayoutDashboard },
+  { href: '/dashboard/storefront/customize', label: 'Customize', icon: Palette },
   { href: '/dashboard/storefront/products', label: 'Products', icon: Package },
   { href: '/dashboard/storefront/services', label: 'Services', icon: Scissors },
   { href: '/dashboard/storefront/gallery', label: 'Gallery', icon: Image },

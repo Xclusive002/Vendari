@@ -492,17 +492,17 @@ export default async function Home() {
               </p>
             </HeroMotion>
             <HeroMotion delay={0.16}>
-              <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+              <div className="mt-8 flex flex-wrap justify-center gap-3 sm:justify-start">
                 <Link
                   href="/register"
-                  className="motion-hover inline-flex items-center justify-center gap-2 rounded-lg bg-brand-gradient px-5 py-3.5 text-sm font-semibold text-white shadow-lg shadow-blue/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue focus-visible:ring-offset-2"
+                  className="motion-hover inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-lg bg-brand-gradient px-4 py-3.5 text-center text-sm font-semibold text-white shadow-lg shadow-blue/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue focus-visible:ring-offset-2 sm:flex-none sm:px-5"
                 >
                   Start 5-day trial{" "}
                   <ArrowRight className="h-4 w-4" />
                 </Link>
                 <a
                   href="#how-it-works"
-                  className="motion-hover inline-flex items-center justify-center gap-2 rounded-lg border border-ink px-5 py-3.5 text-sm font-semibold text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue focus-visible:ring-offset-2"
+                  className="motion-hover inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-lg border border-ink px-4 py-3.5 text-center text-sm font-semibold text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue focus-visible:ring-offset-2 sm:flex-none sm:px-5"
                 >
                   See how it works <ChevronRight className="h-4 w-4" />
                 </a>
