@@ -9,7 +9,7 @@ def move_businesses_to_paid_trial(apps, schema_editor):
     Plan = apps.get_model('billing', 'Plan')
     paid_plan = Plan.objects.filter(name='pro', interval='monthly').first()
     if paid_plan is None:
-        paid_plan = Plan.objects.create(name='pro', interval='monthly', amount=9999)
+        paid_plan = Plan.objects.create(name='pro', interval='monthly', amount=4999)
     trial_started_at = timezone.now()
     Business.objects.filter(plan__name='free').update(
         plan=paid_plan,
@@ -21,7 +21,7 @@ def move_businesses_to_paid_trial(apps, schema_editor):
         trial_started_at=trial_started_at,
         trial_ends_at=trial_started_at + timedelta(days=5),
     )
-    Plan.objects.filter(name='pro', interval='monthly').update(amount=9999)
+    Plan.objects.filter(name='pro', interval='monthly').update(amount=4999)
     Plan.objects.filter(name='free').delete()
 
 

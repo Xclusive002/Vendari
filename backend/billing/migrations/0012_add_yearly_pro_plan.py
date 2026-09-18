@@ -26,7 +26,7 @@ def create_yearly_plan(apps, schema_editor):
         name='pro',
         interval='yearly',
         defaults={
-            'amount': 99999,
+            'amount': 49999,
             'paystack_plan_code': '',
             'feature_flags': PRO_FEATURE_FLAGS,
             'limits': PRO_LIMITS,

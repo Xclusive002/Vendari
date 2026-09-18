@@ -21,7 +21,7 @@ class WhatsAppWebhookTests(APITestCase):
         from billing.models import Plan
 
         self.user = User.objects.create_user('whatsapp-owner@example.com', 'password123')
-        self.plan = Plan.objects.create(name='pro', amount=9999, interval='monthly', feature_flags={
+        self.plan = Plan.objects.create(name='pro', amount=4999, interval='monthly', feature_flags={
             'ai_insights': True,
             'nl_reporting': True,
             'forecasting': True,

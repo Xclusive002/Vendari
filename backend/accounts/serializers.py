@@ -43,7 +43,7 @@ class RegisterSerializer(serializers.Serializer):
         paid_plan, _ = Plan.objects.get_or_create(
             name=Plan.PLAN_PRO,
             interval=Plan.INTERVAL_MONTHLY,
-            defaults={'amount': 9999},
+            defaults={'amount': 4999},
         )
         trial_started_at = timezone.now()
         business.plan = paid_plan

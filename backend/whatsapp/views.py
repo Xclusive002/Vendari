@@ -28,7 +28,7 @@ from .models import WhatsAppPendingAction
 logger = logging.getLogger(__name__)
 
 
-SUBSCRIBE_MESSAGE = 'Your Vendari trial or subscription has ended. Subscribe for N9,999/month to continue using Vendari: {url}/dashboard/settings/billing'
+SUBSCRIBE_MESSAGE = 'Your Vendari trial or subscription has ended. Subscribe for N4,999/month to continue using Vendari: {url}/dashboard/settings/billing'
 
 
 def normalize_phone(value):

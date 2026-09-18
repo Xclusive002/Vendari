@@ -6,7 +6,7 @@ from businesses.models import Business, Membership
 
 class TrialExpired(APIException):
     status_code = 402
-    default_detail = 'Your 5-day trial has ended. Subscribe for ₦9,999/month to continue using Vendari.'
+    default_detail = 'Your 5-day trial has ended. Subscribe for ₦4,999/month to continue using Vendari.'
     default_code = 'trial_expired'
 
 

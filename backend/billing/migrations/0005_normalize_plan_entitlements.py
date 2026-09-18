@@ -33,7 +33,7 @@ def normalize_entitlements(apps, schema_editor):
     Business = apps.get_model('businesses', 'Business')
     plans = {
         'free': (0, FREE_FLAGS),
-        'pro': (9999, PRO_FLAGS),
+        'pro': (4999, PRO_FLAGS),
         'enterprise': (25000, GROWTH_FLAGS),
     }
 

@@ -11,7 +11,7 @@ def keep_only_pro(apps, schema_editor):
     pro_plan = Plan.objects.filter(name='pro', interval='monthly').first()
     if pro_plan is None:
         pro_plan = Plan.objects.create(
-            name='pro', interval='monthly', amount=9999,
+            name='pro', interval='monthly', amount=4999,
             feature_flags={
                 'ai_insights': True,
                 'nl_reporting': True,
@@ -33,7 +33,7 @@ def keep_only_pro(apps, schema_editor):
         trial_ends_at=trial_started_at + timedelta(days=5),
     )
     Plan.objects.exclude(pk=pro_plan.pk).delete()
-    pro_plan.amount = 9999
+    pro_plan.amount = 4999
     pro_plan.save(update_fields=('amount',))
 
 

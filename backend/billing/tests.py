@@ -2,6 +2,7 @@ import hashlib
 import hmac
 import json
 from datetime import timedelta
+from unittest.mock import patch
 
 from django.conf import settings
 from django.utils import timezone
@@ -14,6 +15,37 @@ from inventory.models import InventoryItem
 from sales.models import Sale
 
 from .models import Plan, Subscription
+
+
+class PaystackInitializeTests(APITestCase):
+    def setUp(self):
+        self.user = User.objects.create_user('initialize@test.local', 'password123')
+        self.business = Business.objects.create(owner=self.user, name='Initialize Test')
+        Membership.objects.create(user=self.user, business=self.business, role='owner')
+        self.monthly = Plan.objects.create(name=Plan.PLAN_PRO, amount='4999.00', interval=Plan.INTERVAL_MONTHLY)
+        self.yearly = Plan.objects.create(name=Plan.PLAN_PRO, amount='49999.00', interval=Plan.INTERVAL_YEARLY)
+        self.client.force_authenticate(self.user)
+        self.url = '/api/billing/paystack/initialize/'
+
+    @patch('billing.views.paystack_request')
+    def test_monthly_initialization_uses_4999_naira(self, paystack_request):
+        paystack_request.return_value = {'status': True, 'data': {'authorization_url': 'https://paystack.test/monthly', 'reference': 'monthly-ref'}}
+
+        response = self.client.post(self.url, {'business_id': self.business.pk, 'plan_id': self.monthly.pk, 'billing_interval': 'monthly'}, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(paystack_request.call_args.args[0], 'transaction/initialize')
+        self.assertEqual(paystack_request.call_args.args[1]['amount'], 499900)
+
+    @patch('billing.views.paystack_request')
+    def test_yearly_initialization_uses_49999_naira(self, paystack_request):
+        paystack_request.return_value = {'status': True, 'data': {'authorization_url': 'https://paystack.test/yearly', 'reference': 'yearly-ref'}}
+
+        response = self.client.post(self.url, {'business_id': self.business.pk, 'plan_id': self.yearly.pk, 'billing_interval': 'yearly'}, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(paystack_request.call_args.args[0], 'transaction/initialize')
+        self.assertEqual(paystack_request.call_args.args[1]['amount'], 4999900)
 
 
 class PaystackWebhookTests(APITestCase):
@@ -51,7 +83,7 @@ class PaystackWebhookTests(APITestCase):
         self.assertLessEqual(subscription.renews_at, timezone.now() + timedelta(days=30) + timedelta(seconds=2))
 
     def test_yearly_webhook_renews_for_365_days(self):
-        yearly_plan = Plan.objects.create(name=Plan.PLAN_PRO, amount='99999.00', interval=Plan.INTERVAL_YEARLY)
+        yearly_plan = Plan.objects.create(name=Plan.PLAN_PRO, amount='49999.00', interval=Plan.INTERVAL_YEARLY)
         payload = {
             'event': 'charge.success',
             'data': {

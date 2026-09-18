@@ -130,7 +130,7 @@ def send_welcome_email(user_email, business_name):
         <div class="content">
             <p>Hi there,</p>
             <p>Your {business_name} account is ready with a free 5-day trial of Vendari. Start recording sales and inventory right away — track what's low before it runs out, and see the real numbers about your business, computed live.</p>
-            <p>Your trial lasts 5 days. After that, Vendari access pauses until you subscribe for ₦9,999 per month.</p>
+            <p>Your trial lasts 5 days. After that, Vendari access pauses until you subscribe for ₦4,999 per month.</p>
             <a href="{dashboard_url}/dashboard" class="cta">Go to your dashboard</a>
             <p>Need help getting started? Reach out anytime — we're here to make this smooth for you.</p>
         </div>
@@ -147,7 +147,7 @@ Hi there,
 
 Your {business_name} account is ready with a free 5-day trial of Vendari. Start recording sales and inventory right away — track what's low before it runs out, and see the real numbers about your business, computed live.
 
-Your trial lasts 5 days. After that, Vendari access pauses until you subscribe for ₦9,999 per month.
+Your trial lasts 5 days. After that, Vendari access pauses until you subscribe for ₦4,999 per month.
 
 Go to your dashboard: {dashboard_url}/dashboard
 
