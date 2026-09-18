@@ -1,4 +1,12 @@
+import json
+import logging
+import urllib.error
+import urllib.parse
+import urllib.request
 from datetime import timedelta
+from decimal import Decimal, InvalidOperation
+
+from django.conf import settings
 from django.utils import timezone
 from django.db.models import Count, Q
 from rest_framework import viewsets, status
@@ -11,6 +19,9 @@ from businesses.models import Business, Membership
 
 from .models import InventoryItem
 from .serializers import InventoryItemSerializer
+
+
+logger = logging.getLogger(__name__)
 
 
 class BusinessScopedViewSet(viewsets.ModelViewSet):
@@ -35,6 +46,83 @@ class BusinessScopedViewSet(viewsets.ModelViewSet):
 
 class InventoryItemViewSet(BusinessScopedViewSet):
     serializer_class = InventoryItemSerializer
+
+    def _meta_request(self, path, params=None):
+        query = urllib.parse.urlencode(params or {})
+        separator = '&' if '?' in path else '?'
+        request = urllib.request.Request(
+            f'https://graph.facebook.com/v20.0/{path}{separator}{query}' if query else f'https://graph.facebook.com/v20.0/{path}',
+            headers={'Authorization': f'Bearer {settings.WHATSAPP_ACCESS_TOKEN}'},
+        )
+        with urllib.request.urlopen(request, timeout=20) as response:
+            return json.loads(response.read())
+
+    @action(detail=False, methods=['get', 'post'], url_path='meta-sync')
+    def meta_sync(self, request, business_pk=None):
+        if not settings.WHATSAPP_ACCESS_TOKEN or not settings.WHATSAPP_BUSINESS_ACCOUNT_ID:
+            return Response({'configured': False, 'detail': 'Meta catalog sync needs WHATSAPP_ACCESS_TOKEN and WHATSAPP_BUSINESS_ACCOUNT_ID configured on the server.'}, status=status.HTTP_200_OK)
+
+        try:
+            catalogs_response = self._meta_request(f'{settings.WHATSAPP_BUSINESS_ACCOUNT_ID}/owned_product_catalogs', {'fields': 'id,name,product_count', 'limit': 100})
+        except (urllib.error.HTTPError, urllib.error.URLError, ValueError):
+            logger.exception('Meta catalog discovery failed for business=%s', business_pk)
+            return Response({'configured': True, 'detail': 'Meta catalog access failed. Check the token and business account permissions.'}, status=status.HTTP_502_BAD_GATEWAY)
+
+        catalogs = catalogs_response.get('data', [])
+        if request.method == 'GET':
+            return Response({'configured': True, 'catalogs': catalogs, 'selected_catalog_id': getattr(settings, 'WHATSAPP_CATALOG_ID', '')})
+
+        catalog_id = str(request.data.get('catalog_id') or getattr(settings, 'WHATSAPP_CATALOG_ID', '') or '').strip()
+        if not catalog_id:
+            return Response({'configured': True, 'catalogs': catalogs, 'detail': 'Choose a Meta catalog before syncing.'}, status=status.HTTP_400_BAD_REQUEST)
+        if not any(str(catalog.get('id')) == catalog_id for catalog in catalogs):
+            return Response({'detail': 'That catalog is not available to this WhatsApp Business Account.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            products_response = self._meta_request(f'{catalog_id}/products', {'fields': 'id,name,description,price,currency,availability,image_url,retailer_id', 'limit': 100})
+        except (urllib.error.HTTPError, urllib.error.URLError, ValueError):
+            logger.exception('Meta catalog product fetch failed for catalog=%s', catalog_id)
+            return Response({'detail': 'Meta returned an error while reading this catalog.'}, status=status.HTTP_502_BAD_GATEWAY)
+
+        imported = 0
+        updated = 0
+        skipped = 0
+        next_url = products_response.get('paging', {}).get('next')
+        product_pages = [products_response]
+        while next_url and len(product_pages) < 10:
+            try:
+                next_request = urllib.request.Request(next_url, headers={'Authorization': f'Bearer {settings.WHATSAPP_ACCESS_TOKEN}'})
+                with urllib.request.urlopen(next_request, timeout=20) as response:
+                    page = json.loads(response.read())
+                product_pages.append(page)
+                next_url = page.get('paging', {}).get('next')
+            except (urllib.error.HTTPError, urllib.error.URLError, ValueError):
+                logger.exception('Meta catalog pagination failed for catalog=%s', catalog_id)
+                break
+
+        for page in product_pages:
+            for product in page.get('data', []):
+                product_name = str(product.get('name') or '').strip()
+                retailer_id = str(product.get('retailer_id') or product.get('id') or '').strip()
+                if not product_name or not retailer_id:
+                    skipped += 1
+                    continue
+                try:
+                    price = Decimal(str(product.get('price') or '0').replace(',', ''))
+                except (InvalidOperation, ValueError):
+                    price = Decimal('0')
+                existing = self.get_queryset().filter(code=retailer_id).first()
+                defaults = {'product_name': product_name, 'description': str(product.get('description') or ''), 'selling_price': price, 'cost_price': price * Decimal('0.55'), 'category': 'WhatsApp catalog'}
+                if existing:
+                    for field, value in defaults.items():
+                        setattr(existing, field, value)
+                    existing.save(update_fields=[*defaults.keys(), 'updated_at'])
+                    updated += 1
+                else:
+                    InventoryItem.objects.create(business=self.business(), code=retailer_id, qty_in_stock=0, reorder_level=5, **defaults)
+                    imported += 1
+
+        return Response({'configured': True, 'catalog_id': catalog_id, 'imported': imported, 'updated': updated, 'skipped': skipped, 'detail': f'Meta catalog sync complete: {imported} added, {updated} updated.'})
 
     @action(detail=False, methods=['post'], url_path='storefront-visibility')
     def storefront_visibility(self, request, business_pk=None):

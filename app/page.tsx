@@ -109,6 +109,24 @@ const features = [
   ],
 ] as const;
 
+const catalogImportHighlights = [
+  {
+    title: "Import from WhatsApp catalog",
+    copy: "Copy a product list from your WhatsApp Business catalog or export file and turn it into inventory in seconds.",
+    accent: "bg-[#25D366]/12 text-[#25D366]",
+  },
+  {
+    title: "Clean product preview",
+    copy: "Review every item before adding it, with stock, price, and category fields mapped in a clear mobile-ready layout.",
+    accent: "bg-blue/10 text-blue",
+  },
+  {
+    title: "Ready for storefronts",
+    copy: "Push catalog items directly into your online shop with no second setup, so your storefront stays accurate and fast.",
+    accent: "bg-violet/10 text-violet",
+  },
+] as const;
+
 const stages = [
   [
     "Just starting out",
@@ -396,6 +414,64 @@ function StorefrontShowcase() {
   )
 }
 
+function CatalogImportFeature() {
+  return (
+    <section className="bg-surface px-5 py-20 sm:px-8 sm:py-28">
+      <div className="mx-auto max-w-7xl">
+        <div className="mb-8 max-w-xl">
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-blue">Catalog import</p>
+          <h2 className="mt-4 font-display text-3xl font-semibold leading-tight text-ink sm:text-5xl">
+            Import your WhatsApp catalog without rebuilding your stock list.
+          </h2>
+        </div>
+
+        <div className="grid gap-4 lg:grid-cols-[1.05fr_0.95fr]">
+          <div className="rounded-3xl border border-border bg-bg p-4 shadow-[var(--shadow-modal)] sm:p-6">
+            <div className="rounded-2xl border border-border bg-surface p-3 sm:p-4">
+              <div className="flex items-center justify-between border-b border-border pb-3">
+                <div>
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-text-muted">Catalog preview</p>
+                  <h3 className="mt-2 font-display text-xl font-semibold text-ink">Import-ready items</h3>
+                </div>
+                <span className="rounded-full bg-[#25D366]/12 px-2.5 py-1 text-[10px] font-semibold text-[#25D366]">WhatsApp sync</span>
+              </div>
+
+              <div className="mt-4 space-y-3">
+                {[
+                  ["Premium Ankara", "Textiles", "18 in stock", "₦18,500"],
+                  ["Leather Sandals", "Footwear", "12 in stock", "₦24,000"],
+                  ["Cedar Candle", "Home & Gift", "35 in stock", "₦8,900"],
+                ].map(([name, category, stock, price]) => (
+                  <div key={name} className="flex items-center justify-between rounded-xl border border-border bg-bg px-3 py-2.5">
+                    <div>
+                      <p className="text-sm font-semibold text-ink">{name}</p>
+                      <p className="text-[11px] text-text-secondary">{category}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-[11px] text-text-secondary">{stock}</p>
+                      <p className="text-sm font-semibold text-blue">{price}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            {catalogImportHighlights.map(({ title, copy, accent }) => (
+              <div key={title} className="rounded-2xl border border-border bg-surface p-4 sm:p-5">
+                <span className={`inline-flex rounded-full px-2.5 py-1 text-[10px] font-semibold ${accent}`}>{title}</span>
+                <h3 className="mt-4 font-display text-xl font-semibold text-ink">{title}</h3>
+                <p className="mt-2 text-sm leading-6 text-text-secondary">{copy}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  )
+}
+
 export default async function Home() {
   const accessToken = (await cookies()).get("vendari_access")?.value;
 
@@ -628,6 +704,8 @@ export default async function Home() {
       <ScrollReveal direction="left" delay={0.06}>
         <StorefrontShowcase />
       </ScrollReveal>
+
+      <CatalogImportFeature />
 
       <ScrollReveal>
         <section

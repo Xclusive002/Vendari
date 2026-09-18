@@ -4,14 +4,212 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { getBusiness, getInventory, addInventoryItem, updateInventoryItem, deleteInventoryItem } from '@/app/actions/business'
-import { Plus, Edit2, AlertTriangle, Package } from 'lucide-react'
+import { getBusiness, getInventory, addInventoryItem, updateInventoryItem, deleteInventoryItem, getMetaCatalogs, syncMetaCatalog } from '@/app/actions/business'
+import { Plus, Edit2, AlertTriangle, Package, UploadCloud, RefreshCw, GripVertical } from 'lucide-react'
 import { toast } from 'sonner'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { LoadingButton } from '@/components/ui/loading-button'
 import { PageSkeleton } from '@/components/ui/skeleton'
 import { VoiceInputButton } from '@/components/voice-input-button'
 import { QuickRestockGrid } from '@/components/quick-restock-grid'
+
+type CatalogImportItem = {
+  product_name: string
+  category: string
+  qty_in_stock: number
+  selling_price: number
+  unit_cost: number
+  description: string
+}
+
+type CatalogColumn = 'product_name' | 'category' | 'qty_in_stock' | 'selling_price' | 'unit_cost' | 'description' | 'ignore'
+
+const catalogFields: Array<{ value: CatalogColumn; label: string }> = [
+  { value: 'product_name', label: 'Product name' },
+  { value: 'category', label: 'Category' },
+  { value: 'qty_in_stock', label: 'Stock quantity' },
+  { value: 'selling_price', label: 'Selling price' },
+  { value: 'unit_cost', label: 'Unit cost' },
+  { value: 'description', label: 'Description' },
+  { value: 'ignore', label: 'Ignore column' },
+]
+
+const demoCatalog = `product_name,category,qty_in_stock,selling_price,unit_cost,description
+Premium Ankara,Textiles,18,18500,9500,Soft, premium fabric for event wear
+Leather Sandals,Footwear,12,24000,12000,Comfortable and durable everyday pair
+Gift Box Set,Home & Gift,28,12500,6200,Curated festive gift bundle
+Cedar Candle,Home & Gift,35,8900,4300,A warm, long-lasting candle for gifting`
+
+function parseCsvLine(line: string) {
+  const cells: string[] = []
+  let current = ''
+  let insideQuotes = false
+
+  for (let index = 0; index < line.length; index += 1) {
+    const character = line[index]
+
+    if (character === '"') {
+      if (insideQuotes && line[index + 1] === '"') {
+        current += '"'
+        index += 1
+      } else {
+        insideQuotes = !insideQuotes
+      }
+      continue
+    }
+
+    if (character === ',' && !insideQuotes) {
+      cells.push(current.trim())
+      current = ''
+      continue
+    }
+
+    current += character
+  }
+
+  cells.push(current.trim())
+  return cells
+}
+
+function cleanNumber(raw: unknown, fallback = 0) {
+  if (typeof raw === 'number' && Number.isFinite(raw)) return raw
+  if (typeof raw === 'string') {
+    const normalized = raw.replace(/[^0-9.\-]/g, '')
+    const value = Number(normalized)
+    if (Number.isFinite(value)) return value
+  }
+
+  return fallback
+}
+
+function normalizeCatalogImportEntry(entry: Record<string, unknown>): CatalogImportItem | null {
+  const productName = String(entry.product_name ?? entry.name ?? entry.title ?? entry.item ?? '').trim()
+  if (!productName) return null
+
+  const qtyInStock = Math.max(0, Math.round(cleanNumber(entry.qty_in_stock ?? entry.quantity ?? entry.stock ?? entry.inventory ?? entry.quantity_in_stock, 0)))
+  const sellingPrice = Math.max(0, cleanNumber(entry.selling_price ?? entry.price ?? entry.amount ?? entry.unit_price ?? entry.sale_price, 0))
+  const unitCost = Math.max(0, cleanNumber(entry.unit_cost ?? entry.cost_price ?? entry.cost ?? entry.base_price, 0))
+
+  return {
+    product_name: productName,
+    category: String(entry.category ?? entry.type ?? entry.subcategory ?? '').trim(),
+    qty_in_stock: qtyInStock,
+    selling_price: sellingPrice,
+    unit_cost: unitCost,
+    description: String(entry.description ?? entry.details ?? entry.summary ?? '').trim(),
+  }
+}
+
+function parseCatalogImport(rawText: string): CatalogImportItem[] {
+  const cleaned = rawText.trim()
+  if (!cleaned) return []
+
+  try {
+    const parsed = JSON.parse(cleaned)
+    if (Array.isArray(parsed)) {
+      return parsed
+        .map((entry) => normalizeCatalogImportEntry((entry ?? {}) as Record<string, unknown>))
+        .filter((entry): entry is CatalogImportItem => Boolean(entry))
+    }
+
+    if (parsed && typeof parsed === 'object' && Array.isArray((parsed as Record<string, unknown>).items)) {
+      return ((parsed as Record<string, unknown>).items as unknown[])
+        .map((entry) => normalizeCatalogImportEntry((entry ?? {}) as Record<string, unknown>))
+        .filter((entry): entry is CatalogImportItem => Boolean(entry))
+    }
+  } catch {
+    // JSON parse failed; we will fall back to CSV/plain-text parsing below.
+  }
+
+  const lines = cleaned
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean)
+
+  if (!lines.length) return []
+
+  const firstLine = lines[0].toLowerCase()
+  const isHeader = /product|name|category|price|stock|qty/i.test(firstLine)
+
+  const dataLines = isHeader ? lines.slice(1) : lines
+  if (!dataLines.length) return []
+
+  const headers = isHeader ? parseCsvLine(lines[0]).map((cell) => cell.toLowerCase().replace(/[^a-z]/g, '')) : []
+
+  const rows = dataLines.map((line) => parseCsvLine(line))
+
+  if (isHeader && headers.length >= 2) {
+    return rows
+      .map((cells) => {
+        const values: Record<string, string> = {}
+
+        headers.forEach((header, index) => {
+          values[header] = cells[index] ?? ''
+        })
+
+        return normalizeCatalogImportEntry({
+          product_name: values.productname ?? values.name ?? values.title ?? values.item ?? '',
+          category: values.category ?? values.type ?? values.subcategory ?? '',
+          qty_in_stock: values.qtyinstock ?? values.quantity ?? values.stock ?? values.inventory ?? '0',
+          selling_price: values.sellingprice ?? values.price ?? values.amount ?? values.unitprice ?? '0',
+          unit_cost: values.unitcost ?? values.costprice ?? values.cost ?? '0',
+          description: values.description ?? values.details ?? values.summary ?? '',
+        })
+      })
+      .filter((entry): entry is CatalogImportItem => Boolean(entry))
+  }
+
+  return rows
+    .map((cells) => {
+      const [maybeProduct, maybeCategoryOrPrice, maybePriceOrStock, maybeStockOrPrice, ...rest] = cells
+      const productName = maybeProduct ?? ''
+      if (!productName) return null
+
+      const category = maybeCategoryOrPrice && /[a-z]/i.test(maybeCategoryOrPrice) ? maybeCategoryOrPrice : ''
+      const sellingPrice = cleanNumber((category ? maybePriceOrStock : maybeCategoryOrPrice) ?? '0', 0)
+      const qtyInStock = cleanNumber((category ? maybeStockOrPrice : maybePriceOrStock) ?? '0', 0)
+      const description = rest.join(' ') || ''
+
+      return {
+        product_name: productName,
+        category,
+        qty_in_stock: Math.max(0, Math.round(qtyInStock)),
+        selling_price: Math.max(0, sellingPrice),
+        unit_cost: Math.max(0, sellingPrice * 0.55),
+        description,
+      }
+    })
+    .filter((entry): entry is CatalogImportItem => Boolean(entry))
+}
+
+function detectCatalogMapping(headers: string[]) {
+  return headers.map((header) => {
+    const normalized = header.toLowerCase().replace(/[^a-z]/g, '')
+    if (/product|item|title|name/.test(normalized)) return 'product_name' as CatalogColumn
+    if (/category|type|subcategory/.test(normalized)) return 'category' as CatalogColumn
+    if (/qty|quantity|stock|inventory/.test(normalized)) return 'qty_in_stock' as CatalogColumn
+    if (/selling|sale|price|amount|unitprice/.test(normalized)) return 'selling_price' as CatalogColumn
+    if (/cost|baseprice/.test(normalized)) return 'unit_cost' as CatalogColumn
+    if (/description|details|summary/.test(normalized)) return 'description' as CatalogColumn
+    return 'ignore' as CatalogColumn
+  })
+}
+
+function parseCatalogWithMapping(rawText: string, mapping: CatalogColumn[]) {
+  const lines = rawText.trim().split(/\r?\n/).map((line) => line.trim()).filter(Boolean)
+  if (lines.length < 2) return parseCatalogImport(rawText)
+
+  const rows = lines.slice(1).map(parseCsvLine)
+  return rows
+    .map((cells) => {
+      const entry: Record<string, string> = {}
+      mapping.forEach((field, index) => {
+        if (field !== 'ignore') entry[field] = cells[index] ?? ''
+      })
+      return normalizeCatalogImportEntry(entry)
+    })
+    .filter((entry): entry is CatalogImportItem => Boolean(entry))
+}
 
 export default function InventoryPage() {
   const [business, setBusiness] = useState<any>(null)
@@ -21,6 +219,16 @@ export default function InventoryPage() {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
   const savingRef = useRef(false)
+  const [catalogText, setCatalogText] = useState('')
+  const [catalogPreview, setCatalogPreview] = useState<CatalogImportItem[]>([])
+  const [catalogImporting, setCatalogImporting] = useState(false)
+  const [catalogFileName, setCatalogFileName] = useState('')
+  const [catalogHeaders, setCatalogHeaders] = useState<string[]>([])
+  const [catalogMapping, setCatalogMapping] = useState<CatalogColumn[]>([])
+  const [metaCatalogs, setMetaCatalogs] = useState<Array<{ id: string; name: string; product_count?: number }>>([])
+  const [metaCatalogId, setMetaCatalogId] = useState('')
+  const [metaConfigured, setMetaConfigured] = useState<boolean | null>(null)
+  const [metaSyncing, setMetaSyncing] = useState(false)
   const [formData, setFormData] = useState({
     product_name: '',
     product_code: '',
@@ -50,6 +258,12 @@ export default function InventoryPage() {
       setBusiness(businessData)
       const result = await getInventory(businessData.id)
       setInventory(result.data || [])
+      const metaResult = await getMetaCatalogs(businessData.id)
+      if (metaResult.success) {
+        setMetaConfigured(metaResult.data.configured)
+        setMetaCatalogs(metaResult.data.catalogs || [])
+        setMetaCatalogId(metaResult.data.selected_catalog_id || metaResult.data.catalogs?.[0]?.id || '')
+      }
     } catch (error) {
       console.error('[Inventory] Error:', error)
       toast.error('Failed to load inventory')
@@ -102,6 +316,101 @@ export default function InventoryPage() {
       ...(voiceData.unit_cost !== undefined && { unit_cost: voiceData.unit_cost }),
       ...(voiceData.selling_price !== undefined && { selling_price: voiceData.selling_price }),
     }))
+  }
+
+  const handleCatalogPreview = () => {
+    const parsed = catalogMapping.length ? parseCatalogWithMapping(catalogText, catalogMapping) : parseCatalogImport(catalogText)
+
+    if (!parsed.length) {
+      toast.error('Add a CSV, JSON, or WhatsApp-style catalog snippet to preview importable products.')
+      return
+    }
+
+    setCatalogPreview(parsed)
+    toast.success(`Preview ready: ${parsed.length} products found.`)
+  }
+
+  const handleCatalogFile = async (file: File) => {
+    const text = await file.text()
+    setCatalogFileName(file.name)
+    setCatalogText(text)
+
+    if (file.name.toLowerCase().endsWith('.json')) {
+      setCatalogHeaders([])
+      setCatalogMapping([])
+      const parsed = parseCatalogImport(text)
+      setCatalogPreview(parsed)
+      if (!parsed.length) toast.error('This JSON file does not contain recognizable product records.')
+      return
+    }
+
+    const firstLine = text.split(/\r?\n/)[0] || ''
+    const headers = parseCsvLine(firstLine)
+    setCatalogHeaders(headers)
+    setCatalogMapping(detectCatalogMapping(headers))
+    setCatalogPreview([])
+  }
+
+  const handleMetaSync = async () => {
+    if (!metaCatalogId) {
+      toast.error('Choose a Meta catalog first.')
+      return
+    }
+
+    setMetaSyncing(true)
+    const result = await syncMetaCatalog(business.id, metaCatalogId)
+    setMetaSyncing(false)
+
+    if (result.success) {
+      toast.success(result.data.detail || 'Meta catalog synced into inventory.')
+      await loadData()
+    } else {
+      toast.error(result.error)
+    }
+  }
+
+  const handleCatalogImport = async () => {
+    if (!catalogPreview.length) {
+      toast.error('Preview a catalog before importing it.')
+      return
+    }
+
+    setCatalogImporting(true)
+
+    let created = 0
+    let failed = 0
+
+    for (const item of catalogPreview) {
+      const result = await addInventoryItem(business.id, {
+        product_name: item.product_name,
+        product_code: '',
+        category: item.category,
+        quantity_in_stock: item.qty_in_stock,
+        reorder_level: Math.max(5, Math.round(item.qty_in_stock * 0.2 || 5)),
+        unit_cost: item.unit_cost || item.selling_price * 0.55,
+        selling_price: item.selling_price || item.unit_cost,
+        description: item.description,
+      })
+
+      if (result.success) {
+        created += 1
+      } else {
+        failed += 1
+      }
+    }
+
+    setCatalogImporting(false)
+    setCatalogText('')
+    setCatalogPreview([])
+
+    if (created > 0) {
+      toast.success(`Imported ${created} items into inventory${failed ? ` (${failed} skipped)` : ''}.`)
+      await loadData()
+    }
+
+    if (!created) {
+      toast.error('Nothing was imported. Check the catalog format and try again.')
+    }
   }
 
   const handleSave = async (e: React.FormEvent) => {
@@ -348,6 +657,118 @@ export default function InventoryPage() {
 
         {/* Quick Restock Grid */}
         <QuickRestockGrid items={inventory} businessId={business.id} onRestockAdded={loadData} />
+
+        <Card className="dashboard-panel mb-8">
+          <CardHeader>
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-blue">WhatsApp catalog import</p>
+                <CardTitle className="mt-2 font-display text-ink">Import your catalog into inventory</CardTitle>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setCatalogText(demoCatalog)
+                  setCatalogPreview(parseCatalogImport(demoCatalog))
+                }}
+                className="border-blue/30 text-blue"
+              >
+                Load demo catalog
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-4 lg:grid-cols-[1.3fr_0.7fr]">
+              <div className="rounded-2xl border border-border bg-bg p-3 sm:p-4">
+                <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.12em] text-text-muted">Paste catalog data</label>
+                <label
+                  htmlFor="catalog-file"
+                  onDragOver={(event) => event.preventDefault()}
+                  onDrop={(event) => {
+                    event.preventDefault()
+                    const file = event.dataTransfer.files[0]
+                    if (file) void handleCatalogFile(file)
+                  }}
+                  className="mb-3 flex cursor-pointer items-center gap-3 rounded-xl border border-dashed border-blue/40 bg-blue/5 px-3 py-3 text-sm text-text-secondary transition hover:border-blue hover:bg-blue/10"
+                >
+                  <UploadCloud className="h-5 w-5 shrink-0 text-blue" />
+                  <span className="min-w-0 flex-1"><strong className="block text-ink">Drop a CSV or JSON file here</strong><span className="text-xs">or tap to browse your device</span></span>
+                  {catalogFileName && <span className="max-w-28 truncate text-xs font-semibold text-blue">{catalogFileName}</span>}
+                  <input id="catalog-file" type="file" accept=".csv,.json,text/csv,application/json" className="sr-only" onChange={(event) => { const file = event.target.files?.[0]; if (file) void handleCatalogFile(file) }} />
+                </label>
+                <textarea
+                  value={catalogText}
+                  onChange={(event) => setCatalogText(event.target.value)}
+                  placeholder={'product_name,category,qty_in_stock,selling_price,unit_cost,description\nPremium Ankara,Textiles,18,18500,9500,Premium fabric'}
+                  className="min-h-[180px] w-full rounded-xl border border-border bg-surface px-3 py-3 text-sm text-ink outline-none ring-0 transition focus:border-blue"
+                />
+                {catalogHeaders.length > 0 && (
+                  <div className="mt-3 rounded-xl border border-border bg-surface p-3">
+                    <div className="flex items-center gap-2"><GripVertical className="h-4 w-4 text-blue" /><p className="text-xs font-semibold uppercase tracking-[0.12em] text-text-muted">Map your columns</p></div>
+                    <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                      {catalogHeaders.map((header, index) => (
+                        <label key={`${header}-${index}`} className="flex items-center gap-2 text-xs text-text-secondary">
+                          <span className="min-w-0 flex-1 truncate font-medium text-ink">{header || `Column ${index + 1}`}</span>
+                          <select value={catalogMapping[index] || 'ignore'} onChange={(event) => setCatalogMapping((current) => current.map((value, mappingIndex) => mappingIndex === index ? event.target.value as CatalogColumn : value))} className="dashboard-input h-9 max-w-[145px] text-xs">
+                            {catalogFields.map((field) => <option key={field.value} value={field.value}>{field.label}</option>)}
+                          </select>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+                  <Button type="button" onClick={handleCatalogPreview} className="dashboard-primary flex-1">Preview import</Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleCatalogImport}
+                    disabled={!catalogPreview.length || catalogImporting}
+                    className="flex-1"
+                  >
+                    {catalogImporting ? 'Importing...' : `Import ${catalogPreview.length} products`}
+                  </Button>
+                </div>
+              </div>
+
+              <div className="rounded-2xl border border-blue/20 bg-blue/5 p-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.12em] text-blue">What this accepts</p>
+                <ul className="mt-4 space-y-2 text-sm leading-6 text-text-secondary">
+                  <li>• CSV rows with product, category, stock, and price fields</li>
+                  <li>• JSON arrays from catalog exports</li>
+                  <li>• WhatsApp catalog snippets copied into a clean list</li>
+                </ul>
+
+                <div className="mt-5 rounded-xl border border-border bg-surface p-3">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-text-muted">Preview status</p>
+                  <p className="mt-2 text-2xl font-semibold text-ink">{catalogPreview.length}</p>
+                  <p className="text-xs text-text-secondary">products ready to add</p>
+                </div>
+              </div>
+
+              <div className="rounded-2xl border border-[#25D366]/25 bg-[#25D366]/5 p-4">
+                <div className="flex items-start gap-3"><RefreshCw className="mt-0.5 h-5 w-5 text-[#25D366]" /><div><p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#25D366]">Live Meta sync</p><h3 className="mt-2 font-display text-lg font-semibold text-ink">Pull products from WhatsApp Business</h3><p className="mt-2 text-sm leading-6 text-text-secondary">Sync your real Meta catalog into Vendari. Existing items are updated by retailer ID, so repeated syncs do not create duplicates.</p></div></div>
+                {metaConfigured === false ? <p className="mt-4 rounded-xl bg-surface p-3 text-xs leading-5 text-text-secondary">Meta sync is not configured yet. Add the WhatsApp access token and business account ID on the backend.</p> : <div className="mt-4 space-y-2"><select value={metaCatalogId} onChange={(event) => setMetaCatalogId(event.target.value)} className="dashboard-input w-full text-sm"><option value="">Choose a catalog</option>{metaCatalogs.map((catalog) => <option key={catalog.id} value={catalog.id}>{catalog.name}{catalog.product_count ? ` (${catalog.product_count} products)` : ''}</option>)}</select><Button type="button" onClick={handleMetaSync} disabled={!metaCatalogId || metaSyncing} className="w-full bg-[#25D366] text-white hover:bg-[#1fb958]"><RefreshCw className={`mr-2 h-4 w-4 ${metaSyncing ? 'animate-spin' : ''}`} />{metaSyncing ? 'Syncing Meta catalog...' : 'Sync real Meta catalog'}</Button></div>}
+              </div>
+            </div>
+
+            {catalogPreview.length > 0 && (
+              <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                {catalogPreview.slice(0, 6).map((item, index) => (
+                  <div key={`${item.product_name}-${index}`} className="rounded-xl border border-border bg-surface p-3">
+                    <p className="font-semibold text-ink">{item.product_name}</p>
+                    <p className="mt-1 text-xs text-text-secondary">{item.category || 'General'}</p>
+                    <div className="mt-3 flex items-center justify-between text-xs text-text-secondary">
+                      <span>{item.qty_in_stock} in stock</span>
+                      <span>₦{Number(item.selling_price || 0).toLocaleString()}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
         {/* Inventory Table */}
         <Card className="dashboard-panel">

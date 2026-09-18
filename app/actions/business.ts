@@ -260,6 +260,19 @@ export async function getInventory(businessId: string) {
   return result.success ? { success: true, data: result.data.map(itemFromApi) } : { ...result, data: [] }
 }
 
+export type MetaCatalog = { id: string; name: string; product_count?: number }
+
+export async function getMetaCatalogs(businessId: string) {
+  return request<{ configured: boolean; catalogs?: MetaCatalog[]; selected_catalog_id?: string; detail?: string }>(`/businesses/${businessId}/inventory/meta-sync/`)
+}
+
+export async function syncMetaCatalog(businessId: string, catalogId: string) {
+  return request<{ configured: boolean; imported?: number; updated?: number; skipped?: number; detail?: string }>(`/businesses/${businessId}/inventory/meta-sync/`, {
+    method: 'POST',
+    body: JSON.stringify({ catalog_id: catalogId }),
+  })
+}
+
 export async function updateInventoryItem(businessId: string, itemId: string, updates: Partial<ItemData>) {
   const result = await request<ApiItem>(`/businesses/${businessId}/inventory/${itemId}/`, { method: 'PATCH', body: inventoryFormData(updates) })
   if (!result.success) return result
