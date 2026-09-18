@@ -3,7 +3,7 @@ import { LegalPage } from '@/components/legal-page'
 
 export const metadata: Metadata = {
   title: 'Privacy Policy | Vendari',
-  description: 'Learn how Vendari collects, uses, stores, and protects information when you use our business management software.',
+  description: 'Learn how Vendari collects, uses, stores, and protects information when you use our business management app.',
   alternates: { canonical: 'https://www.vendari.name.ng/privacy' },
 }
 

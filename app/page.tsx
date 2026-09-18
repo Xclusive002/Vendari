@@ -6,9 +6,9 @@ import { redirect } from "next/navigation";
 import { HeroMotion, ParallaxMockup, ScrollReveal } from "@/components/landing-motion";
 
 export const metadata: Metadata = {
-  title: "Vendari - Business Management Software",
+  title: "Vendari - Business Management App for Growing Businesses",
   description:
-    "Run sales, inventory, expenses, customers, reporting, and team operations from one modern business dashboard.",
+    "Run sales, stock, money, and customers from one business management app built for growing businesses.",
   alternates: {
     canonical: "https://www.vendari.name.ng",
   },

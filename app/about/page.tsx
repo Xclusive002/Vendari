@@ -3,12 +3,12 @@ import Link from 'next/link'
 import { ArrowLeft, ArrowRight, AtSign, Check, Music2, Phone, Sparkles } from 'lucide-react'
 
 export const metadata: Metadata = {
-  title: 'About Vendari | Business management software for growing businesses',
-  description: 'Meet the team behind Vendari and learn why we are building clearer business management software for retailers and service businesses.',
-  keywords: ['Vendari', 'business management software', 'small business software', 'sales and inventory software', 'business operations'],
+  title: 'About Vendari | Business management app for growing businesses',
+  description: 'Meet the team behind Vendari and learn why we are building a clearer business management app for retailers and service businesses.',
+  keywords: ['Vendari', 'business management app', 'small business app', 'sales and inventory app', 'business operations'],
   alternates: { canonical: 'https://www.vendari.name.ng/about' },
   openGraph: {
-    title: 'About Vendari | Business management software for growing businesses',
+    title: 'About Vendari | Business management app for growing businesses',
     description: 'The story, people, and purpose behind Vendari.',
     url: 'https://www.vendari.name.ng/about',
     type: 'article',

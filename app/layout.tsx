@@ -6,18 +6,18 @@ import { Toaster } from '@/components/ui/sonner'
 import './globals.css'
 
 const siteUrl = 'https://www.vendari.name.ng'
-const siteDescription = 'All-in-one business management software for retailers and service businesses.'
+const siteDescription = 'Vendari is a business management app that helps growing businesses track sales, stock, money, and customers in one clear place.'
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
-  title: 'Vendari - Business Management Software',
+  title: 'Vendari - Business Management App for Growing Businesses',
   description: siteDescription,
   alternates: {
     canonical: '/',
   },
   openGraph: {
     type: 'website',
-    title: 'Vendari - Business Management Software',
+    title: 'Vendari - Business Management App for Growing Businesses',
     description: siteDescription,
     url: siteUrl,
     siteName: 'Vendari',
@@ -30,7 +30,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary',
-    title: 'Vendari - Business Management Software',
+    title: 'Vendari - Business Management App for Growing Businesses',
     description: siteDescription,
     images: ['/vendari-logo-png.png'],
   },

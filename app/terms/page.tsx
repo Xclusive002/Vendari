@@ -3,7 +3,7 @@ import { LegalPage } from '@/components/legal-page'
 
 export const metadata: Metadata = {
   title: 'Terms and Conditions | Vendari',
-  description: 'The terms and conditions that apply when you access or use Vendari business management software.',
+  description: 'The terms and conditions that apply when you access or use the Vendari business management app.',
   alternates: { canonical: 'https://www.vendari.name.ng/terms' },
 }
 
@@ -13,7 +13,7 @@ export default function TermsPage() {
       title="Terms and Conditions"
       description="The rules for accessing and using Vendari, including accounts, subscriptions, business data, and acceptable use."
       lastUpdated="September 11, 2026"
-      intro="These Terms and Conditions govern your access to and use of Vendari, an all-in-one business management service for retailers and service businesses. By creating an account or using the service, you agree to these terms. If you use Vendari for an organization, you confirm that you have authority to accept these terms on its behalf."
+      intro="These Terms and Conditions govern your access to and use of Vendari, a business management app for retailers and service businesses. By creating an account or using the app, you agree to these terms. If you use Vendari for an organization, you confirm that you have authority to accept these terms on its behalf."
       sections={[
         {
           heading: 'The Vendari service',
