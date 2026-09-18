@@ -406,7 +406,7 @@ export default async function Home() {
   return (
     <main className="min-h-screen overflow-hidden bg-bg text-text-primary">
       <nav
-        className="border-b border-border bg-surface/90"
+        className="sticky top-0 z-40 border-b border-white/60 bg-surface/80 shadow-[0_8px_30px_rgb(6_18_43_/_4%)] backdrop-blur-xl"
         aria-label="Main navigation"
       >
         <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4 sm:px-8">
@@ -442,12 +442,6 @@ export default async function Home() {
               For every business
             </a>
             <Link
-              href="/pricing"
-              className="rounded-md transition-colors hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue"
-            >
-              Pricing
-            </Link>
-            <Link
               href="/about"
               className="rounded-md transition-colors hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue"
             >
@@ -460,12 +454,6 @@ export default async function Home() {
               className="inline-flex rounded-md px-3 py-2 text-sm font-semibold text-ink hover:bg-bg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue"
             >
               Sign in
-            </Link>
-            <Link
-              href="/pricing"
-              className="hidden rounded-md px-3 py-2 text-sm font-semibold text-ink hover:bg-bg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue sm:inline-flex"
-            >
-              View pricing
             </Link>
             <Link
               href="/register"
@@ -483,11 +471,11 @@ export default async function Home() {
         <div className="relative mx-auto max-w-7xl">
           <div className="max-w-3xl">
             <HeroMotion>
-              <p className="mb-5 inline-flex items-center gap-2 rounded-full border border-blue/20 bg-blue/5 px-3 py-1.5 text-xs font-semibold text-blue">
+              <p className="mb-5 inline-flex items-center gap-2 rounded-full border border-blue/20 bg-white/70 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.16em] text-blue shadow-sm">
                 <Sparkles className="h-3.5 w-3.5" /> Clarity for the work behind
                 the work
               </p>
-              <h1 className="max-w-2xl font-display text-5xl font-bold leading-[1.02] tracking-tight text-ink sm:text-7xl">
+              <h1 className="max-w-2xl font-display text-5xl font-bold leading-[0.98] tracking-tight text-ink sm:text-7xl">
                 Business operations.{" "}
                 <span className="bg-brand-gradient bg-clip-text text-transparent">
                   Simplified.
@@ -681,63 +669,6 @@ export default async function Home() {
         </section>
       </ScrollReveal>
 
-      <ScrollReveal>
-        <section
-          id="pricing"
-          className="bg-surface px-5 py-20 sm:px-8 sm:py-28"
-        >
-          <div className="mx-auto max-w-7xl">
-            <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
-              <div className="max-w-2xl">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-blue">
-                  Simple paid plans
-                </p>
-                <h2 className="mt-4 font-display text-3xl font-semibold text-ink sm:text-5xl">
-                  Try Vendari free for 5 days, then keep the clarity going.
-                </h2>
-              </div>
-              <Link
-                href="/pricing"
-                className="inline-flex items-center gap-2 text-sm font-semibold text-blue"
-              >
-                See all package details <ArrowRight className="h-4 w-4" />
-              </Link>
-            </div>
-            <div className="mt-12 grid gap-4 lg:grid-cols-2">
-              {[
-                [
-                  "Pro",
-                  "₦9,999/mo",
-                  "Free for 5 days, then become a member for sales, stock, customers, expenses, AI insights, voice entry, reports, and payment links.",
-                ],
-              ].map(([name, price, copy]) => (
-                <article
-                  key={name}
-                  className="rounded-xl border border-blue bg-blue/5 p-6 shadow-lg shadow-blue/10"
-                >
-                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-blue">
-                    {name}
-                  </p>
-                  <p className="mt-4 font-mono text-2xl font-semibold text-ink">
-                    {price}
-                  </p>
-                  <p className="mt-3 min-h-[56px] text-sm leading-6 text-text-secondary">
-                    {copy}
-                  </p>
-                  <Link
-                    href="/pricing"
-                    className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-ink"
-                  >
-                    Explore this package{" "}
-                    <ArrowRight className="h-4 w-4 text-blue" />
-                  </Link>
-                </article>
-              ))}
-            </div>
-          </div>
-        </section>
-      </ScrollReveal>
-
       <ConciergeOverview />
 
       <section id="faq" className="border-t border-border bg-bg px-5 py-20 sm:px-8 sm:py-28">
@@ -771,7 +702,7 @@ export default async function Home() {
                 One platform. Total control.
               </p>
               <p className="mt-1 text-sm text-white/70">
-                Start with 5 days free, then continue from ₦9,999 per month.
+                Start free and build your business with clearer numbers and better daily decisions.
               </p>
             </div>
             <Link
@@ -841,12 +772,6 @@ export default async function Home() {
               >
                 For every business
               </a>
-              <Link
-                href="/pricing"
-                className="transition-colors hover:text-white"
-              >
-                Pricing
-              </Link>
               <Link
                 href="/register"
                 className="transition-colors hover:text-white"
