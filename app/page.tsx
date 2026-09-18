@@ -4,6 +4,7 @@ import Image from "next/image";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { HeroMotion, ParallaxMockup, ScrollReveal } from "@/components/landing-motion";
+import { TestimonialCarousel } from "@/components/testimonial-carousel";
 
 export const metadata: Metadata = {
   title: "Vendari - Business Management App for Growing Businesses",
@@ -754,6 +755,8 @@ export default async function Home() {
       </ScrollReveal>
 
       <ConciergeOverview />
+
+      <TestimonialCarousel />
 
       <section id="faq" className="border-t border-border bg-bg px-5 py-20 sm:px-8 sm:py-28">
         <div className="mx-auto grid max-w-7xl gap-12 lg:grid-cols-[0.75fr_1.25fr]">

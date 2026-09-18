@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { getBusiness, getInventory, addInventoryItem, updateInventoryItem, deleteInventoryItem, getMetaCatalogs, syncMetaCatalog } from '@/app/actions/business'
-import { Plus, Edit2, AlertTriangle, Package, UploadCloud, RefreshCw, GripVertical } from 'lucide-react'
+import { Plus, Edit2, AlertTriangle, Package, UploadCloud, RefreshCw, GripVertical, MessageCircle, ChevronDown, CheckCircle2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { LoadingButton } from '@/components/ui/loading-button'
@@ -229,6 +229,7 @@ export default function InventoryPage() {
   const [metaCatalogId, setMetaCatalogId] = useState('')
   const [metaConfigured, setMetaConfigured] = useState<boolean | null>(null)
   const [metaSyncing, setMetaSyncing] = useState(false)
+  const [showOtherImportOptions, setShowOtherImportOptions] = useState(false)
   const [formData, setFormData] = useState({
     product_name: '',
     product_code: '',
@@ -658,30 +659,41 @@ export default function InventoryPage() {
         {/* Quick Restock Grid */}
         <QuickRestockGrid items={inventory} businessId={business.id} onRestockAdded={loadData} />
 
-        <Card className="dashboard-panel mb-8">
+        <Card className="dashboard-panel mb-8 overflow-hidden">
           <CardHeader>
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-blue">WhatsApp catalog import</p>
-                <CardTitle className="mt-2 font-display text-ink">Import your catalog into inventory</CardTitle>
+                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#25D366]">WhatsApp catalog</p>
+                <CardTitle className="mt-2 font-display text-ink">Bring your products into Vendari</CardTitle>
+                <p className="mt-2 max-w-xl text-sm leading-6 text-text-secondary">Connect your WhatsApp Business catalog and your products, prices, and pictures will appear in your inventory.</p>
               </div>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => {
-                  setCatalogText(demoCatalog)
-                  setCatalogPreview(parseCatalogImport(demoCatalog))
-                }}
-                className="border-blue/30 text-blue"
-              >
-                Load demo catalog
-              </Button>
+              <MessageCircle className="hidden h-12 w-12 shrink-0 rounded-2xl bg-[#25D366]/10 p-2.5 text-[#25D366] sm:block" />
             </div>
           </CardHeader>
           <CardContent>
-            <div className="grid gap-4 lg:grid-cols-[1.3fr_0.7fr]">
+            <div className="rounded-2xl border border-[#25D366]/25 bg-[#25D366]/5 p-4 sm:p-5">
+              <div className="grid gap-5 lg:grid-cols-[1fr_0.85fr] lg:items-center">
+                <div>
+                  <div className="flex items-center gap-2"><MessageCircle className="h-5 w-5 text-[#25D366]" /><p className="font-display text-xl font-semibold text-ink">Connect your catalog</p></div>
+                  <p className="mt-2 text-sm leading-6 text-text-secondary">We will look for the catalog connected to your WhatsApp Business account. Choose it, then tap import. Your existing inventory stays safe.</p>
+                  <div className="mt-4 grid gap-2 text-sm text-text-secondary sm:grid-cols-3">
+                    {['Choose your catalog', 'Review your products', 'Start selling'].map((step, index) => <div key={step} className="flex items-center gap-2"><span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white text-xs font-semibold text-[#25D366] shadow-sm">{index + 1}</span><span>{step}</span></div>)}
+                  </div>
+                </div>
+                <div className="rounded-xl border border-white/80 bg-surface p-3">
+                  {metaConfigured === false ? <div><p className="text-sm font-semibold text-ink">Ready when you are</p><p className="mt-1 text-xs leading-5 text-text-secondary">Your WhatsApp connection has not been turned on yet. Ask the Vendari team to connect it for your business.</p><a href="tel:09016615446" className="mt-3 inline-flex text-sm font-semibold text-[#25D366] hover:underline">Talk to Vendari</a></div> : <div className="space-y-2"><label className="block text-xs font-semibold text-text-muted">Your WhatsApp catalog</label><select value={metaCatalogId} onChange={(event) => setMetaCatalogId(event.target.value)} className="dashboard-input w-full text-sm"><option value="">Choose a catalog</option>{metaCatalogs.map((catalog) => <option key={catalog.id} value={catalog.id}>{catalog.name}{catalog.product_count ? ` (${catalog.product_count} products)` : ''}</option>)}</select><Button type="button" onClick={handleMetaSync} disabled={!metaCatalogId || metaSyncing} className="w-full bg-[#25D366] text-white hover:bg-[#1fb958]"><RefreshCw className={`mr-2 h-4 w-4 ${metaSyncing ? 'animate-spin' : ''}`} />{metaSyncing ? 'Bringing products in...' : 'Connect and import products'}</Button></div>}
+                </div>
+              </div>
+            </div>
+
+            <button type="button" onClick={() => setShowOtherImportOptions((current) => !current)} className="mt-5 flex w-full items-center justify-between rounded-xl border border-border bg-bg px-4 py-3 text-left text-sm font-semibold text-ink">
+              <span>Have a catalog file instead?</span><ChevronDown className={`h-4 w-4 text-text-muted transition-transform ${showOtherImportOptions ? 'rotate-180' : ''}`} />
+            </button>
+
+            {showOtherImportOptions && <div className="mt-3 grid gap-4 lg:grid-cols-[1.3fr_0.7fr]">
               <div className="rounded-2xl border border-border bg-bg p-3 sm:p-4">
-                <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.12em] text-text-muted">Paste catalog data</label>
+                <p className="mb-1 text-sm font-semibold text-ink">Add products from a file</p>
+                <p className="mb-3 text-xs leading-5 text-text-secondary">Use this when someone has already sent you a product list. You can check everything before it is added.</p>
                 <label
                   htmlFor="catalog-file"
                   onDragOver={(event) => event.preventDefault()}
@@ -693,7 +705,7 @@ export default function InventoryPage() {
                   className="mb-3 flex cursor-pointer items-center gap-3 rounded-xl border border-dashed border-blue/40 bg-blue/5 px-3 py-3 text-sm text-text-secondary transition hover:border-blue hover:bg-blue/10"
                 >
                   <UploadCloud className="h-5 w-5 shrink-0 text-blue" />
-                  <span className="min-w-0 flex-1"><strong className="block text-ink">Drop a CSV or JSON file here</strong><span className="text-xs">or tap to browse your device</span></span>
+                  <span className="min-w-0 flex-1"><strong className="block text-ink">Drop your product list here</strong><span className="text-xs">or tap to choose a file</span></span>
                   {catalogFileName && <span className="max-w-28 truncate text-xs font-semibold text-blue">{catalogFileName}</span>}
                   <input id="catalog-file" type="file" accept=".csv,.json,text/csv,application/json" className="sr-only" onChange={(event) => { const file = event.target.files?.[0]; if (file) void handleCatalogFile(file) }} />
                 </label>
@@ -705,7 +717,7 @@ export default function InventoryPage() {
                 />
                 {catalogHeaders.length > 0 && (
                   <div className="mt-3 rounded-xl border border-border bg-surface p-3">
-                    <div className="flex items-center gap-2"><GripVertical className="h-4 w-4 text-blue" /><p className="text-xs font-semibold uppercase tracking-[0.12em] text-text-muted">Map your columns</p></div>
+                    <div className="flex items-center gap-2"><GripVertical className="h-4 w-4 text-blue" /><p className="text-xs font-semibold text-text-muted">Tell us what each column means</p></div>
                     <div className="mt-3 grid gap-2 sm:grid-cols-2">
                       {catalogHeaders.map((header, index) => (
                         <label key={`${header}-${index}`} className="flex items-center gap-2 text-xs text-text-secondary">
@@ -732,26 +744,8 @@ export default function InventoryPage() {
                 </div>
               </div>
 
-              <div className="rounded-2xl border border-blue/20 bg-blue/5 p-4">
-                <p className="text-xs font-semibold uppercase tracking-[0.12em] text-blue">What this accepts</p>
-                <ul className="mt-4 space-y-2 text-sm leading-6 text-text-secondary">
-                  <li>• CSV rows with product, category, stock, and price fields</li>
-                  <li>• JSON arrays from catalog exports</li>
-                  <li>• WhatsApp catalog snippets copied into a clean list</li>
-                </ul>
-
-                <div className="mt-5 rounded-xl border border-border bg-surface p-3">
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-text-muted">Preview status</p>
-                  <p className="mt-2 text-2xl font-semibold text-ink">{catalogPreview.length}</p>
-                  <p className="text-xs text-text-secondary">products ready to add</p>
-                </div>
-              </div>
-
-              <div className="rounded-2xl border border-[#25D366]/25 bg-[#25D366]/5 p-4">
-                <div className="flex items-start gap-3"><RefreshCw className="mt-0.5 h-5 w-5 text-[#25D366]" /><div><p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#25D366]">Live Meta sync</p><h3 className="mt-2 font-display text-lg font-semibold text-ink">Pull products from WhatsApp Business</h3><p className="mt-2 text-sm leading-6 text-text-secondary">Sync your real Meta catalog into Vendari. Existing items are updated by retailer ID, so repeated syncs do not create duplicates.</p></div></div>
-                {metaConfigured === false ? <p className="mt-4 rounded-xl bg-surface p-3 text-xs leading-5 text-text-secondary">Meta sync is not configured yet. Add the WhatsApp access token and business account ID on the backend.</p> : <div className="mt-4 space-y-2"><select value={metaCatalogId} onChange={(event) => setMetaCatalogId(event.target.value)} className="dashboard-input w-full text-sm"><option value="">Choose a catalog</option>{metaCatalogs.map((catalog) => <option key={catalog.id} value={catalog.id}>{catalog.name}{catalog.product_count ? ` (${catalog.product_count} products)` : ''}</option>)}</select><Button type="button" onClick={handleMetaSync} disabled={!metaCatalogId || metaSyncing} className="w-full bg-[#25D366] text-white hover:bg-[#1fb958]"><RefreshCw className={`mr-2 h-4 w-4 ${metaSyncing ? 'animate-spin' : ''}`} />{metaSyncing ? 'Syncing Meta catalog...' : 'Sync real Meta catalog'}</Button></div>}
-              </div>
-            </div>
+              <div className="rounded-2xl border border-blue/20 bg-blue/5 p-4"><p className="text-sm font-semibold text-ink">You stay in control</p><div className="mt-3 space-y-2 text-sm leading-6 text-text-secondary"><p className="flex gap-2"><CheckCircle2 className="mt-1 h-4 w-4 shrink-0 text-blue" />Check the list before adding it.</p><p className="flex gap-2"><CheckCircle2 className="mt-1 h-4 w-4 shrink-0 text-blue" />Nothing replaces your current products.</p><p className="flex gap-2"><CheckCircle2 className="mt-1 h-4 w-4 shrink-0 text-blue" />Pictures can be added later where needed.</p></div><div className="mt-5 rounded-xl border border-border bg-surface p-3"><p className="text-xs text-text-muted">Products ready to add</p><p className="mt-1 text-2xl font-semibold text-ink">{catalogPreview.length}</p></div></div>
+            </div>}
 
             {catalogPreview.length > 0 && (
               <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">

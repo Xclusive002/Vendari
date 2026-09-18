@@ -7,6 +7,7 @@ from datetime import timedelta
 from decimal import Decimal, InvalidOperation
 
 from django.conf import settings
+from django.core.files.base import ContentFile
 from django.utils import timezone
 from django.db.models import Count, Q
 from rest_framework import viewsets, status
@@ -46,6 +47,20 @@ class BusinessScopedViewSet(viewsets.ModelViewSet):
 
 class InventoryItemViewSet(BusinessScopedViewSet):
     serializer_class = InventoryItemSerializer
+
+    def _download_meta_image(self, image_url, retailer_id):
+        if not image_url or not str(image_url).startswith(('https://', 'http://')):
+            return None
+        try:
+            image_request = urllib.request.Request(str(image_url), headers={'User-Agent': 'Vendari catalog import'})
+            with urllib.request.urlopen(image_request, timeout=15) as response:
+                image_data = response.read()
+            if not image_data:
+                return None
+            return ContentFile(image_data, name=f'meta-{retailer_id}.jpg')
+        except (urllib.error.HTTPError, urllib.error.URLError, ValueError):
+            logger.warning('Meta product image download failed for retailer_id=%s', retailer_id)
+            return None
 
     def _meta_request(self, path, params=None):
         query = urllib.parse.urlencode(params or {})
@@ -113,13 +128,18 @@ class InventoryItemViewSet(BusinessScopedViewSet):
                     price = Decimal('0')
                 existing = self.get_queryset().filter(code=retailer_id).first()
                 defaults = {'product_name': product_name, 'description': str(product.get('description') or ''), 'selling_price': price, 'cost_price': price * Decimal('0.55'), 'category': 'WhatsApp catalog'}
+                image_file = self._download_meta_image(product.get('image_url'), retailer_id)
                 if existing:
                     for field, value in defaults.items():
                         setattr(existing, field, value)
                     existing.save(update_fields=[*defaults.keys(), 'updated_at'])
+                    if image_file:
+                        existing.image.save(image_file.name, image_file, save=True)
                     updated += 1
                 else:
-                    InventoryItem.objects.create(business=self.business(), code=retailer_id, qty_in_stock=0, reorder_level=5, **defaults)
+                    created_item = InventoryItem.objects.create(business=self.business(), code=retailer_id, qty_in_stock=0, reorder_level=5, **defaults)
+                    if image_file:
+                        created_item.image.save(image_file.name, image_file, save=True)
                     imported += 1
 
         return Response({'configured': True, 'catalog_id': catalog_id, 'imported': imported, 'updated': updated, 'skipped': skipped, 'detail': f'Meta catalog sync complete: {imported} added, {updated} updated.'})
