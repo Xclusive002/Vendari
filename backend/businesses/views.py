@@ -41,7 +41,7 @@ class BusinessViewSet(viewsets.ModelViewSet):
 		# Assign the paid plan and start the trial for every new business.
 		if not business.plan:
 			default_plan, _ = Plan.objects.get_or_create(name=Plan.PLAN_PRO, interval=Plan.INTERVAL_MONTHLY, defaults={
-				'amount': 9999,
+				'amount': 4999,
 				'interval': Plan.INTERVAL_MONTHLY,
 				'paystack_plan_code': settings.PAYSTACK_MONTHLY_PLAN_CODE,
 				'feature_flags': {
