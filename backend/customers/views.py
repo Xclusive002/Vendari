@@ -3,6 +3,7 @@ import logging
 from datetime import timedelta
 
 from django.conf import settings
+from django.core.cache import cache
 from django.core.mail import EmailMultiAlternatives
 from django.utils import timezone
 from rest_framework import status, viewsets
@@ -18,6 +19,115 @@ from .models import Customer, CustomerReminder
 from .serializers import CustomerSerializer
 
 logger = logging.getLogger(__name__)
+
+
+def send_trial_reminder_email(business, days_left):
+    if not business:
+        return False
+    recipient_email = str(getattr(business, 'email', '') or getattr(getattr(business, 'owner', None), 'email', '') or '').strip()
+    if not recipient_email:
+        return False
+
+    try:
+        from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', '').strip() or 'onboarding@resend.dev'
+        if from_email.lower().endswith('@gmail.com'):
+            from_email = 'onboarding@resend.dev'
+        dashboard_url = getattr(settings, 'DASHBOARD_URL', '').rstrip('/') or 'http://localhost:3000'
+        pricing_url = f'{dashboard_url}/pricing'
+
+        if days_left == 3:
+            subject = f'{business.name}: 3 days left in your Vendari trial'
+            headline = 'You still have time to unlock the full workflow.'
+            callout = 'Three days left to set up your workspace, organize inventory, track sales, and keep customers engaged before your trial finishes.'
+        elif days_left == 2:
+            subject = f'{business.name}: 2 days left in your Vendari trial'
+            headline = 'The next step is simple: keep momentum going.'
+            callout = 'Two days remain to get your business systems in order. Move quickly and turn this free trial into a complete weekly operating rhythm.'
+        else:
+            subject = f'{business.name}: Your Vendari trial ends tomorrow'
+            headline = 'Tomorrow is your last day to try Vendari.'
+            callout = 'Use the final day to review your sales, inventory, invoices, and customer insights before your access pauses.'
+
+        text = (
+            f'Hi {business.name} owner,\n\n'
+            f'{headline}\n\n'
+            f'{callout}\n\n'
+            'Your free trial is designed to help you test the essentials: sales tracking, inventory visibility, customer management, and daily operations in one place.\n\n'
+            'If this feels like the right fit for your business, upgrade to Pro today and keep everything running smoothly.\n\n'
+            f'Upgrade now: {pricing_url}\n'
+            f'Open your dashboard: {dashboard_url}/dashboard\n\n'
+            'Keep building. Keep growing. Keep the business organized with Vendari.\n\n'
+            'The Vendari team'
+        )
+        html = f'''<div style="font-family:Arial,sans-serif;line-height:1.6;color:#0B1220;max-width:620px;margin:auto;padding:24px;background:#F7F9FC">
+  <div style="background:#ffffff;border:1px solid #E3E8F1;border-radius:16px;padding:28px;box-shadow:0 10px 25px rgba(11,18,32,0.04)">
+    <h1 style="margin:0 0 12px;font-size:28px;color:#06122B">{headline}</h1>
+    <p style="margin:0 0 20px;color:#4B5768">{callout}</p>
+    <p style="margin:0 0 16px;color:#0B1220">Your free trial is the perfect time to test how Vendari helps you stay on top of sales, stock, customers, and daily operations.</p>
+    <p style="margin:0 0 16px;color:#0B1220">When you are ready to keep the momentum going, Pro gives you a more complete view of your business with a cleaner, calmer workflow.</p>
+    <div style="margin:18px 0;padding:16px 18px;border-radius:12px;background:linear-gradient(135deg,#4683EC 0%,#4954F1 100%);color:#ffffff;font-weight:700;text-align:center">
+      <a href="{pricing_url}" style="color:#ffffff;text-decoration:none">Upgrade to Pro today</a>
+    </div>
+    <p style="margin:0;color:#4B5768">Need a quick refresher? <a href="{dashboard_url}/dashboard" style="color:#4683EC;text-decoration:none">Open your dashboard</a> and keep your business moving.</p>
+    <p style="margin:24px 0 0;color:#0B1220">Keep building. Keep growing. Keep the business organized with Vendari.</p>
+    <p style="margin:8px 0 0;color:#4B5768">The Vendari team</p>
+  </div>
+</div>'''
+
+        message = EmailMultiAlternatives(subject=subject, body=text, from_email=from_email, to=[recipient_email])
+        message.attach_alternative(html, 'text/html')
+        message.send(fail_silently=False)
+        return True
+    except Exception:
+        logger.exception('[TRIAL_REMINDER_EMAIL] Failed for business_id=%s days_left=%s', getattr(business, 'pk', None), days_left)
+        return False
+
+
+def send_trial_expired_email(business):
+    if not business:
+        return False
+    recipient_email = str(getattr(business, 'email', '') or getattr(getattr(business, 'owner', None), 'email', '') or '').strip()
+    if not recipient_email:
+        return False
+
+    try:
+        from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', '').strip() or 'onboarding@resend.dev'
+        if from_email.lower().endswith('@gmail.com'):
+            from_email = 'onboarding@resend.dev'
+        dashboard_url = getattr(settings, 'DASHBOARD_URL', '').rstrip('/') or 'http://localhost:3000'
+        pricing_url = f'{dashboard_url}/pricing'
+        subject = f'{business.name}: Your Vendari trial has ended'
+        text = (
+            f'Hi {business.name} owner,\n\n'
+            'Your Vendari trial has ended, but the tools you need are still waiting for you.\n\n'
+            'Access has paused until you subscribe, and the smartest next move is to keep your sales, inventory, customers, and daily operations in one clear system.\n\n'
+            'Choose a Pro plan to continue managing your business without interruption.\n\n'
+            f'Upgrade now: {pricing_url}\n'
+            f'Open your dashboard: {dashboard_url}/dashboard\n\n'
+            'You have already built momentum. Let Vendari help you keep it going.\n\n'
+            'The Vendari team'
+        )
+        html = f'''<div style="font-family:Arial,sans-serif;line-height:1.6;color:#0B1220;max-width:620px;margin:auto;padding:24px;background:#F7F9FC">
+  <div style="background:#ffffff;border:1px solid #E3E8F1;border-radius:16px;padding:28px;box-shadow:0 10px 25px rgba(11,18,32,0.04)">
+    <h1 style="margin:0 0 12px;font-size:28px;color:#06122B">Your Vendari trial has ended</h1>
+    <p style="margin:0 0 16px;color:#4B5768">The good news is you have already seen what Vendari can do for your business. Now it is time to keep the momentum going without interruption.</p>
+    <p style="margin:0 0 16px;color:#0B1220">Your access is paused until you subscribe, but the workflow is ready for you to continue tracking sales, managing stock, and serving customers with more clarity.</p>
+    <div style="margin:18px 0;padding:16px 18px;border-radius:12px;background:linear-gradient(135deg,#4683EC 0%,#4954F1 100%);color:#ffffff;font-weight:700;text-align:center">
+      <a href="{pricing_url}" style="color:#ffffff;text-decoration:none">Resume your Pro plan</a>
+    </div>
+    <p style="margin:0;color:#4B5768">If you are ready to continue, <a href="{pricing_url}" style="color:#4683EC;text-decoration:none">review the plan</a> and get back to work without losing momentum.</p>
+    <p style="margin:24px 0 0;color:#0B1220">You have already built the foundation. Keep going with Vendari.</p>
+    <p style="margin:8px 0 0;color:#4B5768">The Vendari team</p>
+  </div>
+</div>'''
+
+        message = EmailMultiAlternatives(subject=subject, body=text, from_email=from_email, to=[recipient_email])
+        message.attach_alternative(html, 'text/html')
+        message.send(fail_silently=False)
+        return True
+    except Exception:
+        logger.exception('[TRIAL_EXPIRED_EMAIL] Failed for business_id=%s', getattr(business, 'pk', None))
+        return False
 
 
 def send_customer_reminder_email(customer, business, reminder_type, invoice=None):
@@ -132,6 +242,24 @@ class CustomerReminderCronView(APIView):
                         email=customer.email,
                         related_invoice=invoice,
                     )
+                    sent += 1
+
+        for business in Business.objects.filter(trial_ends_at__isnull=False).select_related('owner').order_by('pk'):
+            if business.trial_ends_at and business.trial_ends_at > now:
+                remaining_days = (business.trial_ends_at.date() - now.date()).days
+                if remaining_days in {3, 2, 1}:
+                    cache_key = f'trial-reminder:{business.pk}:{remaining_days}'
+                    if cache.get(cache_key):
+                        continue
+                    if send_trial_reminder_email(business, remaining_days):
+                        cache.set(cache_key, True, timeout=60 * 60 * 24 * 30)
+                        sent += 1
+            elif business.trial_ends_at and business.trial_ends_at <= now:
+                cache_key = f'trial-reminder:{business.pk}:expired'
+                if cache.get(cache_key):
+                    continue
+                if send_trial_expired_email(business):
+                    cache.set(cache_key, True, timeout=60 * 60 * 24 * 30)
                     sent += 1
 
         return Response({'processed': processed, 'sent': sent, 'status': 'ok'})

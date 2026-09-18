@@ -94,6 +94,39 @@ class CustomerApiTests(APITestCase):
         self.assertEqual(mock_send.call_count, 0)
         self.assertEqual(CustomerReminder.objects.filter(customer=customer, reminder_type=CustomerReminder.REENGAGEMENT).count(), 1)
 
+    @patch('customers.views.send_trial_expired_email', return_value=True)
+    @patch('customers.views.send_trial_reminder_email', return_value=True)
+    @override_settings(CRON_SECRET='secret-token')
+    def test_cron_endpoint_sends_trial_reminders_and_expiration_email(self, mock_reminder, mock_expired):
+        active_trial = Business.objects.create(
+            owner=self.user_a,
+            name='Trial Reminder Business',
+            email='owner@trial.local',
+            trial_started_at=timezone.now() - timedelta(days=2),
+            trial_ends_at=timezone.now() + timedelta(days=3),
+        )
+        expired_trial = Business.objects.create(
+            owner=self.user_a,
+            name='Expired Trial Business',
+            email='owner@expired.local',
+            trial_started_at=timezone.now() - timedelta(days=10),
+            trial_ends_at=timezone.now() - timedelta(minutes=5),
+        )
+        Membership.objects.create(user=self.user_a, business=active_trial, role='owner')
+        Membership.objects.create(user=self.user_a, business=expired_trial, role='owner')
+
+        response = self.client.post('/api/cron/send-reminders/', {'secret': 'secret-token'}, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(mock_reminder.called)
+        self.assertTrue(mock_expired.called)
+        self.assertTrue(any(
+            call.args[0].email == 'owner@trial.local'
+            and call.args[0].name == 'Trial Reminder Business'
+            and call.args[1] == 3
+            for call in mock_reminder.call_args_list
+        ))
+
     def test_business_a_cannot_read_or_write_business_b_customers(self):
         url = f'/api/businesses/{self.business_b.pk}/customers/'
         self.assertEqual(self.client.get(url).status_code, status.HTTP_403_FORBIDDEN)

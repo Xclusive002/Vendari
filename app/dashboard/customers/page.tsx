@@ -177,11 +177,11 @@ export default function CustomersPage() {
                 <DialogTitle className="font-display text-ink">{editingId ? 'Edit customer' : 'Add a customer'}</DialogTitle>
               </DialogHeader>
               <form onSubmit={handleSave} className="space-y-4">
-                <div><Label className="text-text-secondary">Name *</Label><Input value={formData.name} onChange={(event) => setFormData({ ...formData, name: event.target.value })} className="dashboard-input mt-1" placeholder="Customer name" required /></div>
-                <div><Label className="text-text-secondary">Phone *</Label><Input value={formData.phone} onChange={(event) => setFormData({ ...formData, phone: event.target.value })} className="dashboard-input mt-1" placeholder="Phone number" required /></div>
-                <div><Label className="text-text-secondary">Email</Label><Input type="email" value={formData.email} onChange={(event) => setFormData({ ...formData, email: event.target.value })} className="dashboard-input mt-1" placeholder="Email address" /></div>
-                <div><Label className="text-text-secondary">Address</Label><Input value={formData.address} onChange={(event) => setFormData({ ...formData, address: event.target.value })} className="dashboard-input mt-1" placeholder="Address" /></div>
-                <div><Label className="text-text-secondary">Notes</Label><Input value={formData.notes} onChange={(event) => setFormData({ ...formData, notes: event.target.value })} className="dashboard-input mt-1" placeholder="Optional notes" /></div>
+                <div><Label className="block text-sm font-medium text-slate-800">Name *</Label><Input value={formData.name} onChange={(event) => setFormData({ ...formData, name: event.target.value })} className="dashboard-input mt-1" placeholder="Customer name" required /></div>
+                <div><Label className="block text-sm font-medium text-slate-800">Phone *</Label><Input value={formData.phone} onChange={(event) => setFormData({ ...formData, phone: event.target.value })} className="dashboard-input mt-1" placeholder="Phone number" required /></div>
+                <div><Label className="block text-sm font-medium text-slate-800">Email</Label><Input type="email" value={formData.email} onChange={(event) => setFormData({ ...formData, email: event.target.value })} className="dashboard-input mt-1" placeholder="Email address" /></div>
+                <div><Label className="block text-sm font-medium text-slate-800">Address</Label><Input value={formData.address} onChange={(event) => setFormData({ ...formData, address: event.target.value })} className="dashboard-input mt-1" placeholder="Address" /></div>
+                <div><Label className="block text-sm font-medium text-slate-800">Notes</Label><Input value={formData.notes} onChange={(event) => setFormData({ ...formData, notes: event.target.value })} className="dashboard-input mt-1" placeholder="Optional notes" /></div>
                 <LoadingButton type="submit" loading={saving} className="dashboard-primary w-full">{editingId ? 'Update Customer' : 'Add Customer'}</LoadingButton>
               </form>
             </DialogContent>
