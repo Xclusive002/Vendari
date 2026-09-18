@@ -25,7 +25,7 @@ from businesses.views import BusinessDashboardSummaryView, BusinessPayoutsView, 
 from inventory.views import InventoryItemViewSet, TopProductsView
 from sales.views import SaleViewSet
 from expenses.views import ExpenseViewSet
-from customers.views import CustomerViewSet
+from customers.views import CustomerReminderCronView, CustomerRemindersView, CustomerViewSet
 from billing.views import PaystackInitializeView, PaystackWebhookView, PaystackBanksView, VerifyBankAccountView, CreateSubaccountView, InvoicePaymentInitializeView
 from ai_insights.views import BusinessAskView, BusinessInsightsView, VoiceEntryView
 from invoices.views import InvoiceViewSet, SaleReceiptView, GenerateInvoiceNotesView
@@ -82,6 +82,8 @@ urlpatterns = [
     path('api/businesses/<int:business_id>/top-products/', TopProductsView.as_view()),
     path('api/businesses/<int:business_id>/sales/<int:sale_id>/receipt/', SaleReceiptView.as_view()),
     path('api/businesses/<int:business_id>/invoices/generate-notes/', GenerateInvoiceNotesView.as_view()),
+    path('api/cron/send-reminders/', CustomerReminderCronView.as_view()),
+    path('api/businesses/<int:business_id>/reminders/', CustomerRemindersView.as_view()),
     path('api/notifications/', include('notifications.urls')),
     path('api/', include(business_router.urls)),
     path('api/', include(inventory_router.urls)),

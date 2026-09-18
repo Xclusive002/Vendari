@@ -4,7 +4,7 @@ import { FormEvent, useEffect, useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
-import { ArrowRight, MailCheck } from 'lucide-react'
+import { ArrowRight, Eye, EyeOff, MailCheck } from 'lucide-react'
 import { register } from '@/app/actions/auth'
 import { LoadingButton } from '@/components/ui/loading-button'
 import LoadingSpinner from '@/components/ui/loading-spinner'
@@ -18,6 +18,7 @@ export default function RegisterPage() {
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [businessName, setBusinessName] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
@@ -72,7 +73,12 @@ export default function RegisterPage() {
 
               <div>
                 <label htmlFor="register-password" className="text-sm font-medium text-text-secondary">Password</label>
-                <input id="register-password" type="password" autoComplete="new-password" value={password} onChange={(event) => setPassword(event.target.value)} className="dashboard-input mt-2 w-full px-3 py-2.5" disabled={loading} />
+                <div className="relative mt-2">
+                  <input id="register-password" type={showPassword ? 'text' : 'password'} autoComplete="new-password" value={password} onChange={(event) => setPassword(event.target.value)} className="dashboard-input w-full px-3 py-2.5 pr-11" disabled={loading} />
+                  <button type="button" onClick={() => setShowPassword((visible) => !visible)} className="absolute inset-y-0 right-0 flex w-11 items-center justify-center text-text-muted hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue" aria-label={showPassword ? 'Hide password' : 'Show password'} disabled={loading}>
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
               </div>
 
               {error && <p role="alert" className="rounded-lg border border-negative/20 bg-negative/5 px-3 py-2.5 text-sm text-negative">{error}</p>}

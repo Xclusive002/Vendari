@@ -4,7 +4,7 @@ import { FormEvent, useEffect, useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
-import { ArrowRight, LockKeyhole } from 'lucide-react'
+import { ArrowRight, Eye, EyeOff, LockKeyhole } from 'lucide-react'
 import { toast } from 'sonner'
 import { login, restoreRememberedSession } from '@/app/actions/auth'
 import { LoadingButton } from '@/components/ui/loading-button'
@@ -19,6 +19,7 @@ export default function LoginPage() {
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [rememberMe, setRememberMe] = useState(true)
@@ -27,6 +28,7 @@ export default function LoginPage() {
   const [resetStep, setResetStep] = useState<'request' | 'confirm'>('request')
   const [resetCode, setResetCode] = useState('')
   const [resetPassword, setResetPassword] = useState('')
+  const [showResetPassword, setShowResetPassword] = useState(false)
   const [resetMessage, setResetMessage] = useState('')
 
   useEffect(() => {
@@ -118,6 +120,7 @@ export default function LoginPage() {
       setResetStep('request')
       setResetCode('')
       setResetPassword('')
+      setShowResetPassword(false)
       setResetMessage('Password reset successfully. Sign in with your new password.')
     } finally {
       setLoading(false)
@@ -157,7 +160,12 @@ export default function LoginPage() {
                 </div>
                 <div>
                   <label htmlFor="reset-password" className="text-sm font-medium text-text-secondary">New password</label>
-                  <input id="reset-password" type="password" autoComplete="new-password" value={resetPassword} onChange={(event) => setResetPassword(event.target.value)} className="dashboard-input mt-2 w-full px-3 py-2.5" disabled={loading} minLength={8} required />
+                  <div className="relative mt-2">
+                    <input id="reset-password" type={showResetPassword ? 'text' : 'password'} autoComplete="new-password" value={resetPassword} onChange={(event) => setResetPassword(event.target.value)} className="dashboard-input w-full px-3 py-2.5 pr-11" disabled={loading} minLength={8} required />
+                    <button type="button" onClick={() => setShowResetPassword((visible) => !visible)} className="absolute inset-y-0 right-0 flex w-11 items-center justify-center text-text-muted hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue" aria-label={showResetPassword ? 'Hide password' : 'Show password'} disabled={loading}>
+                      {showResetPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
                 </div>
               </>}
               {error && <p role="alert" className="rounded-lg border border-negative/20 bg-negative/5 px-3 py-2.5 text-sm text-negative">{error}</p>}
@@ -172,7 +180,12 @@ export default function LoginPage() {
 
               <div>
                 <label htmlFor="login-password" className="text-sm font-medium text-text-secondary">Password</label>
-                <input id="login-password" type="password" autoComplete="current-password" value={password} onChange={(event) => setPassword(event.target.value)} className="dashboard-input mt-2 w-full px-3 py-2.5" disabled={loading} />
+                <div className="relative mt-2">
+                  <input id="login-password" type={showPassword ? 'text' : 'password'} autoComplete="current-password" value={password} onChange={(event) => setPassword(event.target.value)} className="dashboard-input w-full px-3 py-2.5 pr-11" disabled={loading} />
+                  <button type="button" onClick={() => setShowPassword((visible) => !visible)} className="absolute inset-y-0 right-0 flex w-11 items-center justify-center text-text-muted hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue" aria-label={showPassword ? 'Hide password' : 'Show password'} disabled={loading}>
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
               </div>
 
               <label htmlFor="remember-me" className="flex cursor-pointer items-center gap-2 text-sm text-text-secondary">
