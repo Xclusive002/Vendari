@@ -19,6 +19,7 @@ export default function RegisterPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
+  const [fullName, setFullName] = useState('')
   const [businessName, setBusinessName] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
@@ -26,11 +27,12 @@ export default function RegisterPage() {
   async function handleRegister(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     setError('')
+    if (!fullName.trim()) return setError('Enter your name so Vendari can greet you properly.')
     if (!businessName.trim()) return setError('Enter your business name so Vendari can set up your workspace.')
     if (!email.trim() || !email.includes('@')) return setError('Enter a valid email address.')
     if (password.length < 8) return setError('Use at least 8 characters for your password.')
     setLoading(true)
-    const result = await register(email.trim(), password, businessName.trim())
+    const result = await register(email.trim(), password, businessName.trim(), fullName.trim())
     if (result.success) {
       router.push(`/verify-email?email=${encodeURIComponent(email.trim())}`)
       return
@@ -61,6 +63,11 @@ export default function RegisterPage() {
             )}
 
             <form onSubmit={handleRegister} className="mt-8 space-y-5" noValidate>
+              <div>
+                <label htmlFor="register-name" className="text-sm font-medium text-text-secondary">Your name</label>
+                <input id="register-name" value={fullName} onChange={(event) => setFullName(event.target.value)} className="dashboard-input mt-2 w-full px-3 py-2.5" autoComplete="name" disabled={loading} />
+              </div>
+
               <div>
                 <label htmlFor="register-business" className="text-sm font-medium text-text-secondary">Business name</label>
                 <input id="register-business" value={businessName} onChange={(event) => setBusinessName(event.target.value)} className="dashboard-input mt-2 w-full px-3 py-2.5" disabled={loading} />

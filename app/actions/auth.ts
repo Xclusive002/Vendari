@@ -5,9 +5,9 @@ import { cookies } from 'next/headers'
 
 import { apiJson } from '@/lib/api-client'
 
-export async function register(email: string, password: string, business_name: string) {
+export async function register(email: string, password: string, business_name: string, full_name: string) {
   try {
-    const data = await apiJson('/auth/register/', { method: 'POST', body: JSON.stringify({ email, password, business_name }), skipRefresh: true })
+    const data = await apiJson('/auth/register/', { method: 'POST', body: JSON.stringify({ email, password, business_name, full_name }), skipRefresh: true })
     return { success: true, data }
   } catch (error) {
     return { success: false, error: error instanceof Error ? error.message : 'Registration failed' }
@@ -93,7 +93,7 @@ export async function acceptInvite(token: string, email: string, password: strin
 
 export async function getCurrentUser() {
   try {
-    return await apiJson<{ email: string; has_seen_welcome: boolean }>('/auth/me/')
+    return await apiJson<{ email: string; full_name?: string; has_seen_welcome: boolean }>('/auth/me/')
   } catch {
     return null
   }

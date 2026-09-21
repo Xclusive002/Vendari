@@ -15,6 +15,7 @@ from .models import User
 
 
 class RegisterSerializer(serializers.Serializer):
+    full_name = serializers.CharField(max_length=255, required=False, allow_blank=True, default='')
     email = serializers.EmailField()
     password = serializers.CharField(write_only=True, min_length=8)
     business_name = serializers.CharField(max_length=255)
@@ -34,6 +35,7 @@ class RegisterSerializer(serializers.Serializer):
         user = User.objects.create_user(
             email=validated_data['email'],
             password=validated_data['password'],
+            full_name=validated_data['full_name'].strip(),
         )
         business = Business.objects.create(
             owner=user,

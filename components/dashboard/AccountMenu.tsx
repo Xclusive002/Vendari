@@ -9,12 +9,9 @@ import { getBusiness } from '@/app/actions/business'
 
 type Account = {
   email: string
+  fullName: string
   businessName: string
-}
-
-function displayName(email: string) {
-  const localPart = email.split('@')[0] || email
-  return localPart.replace(/[._-]+/g, ' ').replace(/\b\w/g, (letter) => letter.toUpperCase())
+  logo: string
 }
 
 export default function AccountMenu() {
@@ -26,7 +23,7 @@ export default function AccountMenu() {
 
   useEffect(() => {
     Promise.all([getCurrentUser(), getBusiness()]).then(([user, business]) => {
-      if (user) setAccount({ email: user.email, businessName: business?.business_name || business?.name || 'No business set up' })
+      if (user) setAccount({ email: user.email, fullName: user.full_name?.trim() || business?.business_name || business?.name || 'Account', businessName: business?.business_name || business?.name || 'No business set up', logo: business?.logo || '' })
     })
   }, [])
 
@@ -44,13 +41,13 @@ export default function AccountMenu() {
     router.push('/login')
   }
 
-  const name = account ? displayName(account.email) : 'Account'
+  const name = account?.fullName || 'Account'
   const initials = name.slice(0, 2).toUpperCase()
 
   return (
     <div ref={containerRef} className="relative">
       <button type="button" aria-label="Open user menu" aria-expanded={open} onClick={() => setOpen(!open)} className="mobile-tap-target flex items-center gap-2 rounded-lg border border-border bg-surface p-1.5 pr-3 shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue">
-        <span className="flex h-7 w-7 items-center justify-center rounded-full bg-brand-gradient text-[10px] font-semibold text-white">{initials}</span>
+        {account?.logo ? <img src={account.logo} alt="Business logo" className="h-7 w-7 rounded-full object-cover" /> : <span className="flex h-7 w-7 items-center justify-center rounded-full bg-brand-gradient text-[10px] font-semibold text-white">{initials}</span>}
         <span className="hidden text-xs font-semibold text-ink sm:inline">{name}</span>
         <ChevronDown className={`hidden h-3.5 w-3.5 text-text-muted transition-transform sm:block ${open ? 'rotate-180' : ''}`} />
       </button>
