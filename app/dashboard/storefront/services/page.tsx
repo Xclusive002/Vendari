@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { PageSkeleton } from '@/components/ui/skeleton'
 import { getBusiness, getServices, createService, updateService, deleteService, type ServiceRecord } from '@/app/actions/business'
+import { normalizeAmountInput } from '@/lib/utils'
 
 const blank = { name: '', description: '', price: '', imageFile: null as File | null }
 
@@ -44,7 +45,7 @@ export default function StorefrontServicesPage() {
     event.preventDefault()
     if (!business || !form.name.trim()) return
     setSaving(true)
-    const payload = { name: form.name.trim(), description: form.description, price: form.price.trim() === '' ? null : form.price, imageFile: form.imageFile, is_visible_on_storefront: editing?.is_visible_on_storefront ?? true, display_order: editing?.display_order ?? services.length }
+    const payload = { name: form.name.trim(), description: form.description, price: form.price.trim() === '' ? null : String(normalizeAmountInput(form.price)), imageFile: form.imageFile, is_visible_on_storefront: editing?.is_visible_on_storefront ?? true, display_order: editing?.display_order ?? services.length }
     const result = editing ? await updateService(String(business.id), editing.id, payload) : await createService(String(business.id), payload)
     setSaving(false)
     if (!result.success) { toast.error(result.error); return }

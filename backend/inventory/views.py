@@ -78,7 +78,7 @@ class InventoryItemViewSet(BusinessScopedViewSet):
             return Response({'configured': False, 'detail': 'Meta catalog sync needs WHATSAPP_ACCESS_TOKEN and WHATSAPP_BUSINESS_ACCOUNT_ID configured on the server.'}, status=status.HTTP_200_OK)
 
         try:
-            catalogs_response = self._meta_request(f'{settings.WHATSAPP_BUSINESS_ACCOUNT_ID}/owned_product_catalogs', {'fields': 'id,name,product_count', 'limit': 100})
+            catalogs_response = self._meta_request(f'{settings.WHATSAPP_BUSINESS_ACCOUNT_ID}/product_catalogs', {'fields': 'id,name,product_count', 'limit': 100})
         except (urllib.error.HTTPError, urllib.error.URLError, ValueError):
             logger.exception('Meta catalog discovery failed for business=%s', business_pk)
             return Response({'configured': True, 'detail': 'Meta catalog access failed. Check the token and business account permissions.'}, status=status.HTTP_502_BAD_GATEWAY)

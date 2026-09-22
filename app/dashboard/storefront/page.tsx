@@ -11,6 +11,7 @@ import { checkStorefrontSlug, getBusiness, getStorefrontSettings, launchStorefro
 import { getStorefrontUrl } from '@/lib/storefront'
 import { PageSkeleton } from '@/components/ui/skeleton'
 import { getStorefrontTheme, STOREFRONT_THEMES } from '@/lib/storefront-themes'
+import { extractBrandColors } from '@/lib/brand-colors'
 
 const VENDARI_BLUE = '#4683EC'
 const SOCIAL_PLATFORMS = [
@@ -179,6 +180,10 @@ export default function StorefrontPage() {
       : await uploadStorefrontBanner(business.id, file)
     setUploadingMedia(null)
     if (result.success) {
+      if (kind === 'logo') {
+        const palette = await extractBrandColors(file)
+        if (palette) await updateStorefrontSettings(business.id, palette)
+      }
       const refreshed = await getStorefrontSettings(business.id)
       if (refreshed.success) setSettings(refreshed.data)
       toast.success(`${kind === 'logo' ? 'Logo' : 'Banner'} updated`)

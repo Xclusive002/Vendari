@@ -12,6 +12,7 @@ import { LoadingButton } from '@/components/ui/loading-button'
 import { PageSkeleton } from '@/components/ui/skeleton'
 import { VoiceInputButton } from '@/components/voice-input-button'
 import { QuickRestockGrid } from '@/components/quick-restock-grid'
+import { normalizeAmountInput } from '@/lib/utils'
 
 type CatalogImportItem = {
   product_name: string
@@ -82,6 +83,11 @@ function cleanNumber(raw: unknown, fallback = 0) {
   return fallback
 }
 
+function cleanAmountInput(value: string) {
+  const normalized = value.replace(/^0+(?=\d|$)/, '')
+  return normalized ? Number(normalized) || 0 : 0
+}
+
 function normalizeCatalogImportEntry(entry: Record<string, unknown>): CatalogImportItem | null {
   const productName = String(entry.product_name ?? entry.name ?? entry.title ?? entry.item ?? '').trim()
   if (!productName) return null
@@ -128,6 +134,20 @@ function parseCatalogImport(rawText: string): CatalogImportItem[] {
 
   if (!lines.length) return []
 
+  const labeledValues: Record<string, string> = {}
+  lines.forEach((line) => {
+    const match = line.match(/^(product(?:\s+name)?|name|item|category|type|price|amount|selling\s+price|unit\s+price|stock|quantity|qty)\s*[:\-]\s*(.+)$/i)
+    if (match) labeledValues[match[1].toLowerCase().replace(/\s+/g, '')] = match[2].trim()
+  })
+  if (labeledValues.product || labeledValues.productname || labeledValues.name || labeledValues.item) {
+    const labeledItem = normalizeCatalogImportEntry({
+      product_name: labeledValues.product || labeledValues.productname || labeledValues.name || labeledValues.item,
+      category: labeledValues.category || labeledValues.type,
+      selling_price: labeledValues.price || labeledValues.amount || labeledValues.sellingprice || labeledValues.unitprice,
+      qty_in_stock: labeledValues.stock || labeledValues.quantity || labeledValues.qty,
+    })
+    return labeledItem ? [labeledItem] : []
+  }
   const firstLine = lines[0].toLowerCase()
   const isHeader = /product|name|category|price|stock|qty/i.test(firstLine)
 
@@ -591,9 +611,7 @@ export default function InventoryPage() {
                       type="number"
                       step="0.01"
                       value={formData.unit_cost}
-                      onChange={(e) =>
-                        setFormData({ ...formData, unit_cost: parseFloat(e.target.value) })
-                      }
+                      onChange={(e) => setFormData({ ...formData, unit_cost: normalizeAmountInput(e.target.value) })}
                       className="dashboard-input mt-1"
                       placeholder="0.00"
                     />
@@ -604,9 +622,7 @@ export default function InventoryPage() {
                       type="number"
                       step="0.01"
                       value={formData.selling_price}
-                      onChange={(e) =>
-                        setFormData({ ...formData, selling_price: parseFloat(e.target.value) })
-                      }
+                      onChange={(e) => setFormData({ ...formData, selling_price: normalizeAmountInput(e.target.value) })}
                       className="dashboard-input mt-1"
                       placeholder="0.00"
                     />

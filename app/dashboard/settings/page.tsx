@@ -7,7 +7,8 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { AlertCircle, CheckCircle2, LogOut, Save } from 'lucide-react'
 import Link from 'next/link'
-import { getBusiness, getPaystackBanks, createPaystackSubaccount, verifyBankAccount, type PaystackBank, updateBusiness } from '@/app/actions/business'
+import { getBusiness, getPaystackBanks, createPaystackSubaccount, verifyBankAccount, type PaystackBank, updateBusiness, updateStorefrontSettings } from '@/app/actions/business'
+import { extractBrandColors } from '@/lib/brand-colors'
 import { logout } from '@/app/actions/auth'
 import { toast } from 'sonner'
 import { LoadingButton } from '@/components/ui/loading-button'
@@ -136,6 +137,10 @@ export default function SettingsPage() {
       if (result.success) {
         const savedBusiness = result.data as { logo?: string }
         if (savedBusiness.logo) setLogoPreview(savedBusiness.logo)
+        if (logo) {
+          const palette = await extractBrandColors(logo)
+          if (palette) await updateStorefrontSettings(businessId, palette)
+        }
         setLogo(null)
         toast.success('Business details saved')
       } else toast.error(result.error || 'Unable to save business details')

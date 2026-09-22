@@ -14,6 +14,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar } from 'recharts'
 import { LoadingButton } from '@/components/ui/loading-button'
 import { PageSkeleton } from '@/components/ui/skeleton'
+import { normalizeAmountInput } from '@/lib/utils'
 
 const formatCurrency = (value: number) =>
   new Intl.NumberFormat('en-NG', {
@@ -730,7 +731,7 @@ export default function ReportsPage() {
                   type="number"
                   step="0.01"
                   value={formData.amount}
-                  onChange={(e) => setFormData({ ...formData, amount: parseFloat(e.target.value) || 0 })}
+                  onChange={(e) => setFormData({ ...formData, amount: normalizeAmountInput(e.target.value) })}
                   className="dashboard-input mt-1"
                   placeholder="0.00"
                   required

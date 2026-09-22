@@ -6,6 +6,7 @@ import { ArrowLeft, Loader2, Plus, Sparkles, Trash2, X } from 'lucide-react'
 import Link from 'next/link'
 import { addCustomer, getBusiness, getCustomers, createInvoice, generateInvoiceNotes } from '@/app/actions/business'
 import { LoadingButton } from '@/components/ui/loading-button'
+import { normalizeAmountInput } from '@/lib/utils'
 import { PageSkeleton } from '@/components/ui/skeleton'
 import { BackButton } from '@/components/ui/back-button'
 
@@ -114,7 +115,7 @@ export default function NewInvoicePage() {
         item.id === id
           ? {
               ...item,
-              [field]: field === 'description' ? value : Number(value) || 0,
+              [field]: field === 'description' ? value : field === 'unit_price' ? normalizeAmountInput(value) : Number(value) || 0,
             }
           : item
       )
