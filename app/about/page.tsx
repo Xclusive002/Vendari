@@ -7,6 +7,7 @@ export const metadata: Metadata = {
   description: 'Learn how ProfitPilot began in 2022, why it became Vendari in 2026, and how we are building a more trustworthy operating system for growing businesses.',
   keywords: ['Vendari', 'business management app', 'small business app', 'sales and inventory app', 'business operations'],
   alternates: { canonical: 'https://www.vendari.name.ng/about' },
+  robots: { index: true, follow: true },
   openGraph: {
     title: 'About Vendari | Business management app for growing businesses',
     description: 'The story, purpose, and principles behind Vendari.',

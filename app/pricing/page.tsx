@@ -9,6 +9,13 @@ export const metadata: Metadata = {
   alternates: {
     canonical: 'https://www.vendari.name.ng/pricing',
   },
+  robots: { index: true, follow: true },
+  openGraph: {
+    title: 'Vendari Pricing | One complete business workspace',
+    description: 'See Vendari membership pricing for sales, inventory, customers, reports, expenses, and storefront tools.',
+    url: 'https://www.vendari.name.ng/pricing',
+    type: 'website',
+  },
 }
 
 export default function PricingPage() {
