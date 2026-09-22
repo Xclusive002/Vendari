@@ -532,6 +532,19 @@ export default async function Home() {
             </Link>
           </div>
           <div className="flex items-center gap-3">
+            <details className="relative md:hidden">
+              <summary className="flex h-10 w-10 cursor-pointer list-none items-center justify-center rounded-md border border-border bg-surface text-ink shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue" aria-label="Open navigation">
+                <span className="sr-only">Open navigation</span>
+                <span className="flex w-4 flex-col gap-1" aria-hidden="true"><span className="h-0.5 w-full bg-current" /><span className="h-0.5 w-full bg-current" /><span className="h-0.5 w-full bg-current" /></span>
+              </summary>
+              <div className="absolute right-0 top-12 z-50 w-56 rounded-xl border border-border bg-surface p-2 shadow-[var(--shadow-modal)]">
+                <a href="#how-it-works" className="block rounded-lg px-3 py-2.5 text-sm font-medium text-text-secondary hover:bg-bg hover:text-ink">How it works</a>
+                <a href="#features" className="block rounded-lg px-3 py-2.5 text-sm font-medium text-text-secondary hover:bg-bg hover:text-ink">Features</a>
+                <a href="#businesses" className="block rounded-lg px-3 py-2.5 text-sm font-medium text-text-secondary hover:bg-bg hover:text-ink">For every business</a>
+                <Link href="/pricing" className="block rounded-lg px-3 py-2.5 text-sm font-medium text-text-secondary hover:bg-bg hover:text-ink">Pricing</Link>
+                <Link href="/about" className="block rounded-lg px-3 py-2.5 text-sm font-medium text-text-secondary hover:bg-bg hover:text-ink">About</Link>
+              </div>
+            </details>
             <Link
               href="/login"
               className="inline-flex rounded-md px-3 py-2 text-sm font-semibold text-ink hover:bg-bg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue"
