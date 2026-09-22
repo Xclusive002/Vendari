@@ -30,7 +30,7 @@ async function fetchWithTimeout(url: string, options: RequestInit = {}, timeoutM
 
   function isPublicAuthRequest(path: string) {
     const pathname = path.split('?')[0].replace(/\/$/, '')
-    return pathname === '/auth/login' || pathname === '/auth/register' || pathname === '/auth/token/refresh'
+    return pathname === '/auth/login' || pathname === '/auth/register' || pathname === '/auth/google/exchange' || pathname === '/auth/token/refresh'
   }
 
   const ACCESS_TOKEN_MAX_AGE = 15 * 60

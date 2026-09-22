@@ -5,7 +5,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { ArrowRight, Eye, EyeOff, MailCheck } from 'lucide-react'
-import { register } from '@/app/actions/auth'
+import { getGoogleSignInUrl, register } from '@/app/actions/auth'
 import { LoadingButton } from '@/components/ui/loading-button'
 import LoadingSpinner from '@/components/ui/loading-spinner'
 
@@ -41,6 +41,16 @@ export default function RegisterPage() {
     setLoading(false)
   }
 
+  async function handleGoogleSignIn() {
+    setLoading(true)
+    try {
+      window.location.assign(await getGoogleSignInUrl())
+    } catch (error) {
+      setLoading(false)
+      setError(error instanceof Error ? error.message : 'Google sign-in is unavailable.')
+    }
+  }
+
   return (
     <main className="auth-shell">
       <div className="auth-card">
@@ -62,7 +72,9 @@ export default function RegisterPage() {
               </>
             )}
 
-            <form onSubmit={handleRegister} className="mt-8 space-y-5" noValidate>
+            <button type="button" onClick={handleGoogleSignIn} disabled={loading} className="mt-8 flex w-full items-center justify-center gap-3 rounded-lg border border-border bg-white px-4 py-3 text-sm font-semibold text-ink shadow-sm hover:bg-bg disabled:opacity-60"><span className="font-bold text-blue">G</span>{loading ? 'Connecting to Google…' : 'Continue with Google'}</button>
+            <div className="my-5 flex items-center gap-3 text-xs text-text-muted"><span className="h-px flex-1 bg-border" /><span>or create with email</span><span className="h-px flex-1 bg-border" /></div>
+            <form onSubmit={handleRegister} className="space-y-5" noValidate>
               <div>
                 <label htmlFor="register-name" className="text-sm font-medium text-text-secondary">Your name</label>
                 <input id="register-name" value={fullName} onChange={(event) => setFullName(event.target.value)} className="dashboard-input mt-2 w-full px-3 py-2.5" autoComplete="name" disabled={loading} />

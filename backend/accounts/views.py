@@ -2,12 +2,18 @@ import logging
 import random
 import secrets
 import threading
+import urllib.error
+import urllib.parse
+import urllib.request
+import json
 from datetime import timedelta
 
 from django.conf import settings
 from django.core.mail import EmailMultiAlternatives
+from django.core.signing import BadSignature, SignatureExpired, TimestampSigner
 from django.db import transaction
 from django.contrib.auth.hashers import check_password, make_password
+from django.shortcuts import redirect
 from django.utils import timezone
 from rest_framework import status
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -15,9 +21,10 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from businesses.models import Business
+from businesses.models import Business, Membership
+from billing.models import Plan
 from vendari_api.rate_limits import rate_limited, too_many_requests
-from .models import EmailVerificationToken, PasswordResetCode, User
+from .models import EmailVerificationToken, GoogleLoginCode, PasswordResetCode, User
 from .serializers import InviteAcceptSerializer, LoginSerializer, PasswordResetConfirmSerializer, PasswordResetRequestSerializer, RegisterSerializer, VerifyEmailSerializer
 from .serializers_profile import CurrentUserSerializer
 
@@ -254,6 +261,121 @@ class LoginView(APIView):
         serializer = LoginSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         return Response(token_pair(serializer.validated_data['user']))
+
+
+def google_redirect_uri():
+    return settings.GOOGLE_REDIRECT_URI.strip()
+
+
+def google_frontend_redirect_uri():
+    return settings.GOOGLE_FRONTEND_REDIRECT_URI or f'{settings.DASHBOARD_URL.rstrip("/")}/login'
+
+
+def google_error_redirect(message):
+    return f'{google_frontend_redirect_uri()}?oauth_error={urllib.parse.quote(message)}'
+
+
+class GoogleLoginStartView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        if not settings.GOOGLE_CLIENT_ID or not settings.GOOGLE_CLIENT_SECRET or not google_redirect_uri():
+            return Response({'detail': 'Google sign-in is not configured on the server.'}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+        state = TimestampSigner(salt='vendari-google-oauth').sign(secrets.token_urlsafe(24))
+        params = urllib.parse.urlencode({
+            'client_id': settings.GOOGLE_CLIENT_ID,
+            'redirect_uri': google_redirect_uri(),
+            'response_type': 'code',
+            'scope': 'openid email profile',
+            'state': state,
+            'access_type': 'online',
+            'prompt': 'select_account',
+        })
+        return redirect(f'https://accounts.google.com/o/oauth2/v2/auth?{params}')
+
+
+class GoogleLoginCallbackView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        error = request.query_params.get('error')
+        if error:
+            return redirect(google_error_redirect('Google sign-in was cancelled.'))
+
+        try:
+            TimestampSigner(salt='vendari-google-oauth').unsign(request.query_params.get('state', ''), max_age=600)
+        except (BadSignature, SignatureExpired):
+            return redirect(google_error_redirect('Google sign-in expired. Please try again.'))
+
+        authorization_code = request.query_params.get('code', '')
+        if not authorization_code:
+            return redirect(google_error_redirect('Google did not return an authorization code.'))
+
+        try:
+            token_request = urllib.request.Request(
+                'https://oauth2.googleapis.com/token',
+                data=urllib.parse.urlencode({
+                    'code': authorization_code,
+                    'client_id': settings.GOOGLE_CLIENT_ID,
+                    'client_secret': settings.GOOGLE_CLIENT_SECRET,
+                    'redirect_uri': google_redirect_uri(),
+                    'grant_type': 'authorization_code',
+                }).encode(),
+                headers={'Content-Type': 'application/x-www-form-urlencoded'},
+                method='POST',
+            )
+            with urllib.request.urlopen(token_request, timeout=15) as response:
+                token_payload = json.loads(response.read())
+            access_token = token_payload.get('access_token')
+            if not access_token:
+                raise ValueError('Google did not return an access token.')
+            profile_request = urllib.request.Request(
+                'https://openidconnect.googleapis.com/v1/userinfo',
+                headers={'Authorization': f'Bearer {access_token}'},
+            )
+            with urllib.request.urlopen(profile_request, timeout=15) as response:
+                profile = json.loads(response.read())
+        except (urllib.error.HTTPError, urllib.error.URLError, ValueError, json.JSONDecodeError):
+            logger.exception('Google OAuth exchange failed')
+            return redirect(google_error_redirect('Google sign-in could not be completed.'))
+
+        email = str(profile.get('email', '')).strip().lower()
+        if not email or not profile.get('email_verified'):
+            return redirect(google_error_redirect('Google did not provide a verified email address.'))
+
+        user = User.objects.filter(email__iexact=email).first()
+        if user is None:
+            user = User(email=email, full_name=str(profile.get('name', '')).strip(), is_verified=True)
+            user.set_unusable_password()
+            user.save()
+            plan, _ = Plan.objects.get_or_create(name=Plan.PLAN_PRO, interval=Plan.INTERVAL_MONTHLY, defaults={'amount': 4999})
+            business_name = f"{user.full_name or email.split('@')[0]}'s business"
+            business = Business.objects.create(owner=user, name=business_name, email=email, plan=plan, trial_started_at=timezone.now(), trial_ends_at=timezone.now() + timedelta(days=5))
+            Membership.objects.create(user=user, business=business, role=Membership.ROLE_OWNER)
+        elif not user.is_active:
+            return redirect(google_error_redirect('This Vendari account is inactive.'))
+        else:
+            if not user.is_verified:
+                user.is_verified = True
+                user.save(update_fields=['is_verified'])
+
+        code = secrets.token_urlsafe(48)
+        GoogleLoginCode.objects.create(user=user, code=code, expires_at=timezone.now() + timedelta(minutes=2))
+        return redirect(f'{google_frontend_redirect_uri()}?oauth_code={urllib.parse.quote(code)}')
+
+
+class GoogleLoginExchangeView(APIView):
+    permission_classes = [AllowAny]
+
+    @transaction.atomic
+    def post(self, request):
+        code = str(request.data.get('code', '')).strip()
+        login_code = GoogleLoginCode.objects.select_for_update().select_related('user').filter(code=code, used_at__isnull=True).first()
+        if not code or login_code is None or login_code.expires_at <= timezone.now():
+            return Response({'detail': 'This Google sign-in has expired. Please try again.'}, status=status.HTTP_400_BAD_REQUEST)
+        login_code.used_at = timezone.now()
+        login_code.save(update_fields=['used_at'])
+        return Response(token_pair(login_code.user))
 
 
 class PasswordResetRequestView(APIView):

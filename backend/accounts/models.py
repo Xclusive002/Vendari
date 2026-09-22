@@ -74,3 +74,14 @@ class PasswordResetCode(models.Model):
 
     def __str__(self):
         return f'Password reset for {self.user.email}'
+
+
+class GoogleLoginCode(models.Model):
+    code = models.CharField(max_length=96, unique=True, editable=False)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='google_login_codes')
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField()
+    used_at = models.DateTimeField(null=True, blank=True)
+
+    def __str__(self):
+        return f'Google login for {self.user.email}'

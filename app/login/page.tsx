@@ -6,7 +6,7 @@ import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { ArrowRight, Eye, EyeOff, LockKeyhole } from 'lucide-react'
 import { toast } from 'sonner'
-import { login, restoreRememberedSession } from '@/app/actions/auth'
+import { exchangeGoogleCode, getGoogleSignInUrl, login, restoreRememberedSession } from '@/app/actions/auth'
 import { LoadingButton } from '@/components/ui/loading-button'
 import LoadingSpinner from '@/components/ui/loading-spinner'
 
@@ -30,6 +30,7 @@ export default function LoginPage() {
   const [resetPassword, setResetPassword] = useState('')
   const [showResetPassword, setShowResetPassword] = useState(false)
   const [resetMessage, setResetMessage] = useState('')
+  const [googleLoading, setGoogleLoading] = useState(false)
 
   useEffect(() => {
     let active = true
@@ -40,6 +41,29 @@ export default function LoginPage() {
     })
     return () => { active = false }
   }, [])
+
+  useEffect(() => {
+    const searchParams = new URLSearchParams(window.location.search)
+    const code = searchParams.get('oauth_code')
+    const oauthError = searchParams.get('oauth_error')
+    if (oauthError) setError(oauthError)
+    if (!code) return
+    setGoogleLoading(true)
+    exchangeGoogleCode(code).then((result) => {
+      if (result.success) window.location.replace('/dashboard')
+      else setError(result.error)
+    }).finally(() => setGoogleLoading(false))
+  }, [])
+
+  async function handleGoogleSignIn() {
+    setGoogleLoading(true)
+    try {
+      window.location.assign(await getGoogleSignInUrl())
+    } catch (error) {
+      setGoogleLoading(false)
+      setError(error instanceof Error ? error.message : 'Google sign-in is unavailable.')
+    }
+  }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -148,6 +172,8 @@ export default function LoginPage() {
               </>
             )}
 
+            {!resetOpen && <button type="button" onClick={handleGoogleSignIn} disabled={googleLoading || loading || restoring} className="mt-8 flex w-full items-center justify-center gap-3 rounded-lg border border-border bg-white px-4 py-3 text-sm font-semibold text-ink shadow-sm hover:bg-bg disabled:opacity-60"><span className="font-bold text-blue">G</span>{googleLoading ? 'Connecting to Google…' : 'Continue with Google'}</button>}
+            {!resetOpen && <div className="my-5 flex items-center gap-3 text-xs text-text-muted"><span className="h-px flex-1 bg-border" /><span>or use email</span><span className="h-px flex-1 bg-border" /></div>}
             {resetOpen ? <form onSubmit={resetStep === 'request' ? handleResetRequest : handleResetConfirm} className="mt-8 space-y-5" noValidate>
               <div>
                 <label htmlFor="reset-email" className="text-sm font-medium text-text-secondary">Email address</label>

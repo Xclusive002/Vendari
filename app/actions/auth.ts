@@ -48,6 +48,29 @@ export async function login(email: string, password: string, rememberMe = false)
   }
 }
 
+export async function getGoogleSignInUrl() {
+  const baseUrl = process.env.NEXT_PUBLIC_API_URL?.trim().replace(/\/+$/, '')
+  if (!baseUrl) throw new Error('NEXT_PUBLIC_API_URL is not configured')
+  return `${baseUrl}/auth/google/start/`
+}
+
+export async function exchangeGoogleCode(code: string) {
+  try {
+    const tokens = await apiJson<{ access: string; refresh: string }>('/auth/google/exchange/', {
+      method: 'POST',
+      body: JSON.stringify({ code }),
+      skipRefresh: true,
+    })
+    const cookieStore = await cookies()
+    cookieStore.set('vendari_access', tokens.access, { ...authCookieOptions, maxAge: ACCESS_TOKEN_MAX_AGE })
+    cookieStore.set('vendari_refresh', tokens.refresh, { ...authCookieOptions, maxAge: REFRESH_TOKEN_MAX_AGE })
+    cookieStore.set('vendari_remember', '1', { ...authCookieOptions, httpOnly: false, maxAge: REFRESH_TOKEN_MAX_AGE })
+    return { success: true as const }
+  } catch (error) {
+    return { success: false as const, error: error instanceof Error ? error.message : 'Google sign-in failed' }
+  }
+}
+
 export async function restoreRememberedSession() {
   const cookieStore = await cookies()
   if (cookieStore.get('vendari_remember')?.value !== '1') return { success: false as const }
