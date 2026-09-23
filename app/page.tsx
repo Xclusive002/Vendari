@@ -5,6 +5,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { HeroMotion, ParallaxMockup, ScrollReveal } from "@/components/landing-motion";
 import { TestimonialCarousel } from "@/components/testimonial-carousel";
+import { AdvertiseBanner } from "@/components/advertise-banner";
 
 export const metadata: Metadata = {
   title: "Vendari - Business Management App for Growing Businesses",
@@ -610,6 +611,8 @@ export default async function Home() {
           </HeroMotion>
         </div>
       </section>
+
+      <AdvertiseBanner />
 
       <ScrollReveal direction="left">
         <section
