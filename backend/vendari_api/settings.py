@@ -56,6 +56,7 @@ WHATSAPP_DISPLAY_NUMBER = env('WHATSAPP_DISPLAY_NUMBER', default='')
 WHATSAPP_BUSINESS_ACCOUNT_ID = env('WHATSAPP_BUSINESS_ACCOUNT_ID', default='')
 WHATSAPP_APP_SECRET = env('WHATSAPP_APP_SECRET', default='')
 WHATSAPP_WEBHOOK_VERIFY_TOKEN = env('WHATSAPP_WEBHOOK_VERIFY_TOKEN', default='')
+VENDARI_LOGO_URL = env('VENDARI_LOGO_URL', default='')
 GOOGLE_CLIENT_ID = env('GOOGLE_CLIENT_ID', default='')
 GOOGLE_CLIENT_SECRET = env('GOOGLE_CLIENT_SECRET', default='')
 GOOGLE_REDIRECT_URI = env('GOOGLE_REDIRECT_URI', default='')
@@ -86,6 +87,7 @@ INSTALLED_APPS = [
     'billing',
     'ai_insights',
     'whatsapp',
+    'broadcasts',
 ]
 
 MIDDLEWARE = [

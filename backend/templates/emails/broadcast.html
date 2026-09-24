@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>{{ subject }}</title>
+</head>
+<body style="margin:0;padding:0;background-color:#F4F7FB;font-family:Arial,Helvetica,sans-serif;color:#0B1220;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color:#F4F7FB;">
+    <tr>
+      <td align="center" style="padding:28px 14px;">
+        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="max-width:620px;background-color:#FFFFFF;border:1px solid #E3E8F1;">
+          <tr>
+            <td style="padding:26px 28px;background-color:#06122B;border-bottom:4px solid #4683EC;">
+              <img src="{{ logo_url }}" width="150" alt="Vendari" style="display:block;width:150px;height:auto;border:0;">
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:34px 28px 28px;">
+              <h1 style="margin:0 0 20px;color:#06122B;font-size:28px;line-height:1.2;font-weight:700;">{{ subject }}</h1>
+              <div style="font-size:16px;line-height:1.75;color:#4B5768;">
+                {{ message_body|linebreaksbr }}
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:22px 28px;background-color:#F7F9FC;border-top:1px solid #E3E8F1;">
+              <p style="margin:0 0 8px;color:#0B1220;font-size:13px;line-height:1.5;font-weight:700;">Vendari</p>
+              <p style="margin:0;color:#8792A2;font-size:12px;line-height:1.6;">You're receiving this because you have a Vendari account.</p>
+              <p style="margin:6px 0 0;color:#8792A2;font-size:12px;line-height:1.6;">Need help? Call 0901 661 5446.</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

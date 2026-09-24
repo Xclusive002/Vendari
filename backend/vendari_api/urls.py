@@ -30,6 +30,7 @@ from billing.views import PaystackInitializeView, PaystackWebhookView, PaystackB
 from ai_insights.views import BusinessAskView, BusinessInsightsView, VoiceEntryView
 from invoices.views import InvoiceViewSet, SaleReceiptView, GenerateInvoiceNotesView
 from whatsapp.views import WhatsAppWebhookView
+from broadcasts.views import BroadcastCronView
 
 business_router = routers.SimpleRouter()
 business_router.register('businesses', BusinessViewSet, basename='business')
@@ -83,6 +84,7 @@ urlpatterns = [
     path('api/businesses/<int:business_id>/sales/<int:sale_id>/receipt/', SaleReceiptView.as_view()),
     path('api/businesses/<int:business_id>/invoices/generate-notes/', GenerateInvoiceNotesView.as_view()),
     path('api/cron/send-reminders/', CustomerReminderCronView.as_view()),
+    path('api/cron/send-broadcasts/', BroadcastCronView.as_view()),
     path('api/businesses/<int:business_id>/reminders/', CustomerRemindersView.as_view()),
     path('api/notifications/', include('notifications.urls')),
     path('api/', include(business_router.urls)),
