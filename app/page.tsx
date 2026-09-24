@@ -532,32 +532,31 @@ export default async function Home() {
               About
             </Link>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center">
             <details className="relative md:hidden">
-              <summary className="flex h-10 w-10 cursor-pointer list-none items-center justify-center rounded-md border border-border bg-surface text-ink shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue" aria-label="Open navigation">
+              <summary className="flex h-11 w-11 cursor-pointer list-none items-center justify-center rounded-lg border border-border bg-surface text-ink shadow-sm transition hover:bg-bg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue [&::-webkit-details-marker]:hidden" aria-label="Open navigation">
                 <span className="sr-only">Open navigation</span>
-                <span className="flex w-4 flex-col gap-1" aria-hidden="true"><span className="h-0.5 w-full bg-current" /><span className="h-0.5 w-full bg-current" /><span className="h-0.5 w-full bg-current" /></span>
+                <span className="flex w-5 flex-col gap-1.5" aria-hidden="true"><span className="h-0.5 w-full rounded-full bg-current" /><span className="h-0.5 w-full rounded-full bg-current" /><span className="h-0.5 w-full rounded-full bg-current" /></span>
               </summary>
-              <div className="absolute right-0 top-12 z-50 w-56 rounded-xl border border-border bg-surface p-2 shadow-[var(--shadow-modal)]">
-                <a href="#how-it-works" className="block rounded-lg px-3 py-2.5 text-sm font-medium text-text-secondary hover:bg-bg hover:text-ink">How it works</a>
-                <a href="#features" className="block rounded-lg px-3 py-2.5 text-sm font-medium text-text-secondary hover:bg-bg hover:text-ink">Features</a>
-                <a href="#businesses" className="block rounded-lg px-3 py-2.5 text-sm font-medium text-text-secondary hover:bg-bg hover:text-ink">For every business</a>
-                <Link href="/pricing" className="block rounded-lg px-3 py-2.5 text-sm font-medium text-text-secondary hover:bg-bg hover:text-ink">Pricing</Link>
-                <Link href="/about" className="block rounded-lg px-3 py-2.5 text-sm font-medium text-text-secondary hover:bg-bg hover:text-ink">About</Link>
+              <div className="absolute right-0 top-14 z-50 w-[min(18rem,calc(100vw-2.5rem))] rounded-xl border border-border bg-surface p-3 shadow-[var(--shadow-modal)]">
+                <p className="px-3 pb-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-text-muted">Menu</p>
+                <nav className="space-y-1" aria-label="Mobile navigation">
+                  <a href="#how-it-works" className="block rounded-lg px-3 py-3 text-sm font-medium text-text-secondary transition hover:bg-bg hover:text-ink">How it works</a>
+                  <a href="#features" className="block rounded-lg px-3 py-3 text-sm font-medium text-text-secondary transition hover:bg-bg hover:text-ink">Features</a>
+                  <a href="#businesses" className="block rounded-lg px-3 py-3 text-sm font-medium text-text-secondary transition hover:bg-bg hover:text-ink">For every business</a>
+                  <Link href="/pricing" className="block rounded-lg px-3 py-3 text-sm font-medium text-text-secondary transition hover:bg-bg hover:text-ink">Pricing</Link>
+                  <Link href="/about" className="block rounded-lg px-3 py-3 text-sm font-medium text-text-secondary transition hover:bg-bg hover:text-ink">About</Link>
+                </nav>
+                <div className="mt-3 grid grid-cols-2 gap-2 border-t border-border pt-3">
+                  <Link href="/login" className="inline-flex min-h-11 items-center justify-center rounded-lg border border-border px-3 py-2 text-sm font-semibold text-ink transition hover:bg-bg">Sign in</Link>
+                  <Link href="/register" className="inline-flex min-h-11 items-center justify-center gap-1 rounded-lg bg-brand-gradient px-3 py-2 text-sm font-semibold text-white shadow-sm">Start now <ArrowRight className="h-3.5 w-3.5" /></Link>
+                </div>
               </div>
             </details>
-            <Link
-              href="/login"
-              className="inline-flex rounded-md px-3 py-2 text-sm font-semibold text-ink hover:bg-bg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue"
-            >
-              Sign in
-            </Link>
-            <Link
-              href="/register"
-              className="motion-hover inline-flex items-center gap-2 rounded-md bg-brand-gradient px-3.5 py-2 text-xs font-semibold text-white shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue focus-visible:ring-offset-2 sm:text-sm"
-            >
-              Start now <ArrowRight className="h-3.5 w-3.5" />
-            </Link>
+            <div className="hidden items-center gap-3 md:flex">
+              <Link href="/login" className="inline-flex rounded-md px-3 py-2 text-sm font-semibold text-ink hover:bg-bg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue">Sign in</Link>
+              <Link href="/register" className="motion-hover inline-flex items-center gap-2 rounded-md bg-brand-gradient px-3.5 py-2 text-xs font-semibold text-white shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue focus-visible:ring-offset-2 sm:text-sm">Start now <ArrowRight className="h-3.5 w-3.5" /></Link>
+            </div>
           </div>
         </div>
       </nav>
