@@ -101,20 +101,18 @@ export default function DashboardPage() {
         if (currentLoad !== loadVersion) return
         setBusiness(currentBusiness)
 
-        const storefrontResult = await getStorefrontSettings(currentBusiness.id)
+        const [storefrontResult, subscriptionResult, summaryResult, invoiceResult] = await Promise.all([
+          getStorefrontSettings(currentBusiness.id),
+          getSubscription(currentBusiness.id),
+          getDashboardSummary(currentBusiness.id),
+          getInvoices(currentBusiness.id, undefined, 'unpaid'),
+        ])
         if (currentLoad === loadVersion && storefrontResult.success) setStorefront(storefrontResult.data)
-
-        const subscriptionResult = await getSubscription(currentBusiness.id)
-        if (currentLoad === loadVersion && subscriptionResult.success && subscriptionResult.data) {
-          setSubscription(subscriptionResult.data)
-        }
-
-        const summaryResult = await getDashboardSummary(currentBusiness.id)
+        if (currentLoad === loadVersion && subscriptionResult.success && subscriptionResult.data) setSubscription(subscriptionResult.data)
         if (currentLoad !== loadVersion) return
         const nextSummary = summaryResult.success ? summaryResult.data : { total_sales: 0, orders: 0, total_expenses: 0, profit: 0, trend: [], products: [], low_stock: [] }
         setSummary(nextSummary)
 
-        const invoiceResult = await getInvoices(currentBusiness.id, undefined, 'unpaid')
         const invoices = invoiceResult.success ? invoiceResult.data || [] : []
         const today = new Date()
         const dueSoon = invoices.filter((invoice: any) => {

@@ -6,7 +6,7 @@ from urllib.parse import quote
 from django.conf import settings
 from django.core.cache import cache
 from django.db import transaction
-from django.db.models import F, Q, Sum
+from django.db.models import Count, F, Q, Sum
 from django.utils import timezone
 from rest_framework import status, viewsets
 from rest_framework.response import Response
@@ -473,7 +473,8 @@ class BusinessDashboardSummaryView(APIView):
 		business = Business.objects.get(pk=business_id)
 		sales = Sale.objects.filter(business=business)
 		expenses = Expense.objects.filter(business=business)
-		total_sales = sales.aggregate(value=Sum('total'))['value'] or 0
+		sales_totals = sales.aggregate(value=Sum('total'), count=Count('id'))
+		total_sales = sales_totals['value'] or 0
 		total_expenses = expenses.aggregate(value=Sum('amount'))['value'] or 0
 		trend_start = timezone.now() - timedelta(days=6)
 		trend = sales.filter(sold_at__gte=trend_start).values('sold_at__date').annotate(amount=Sum('total')).order_by('sold_at__date')
@@ -497,7 +498,7 @@ class BusinessDashboardSummaryView(APIView):
 
 		return Response({
 			'total_sales': float(total_sales),
-			'orders': sales.count(),
+			'orders': sales_totals['count'] or 0,
 			'total_expenses': float(total_expenses),
 			'profit': float(total_sales - total_expenses),
 			'trend': trend_data,

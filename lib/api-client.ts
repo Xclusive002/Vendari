@@ -5,6 +5,8 @@ import { cookies, headers } from 'next/headers'
 type ApiOptions = RequestInit & { skipRefresh?: boolean }
 
 const DEFAULT_API_TIMEOUT_MS = 15000
+const REFRESH_TIMEOUT_MS = 10000
+let refreshPromise: Promise<boolean> | null = null
 
 function apiUrl(path: string) {
   const baseUrl = process.env.NEXT_PUBLIC_API_URL?.trim().replace(/\/+$/, '')
@@ -55,7 +57,7 @@ export async function apiFetch(path: string, options: ApiOptions = {}): Promise<
   if (!(requestOptions.body instanceof FormData)) requestHeaders.set('Content-Type', 'application/json')
   const fullUrl = apiUrl(path)
   const controller = new AbortController()
-  const timeoutId = setTimeout(() => controller.abort(), 15000)
+  const timeoutId = setTimeout(() => controller.abort(), DEFAULT_API_TIMEOUT_MS)
 
   try {
     const response = await fetch(fullUrl, { ...requestOptions, headers: requestHeaders, cache: 'no-store', signal: controller.signal })
@@ -75,16 +77,29 @@ export async function apiFetch(path: string, options: ApiOptions = {}): Promise<
 }
 
 async function refreshSession() {
+  if (refreshPromise) return refreshPromise
+  refreshPromise = refreshSessionOnce()
+  try {
+    return await refreshPromise
+  } finally {
+    refreshPromise = null
+  }
+}
+
+async function refreshSessionOnce() {
   const refresh = (await cookies()).get('vendari_refresh')?.value
   if (!refresh) return false
-  const response = await fetch(apiUrl('/auth/token/refresh/'), {
-    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ refresh }), cache: 'no-store',
-  })
-  if (!response.ok) return false
-  if (!response.ok) {
-    await clearAuthCookies()
-    return false
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => controller.abort(), REFRESH_TIMEOUT_MS)
+  let response: Response
+  try {
+    response = await fetch(apiUrl('/auth/token/refresh/'), {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ refresh }), cache: 'no-store', signal: controller.signal,
+    })
+  } finally {
+    clearTimeout(timeoutId)
   }
+  if (!response.ok) return false
   const tokens = await response.json()
   const cookieStore = await cookies()
   cookieStore.set('vendari_access', tokens.access, {
