@@ -1,0 +1,23 @@
+{% extends "admin/change_form.html" %}
+
+{% block object-tools-items %}
+  {% if original and original.status == 'draft' %}
+    <li>
+      <form method="post" action="{% url 'admin:broadcasts_broadcast_queue' original.pk %}" style="display:inline;">
+        {% csrf_token %}
+        <button type="submit" class="button" style="background:#4683EC;color:#fff;border:0;border-radius:4px;padding:8px 12px;font-weight:600;cursor:pointer;">
+          Queue for sending
+        </button>
+      </form>
+    </li>
+  {% endif %}
+  {{ block.super }}
+{% endblock %}
+
+{% block after_field_sets %}
+  <div class="help" style="margin:16px 0;padding:12px 14px;border-left:4px solid #4683EC;background:#F4F7FB;max-width:760px;">
+    <strong>How sending works:</strong> Save this broadcast, then click <strong>Queue for sending</strong> above.
+    Vendari snapshots every user with an email address at that moment. Nothing is sent from this page.
+    The external cron job sends up to 50 recipients per run and retries failed recipients.
+  </div>
+{% endblock %}
