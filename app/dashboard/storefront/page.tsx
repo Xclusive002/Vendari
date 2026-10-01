@@ -10,8 +10,9 @@ import { toast } from 'sonner'
 import { checkStorefrontSlug, getBusiness, getStorefrontSettings, launchStorefront, updateBusiness, updateStorefrontSettings, uploadStorefrontBanner } from '@/app/actions/business'
 import { getStorefrontUrl } from '@/lib/storefront'
 import { PageSkeleton } from '@/components/ui/skeleton'
-import { getStorefrontTheme, STOREFRONT_THEMES } from '@/lib/storefront-themes'
+import { STOREFRONT_THEMES } from '@/lib/storefront-themes'
 import { extractBrandColors } from '@/lib/brand-colors'
+import { StorefrontThemePreview } from '@/components/dashboard/storefront-theme-preview'
 
 const VENDARI_BLUE = '#4683EC'
 const SOCIAL_PLATFORMS = [
@@ -20,32 +21,6 @@ const SOCIAL_PLATFORMS = [
   { key: 'tiktok', label: 'TikTok', icon: Music2 },
   { key: 'twitter', label: 'Twitter/X', icon: Globe },
 ] as const
-function StorefrontPreview({ business, settings }: { business: any; settings: any }) {
-  const primary = settings.primary_color || '#4683EC'
-  const accent = settings.accent_color || primary
-  const theme = getStorefrontTheme(settings.theme)
-  const isBold = theme.key === 'bold'
-  const isMinimal = theme.key === 'minimal'
-  return (
-    <div className={`overflow-hidden border border-border bg-white shadow-sm ${theme.radius}`}>
-      <div className="flex items-center justify-between px-4 py-3 text-white" style={{ backgroundColor: primary }}>
-        <div className="flex items-center gap-2"><span className="flex h-7 w-7 items-center justify-center rounded-full bg-white/20 text-xs font-bold">{business.name?.slice(0, 1) || 'S'}</span><span className="text-xs font-semibold">{business.name || 'Your store'}</span></div>
-        <span className="text-[10px] uppercase tracking-[0.18em] text-white/70">{theme.label}</span>
-      </div>
-      <div className="p-4" style={{ backgroundColor: theme.surface }}>
-        <div className={`${isBold ? 'min-h-24 rounded-xl p-4 text-white' : isMinimal ? 'border-b border-slate-200 pb-4' : 'rounded-lg p-3'} ${isBold ? 'flex flex-col justify-end' : ''}`} style={isBold ? { backgroundColor: primary } : undefined}>
-          <p className={`text-[9px] font-semibold uppercase tracking-[0.2em] ${isBold ? 'text-white/70' : 'text-slate-500'}`}>Online shop</p>
-          <p className={`mt-1 font-bold ${isBold ? 'text-xl' : 'text-lg'}`} style={!isBold ? { color: primary } : undefined}>{business.name || 'Your storefront'}</p>
-          <p className={`mt-1 line-clamp-1 text-[10px] ${isBold ? 'text-white/80' : 'text-slate-500'}`}>{settings.description || 'Fresh products and services for your customers.'}</p>
-        </div>
-        <div className={`mt-4 grid grid-cols-3 gap-2 ${isMinimal ? '' : 'rounded-lg'}`}>
-          {['Product one', 'Product two', 'Product three'].map((product, index) => <div key={product} className="overflow-hidden border border-slate-200 bg-white" style={{ borderRadius: isMinimal ? 0 : 8 }}><div className="h-14" style={{ backgroundColor: index === 1 ? accent : `${primary}22` }} /><div className="p-2"><p className="truncate text-[10px] font-semibold text-slate-800">{product}</p><p className="mt-1 text-[9px] font-bold" style={{ color: accent }}>N2,500</p></div></div>)}
-        </div>
-      </div>
-    </div>
-  )
-}
-
 export default function StorefrontPage() {
   const [business, setBusiness] = useState<any>(null)
   const [settings, setSettings] = useState<any>(null)
@@ -139,6 +114,8 @@ export default function StorefrontPage() {
       whatsapp_number: settings.whatsapp_number || '',
       delivery_option: settings.delivery_option || 'both',
       primary_color: settings.primary_color || VENDARI_BLUE,
+      accent_color: settings.accent_color || VENDARI_BLUE,
+      storefront_label: settings.storefront_label || '',
       theme: settings.theme || 'classic',
       is_published: Boolean(settings.is_published),
       social_links: settings.social_links || {},
@@ -276,7 +253,7 @@ export default function StorefrontPage() {
 
               <div className="rounded-xl border border-border bg-bg p-4">
                 <div className="flex items-center justify-between"><p className="text-xs font-semibold uppercase tracking-[0.2em] text-text-muted">Live preview</p><span className="text-[10px] font-semibold text-emerald-600">Updates instantly</span></div>
-                <div className="mt-3"><StorefrontPreview business={business} settings={settings} /></div>
+                <div className="mt-3"><StorefrontThemePreview themeKey={settings.theme || 'classic'} businessName={business.name || 'Your business'} description={settings.description} primaryColor={settings.primary_color} accentColor={settings.accent_color} /></div>
               </div>
             </CardContent>
           </Card>
@@ -314,12 +291,9 @@ export default function StorefrontPage() {
                 <div className="mt-3 grid gap-3 sm:grid-cols-3">
                   {STOREFRONT_THEMES.slice(0, 3).map((preset) => {
                     const selected = (settings.theme || 'classic') === preset.key
-                    return <button key={preset.key} type="button" onClick={() => setSettings({ ...settings, theme: preset.key })} className={`text-left transition ${selected ? 'ring-2 ring-blue ring-offset-2' : 'hover:-translate-y-0.5'}`}>
-                      <div className={`overflow-hidden rounded-lg border ${selected ? 'border-blue ring-2 ring-blue ring-offset-2' : 'border-border'}`}>
-                        <div className={`h-7 ${preset.preview}`} />
-                        <div className="space-y-2 bg-white p-2"><div className="h-2 w-2/3 rounded-full bg-slate-200" /><div className="grid grid-cols-3 gap-1"><span className="h-8 rounded-sm bg-slate-100" /><span className="h-8 rounded-sm bg-slate-200" /><span className="h-8 rounded-sm bg-slate-100" /></div></div>
-                      </div>
-                      <p className="mt-2 text-xs font-semibold text-ink">{preset.label}</p><p className="mt-0.5 text-[10px] leading-4 text-text-muted">{preset.description}</p>
+                    return <button key={preset.key} type="button" aria-pressed={selected} onClick={() => setSettings({ ...settings, theme: preset.key })} className={`overflow-hidden rounded-xl border text-left transition hover:-translate-y-0.5 hover:shadow-lg ${selected ? 'border-blue ring-2 ring-blue/20' : 'border-border'}`}>
+                      <StorefrontThemePreview themeKey={preset.key} businessName={business.name || 'Your business'} description={settings.description} primaryColor={settings.primary_color} accentColor={settings.accent_color} />
+                      <div className="flex items-center justify-between gap-2 bg-white p-2.5"><span className="text-xs font-semibold text-ink">{preset.label}</span>{selected && <Check className="h-4 w-4 shrink-0 text-blue" />}</div>
                     </button>
                   })}
                 </div>

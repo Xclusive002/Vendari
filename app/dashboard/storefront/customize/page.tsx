@@ -2,47 +2,18 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
-import { Check, ExternalLink, LayoutTemplate, Palette, Save, Sparkles, Store, Wand2 } from 'lucide-react'
+import { Check, ExternalLink, LayoutTemplate, Palette, Save, Sparkles, Wand2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { PageSkeleton } from '@/components/ui/skeleton'
 import { getBusiness, getStorefrontSettings, updateStorefrontSettings } from '@/app/actions/business'
 import { STOREFRONT_THEMES } from '@/lib/storefront-themes'
+import { StorefrontThemePreview } from '@/components/dashboard/storefront-theme-preview'
 
 const VENDARI_BLUE = '#4683EC'
 
 type Settings = Record<string, any>
-
-function ThemeCanvas({ business, settings }: { business: any; settings: Settings }) {
-  const theme = STOREFRONT_THEMES.find((item) => item.key === settings.theme) || STOREFRONT_THEMES[0]
-  const primary = settings.primary_color || theme.primary
-  const accent = settings.accent_color || theme.accent
-  const dark = theme.key === 'noir'
-  const editorial = theme.key === 'editorial' || theme.key === 'atelier'
-  const bold = theme.key === 'bold' || theme.key === 'sunset'
-  const products = ['Featured product', 'New arrival', 'Best seller']
-
-  return (
-    <div className="overflow-hidden rounded-2xl border border-border bg-surface shadow-[var(--shadow-modal)]" style={{ backgroundColor: theme.surface, color: theme.ink }}>
-      <div className="flex items-center justify-between border-b border-black/10 px-4 py-3 text-xs" style={{ backgroundColor: dark ? '#111827' : primary, color: '#fff' }}>
-        <div className="flex items-center gap-2 font-semibold"><span className="flex h-7 w-7 items-center justify-center rounded-full bg-white/20">{business?.name?.slice(0, 1) || 'V'}</span>{business?.name || 'Your storefront'}</div>
-        <span className="hidden uppercase tracking-[0.16em] text-white/70 sm:inline">{theme.label}</span>
-      </div>
-      <div className="p-4 sm:p-6">
-        <div className={`${bold ? 'min-h-36 rounded-2xl p-5 text-white' : editorial ? 'border-b-2 border-current pb-5' : 'rounded-xl border border-black/10 p-4'}`} style={bold ? { background: `linear-gradient(135deg, ${primary}, ${accent})` } : undefined}>
-          <p className={`text-[10px] font-semibold uppercase tracking-[0.2em] ${bold ? 'text-white/70' : ''}`} style={!bold ? { color: accent } : undefined}>Online shop</p>
-          <h2 className={`mt-2 font-display font-bold ${bold ? 'text-3xl' : editorial ? 'text-3xl italic' : 'text-2xl'}`}>{business?.name || 'Your business'}</h2>
-          <p className={`mt-2 max-w-lg text-sm leading-6 ${bold ? 'text-white/80' : 'opacity-65'}`}>{settings.description || 'A storefront shaped around your business.'}</p>
-        </div>
-        <div className={`mt-5 grid gap-3 ${settings.product_display_mode === 'block' ? 'sm:grid-cols-1' : 'grid-cols-2 sm:grid-cols-3'}`}>
-          {products.map((product, index) => <div key={product} className={`overflow-hidden border border-black/10 bg-white/80 ${bold ? 'rounded-2xl' : theme.key === 'minimal' ? 'rounded-none' : 'rounded-xl'}`}><div className="h-20" style={{ background: index === 1 ? accent : `${primary}30` }} /><div className="p-3"><p className="truncate text-xs font-semibold">{product}</p><p className="mt-1 text-xs font-bold" style={{ color: accent }}>N2,500</p></div></div>)}
-        </div>
-        <div className="mt-5 flex items-center justify-between gap-3 rounded-xl px-4 py-3 text-xs font-semibold text-white" style={{ backgroundColor: dark ? '#111827' : primary }}><span>Designed for your customers</span><span className="rounded-full bg-white/20 px-3 py-1">Shop now</span></div>
-      </div>
-    </div>
-  )
-}
 
 export default function StorefrontCustomizePage() {
   const [business, setBusiness] = useState<any>(null)
@@ -72,6 +43,7 @@ export default function StorefrontCustomizePage() {
     const result = await updateStorefrontSettings(business.id, {
       description: settings.description || '',
       about: settings.about || '',
+      storefront_label: settings.storefront_label || '',
       theme: settings.theme || 'classic',
       primary_color: settings.primary_color || VENDARI_BLUE,
       accent_color: settings.accent_color || theme.accent,
@@ -94,14 +66,14 @@ export default function StorefrontCustomizePage() {
 
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_420px]">
         <section className="order-2 space-y-6 xl:order-1">
-          <div className="rounded-2xl border border-border bg-surface p-5 shadow-[var(--shadow-card)] sm:p-6"><div className="flex items-center gap-2"><Palette className="h-5 w-5 text-blue" /><div><h2 className="font-display text-xl font-semibold text-ink">Visual direction</h2><p className="text-sm text-text-secondary">Every theme changes rhythm, contrast, shape, and hierarchy.</p></div></div><div className="mt-5 grid gap-3 sm:grid-cols-2">{STOREFRONT_THEMES.map((preset) => { const active = settings.theme === preset.key; return <button type="button" key={preset.key} onClick={() => update('theme', preset.key)} className={`overflow-hidden rounded-xl border text-left transition hover:-translate-y-0.5 hover:shadow-[var(--shadow-raised)] ${active ? 'border-blue ring-2 ring-blue/20' : 'border-border'}`}><div className={`relative h-28 ${preset.preview}`}><div className="absolute inset-3 rounded-lg border border-white/30 bg-white/15 p-3 text-white backdrop-blur-sm"><div className="flex items-center justify-between"><span className="text-[10px] font-bold">{business.name || 'Your business'}</span><span className="text-[8px] uppercase tracking-widest text-white/70">{preset.label}</span></div><div className="mt-5 h-1.5 w-2/3 rounded-full bg-white/80" /><div className="mt-2 h-1.5 w-1/2 rounded-full bg-white/40" /></div>{active && <span className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-full bg-white text-blue"><Check className="h-4 w-4" /></span>}</div><div className="bg-surface p-3"><p className="font-display text-base font-semibold text-ink">{preset.label}</p><p className="mt-1 text-xs text-text-muted">{preset.mood}</p></div></button> })}</div></div>
+          <div className="rounded-2xl border border-border bg-surface p-5 shadow-[var(--shadow-card)] sm:p-6"><div className="flex items-center gap-2"><Palette className="h-5 w-5 text-blue" /><div><h2 className="font-display text-xl font-semibold text-ink">Visual direction</h2><p className="text-sm text-text-secondary">Choose a complete storefront look, not just a color palette.</p></div></div><div className="mt-5 grid gap-4 sm:grid-cols-2">{STOREFRONT_THEMES.map((preset) => { const active = settings.theme === preset.key; return <button type="button" key={preset.key} onClick={() => update('theme', preset.key)} aria-pressed={active} className={`group relative overflow-hidden rounded-2xl border text-left transition duration-200 hover:-translate-y-1 hover:shadow-xl ${active ? 'border-blue ring-2 ring-blue/25' : 'border-border'}`}><StorefrontThemePreview themeKey={preset.key} businessName={business.name || 'Your business'} description={settings.description} primaryColor={settings.primary_color} accentColor={settings.accent_color} className="border-0 shadow-none" />{active && <span className="absolute right-3 top-10 flex h-7 w-7 items-center justify-center rounded-full bg-white text-blue shadow-lg"><Check className="h-4 w-4" /></span>}<div className="border-t border-border bg-surface p-4"><div className="flex items-center justify-between gap-2"><p className="font-display text-base font-semibold text-ink">{preset.label}</p><span className="text-[10px] font-semibold uppercase tracking-wider text-text-muted">{preset.mood}</span></div><p className="mt-1 text-xs leading-5 text-text-secondary">{preset.description}</p></div></button> })}</div></div>
 
           <div className="rounded-2xl border border-border bg-surface p-5 shadow-[var(--shadow-card)] sm:p-6"><div className="flex items-center gap-2"><LayoutTemplate className="h-5 w-5 text-blue" /><div><h2 className="font-display text-xl font-semibold text-ink">Content and layout</h2><p className="text-sm text-text-secondary">Shape what customers see before they browse.</p></div></div><div className="mt-5 space-y-4"><label className="block text-sm font-medium text-text-secondary">Storefront headline<textarea value={settings.description || ''} onChange={(event) => update('description', event.target.value)} className="dashboard-input mt-2 min-h-24 w-full px-3 py-2 text-sm" placeholder="What should customers know first?" /></label><label className="block text-sm font-medium text-text-secondary">About your business<textarea value={settings.about || ''} onChange={(event) => update('about', event.target.value)} className="dashboard-input mt-2 min-h-32 w-full px-3 py-2 text-sm" placeholder="Tell your story in a few clear lines." /></label><label className="block text-sm font-medium text-text-secondary">Product presentation<select value={settings.product_display_mode || 'flexed'} onChange={(event) => update('product_display_mode', event.target.value)} className="dashboard-input mt-2 min-h-11 w-full px-3 py-2 text-sm"><option value="flexed">Grid - browse several products at once</option><option value="block">Editorial list - one product at a time</option></select></label></div></div>
 
           <div className="rounded-2xl border border-border bg-surface p-5 shadow-[var(--shadow-card)] sm:p-6"><div className="flex items-center gap-2"><Sparkles className="h-5 w-5 text-blue" /><div><h2 className="font-display text-xl font-semibold text-ink">Brand controls</h2><p className="text-sm text-text-secondary">Keep the structure of a theme while making the color language yours.</p></div></div><div className="mt-5 grid gap-3 sm:grid-cols-2">{([['primary_color', 'Primary color'], ['accent_color', 'Accent color']] as const).map(([key, label]) => <label key={key} className="flex items-center gap-3 rounded-xl border border-border bg-bg p-3"><input type="color" value={settings[key] || (key === 'primary_color' ? VENDARI_BLUE : theme.accent)} onChange={(event) => update(key, event.target.value)} className="h-11 w-12 cursor-pointer rounded border-0 bg-transparent p-0" /><span><span className="block text-sm font-semibold text-ink">{label}</span><span className="text-xs uppercase text-text-muted">{settings[key] || theme[key === 'primary_color' ? 'primary' : 'accent']}</span></span></label>)}</div><label className="mt-4 block text-sm font-medium text-text-secondary">Custom storefront label<Input value={settings.storefront_label || ''} onChange={(event) => update('storefront_label', event.target.value)} className="mt-2" placeholder="e.g. Made for everyday living" /></label></div>
         </section>
 
-        <aside className="order-1 h-fit xl:sticky xl:top-24 xl:order-2"><div className="mb-3 flex items-center justify-between"><div><p className="text-xs font-semibold uppercase tracking-[0.18em] text-blue">Live canvas</p><p className="mt-1 text-sm text-text-secondary">A customer-facing preview</p></div><Store className="h-5 w-5 text-blue" /></div><ThemeCanvas business={business} settings={settings} /><div className="mt-3 rounded-xl border border-blue/15 bg-blue/5 p-4 text-sm text-text-secondary"><Wand2 className="mr-2 inline h-4 w-4 text-blue" />Theme changes are intentionally different: a bold market, an editorial studio, and a minimal shop should not feel like the same storefront wearing new colors.</div></aside>
+        <aside className="order-1 h-fit xl:sticky xl:top-24 xl:order-2"><div className="mb-3 flex items-center justify-between"><div><p className="text-xs font-semibold uppercase tracking-[0.18em] text-blue">Live canvas</p><p className="mt-1 text-sm text-text-secondary">A customer-facing preview</p></div><span className="rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[10px] font-semibold text-emerald-700">LIVE PREVIEW</span></div><StorefrontThemePreview themeKey={settings.theme || 'classic'} businessName={business.name || 'Your business'} description={settings.description} primaryColor={settings.primary_color} accentColor={settings.accent_color} /><div className="mt-3 rounded-xl border border-blue/15 bg-blue/5 p-4 text-sm text-text-secondary"><Wand2 className="mr-2 inline h-4 w-4 text-blue" />Your preview responds as you switch themes, tune your colors, or refine your storefront headline.</div></aside>
       </div>
     </div>
   </main>
