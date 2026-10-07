@@ -14,7 +14,7 @@ from businesses.models import Business, Membership, StorefrontOrder, StorefrontO
 from inventory.models import InventoryItem
 from sales.models import Sale
 
-from .models import Plan, Subscription
+from .models import Payment, Plan, Subscription, WebhookEvent
 
 
 class PaystackInitializeTests(APITestCase):
@@ -48,6 +48,46 @@ class PaystackInitializeTests(APITestCase):
         self.assertEqual(paystack_request.call_args.args[1]['amount'], 4999900)
 
 
+class PaystackMembershipCheckoutTests(APITestCase):
+    def setUp(self):
+        self.user = User.objects.create_user('checkout@test.local', 'password123')
+        self.client.force_authenticate(self.user)
+        self.url = '/api/billing/checkout/'
+
+    @patch('billing.views.paystack_request')
+    def test_checkout_initializes_membership_plan_with_metadata(self, paystack_request):
+        paystack_request.return_value = {'status': True, 'data': {'authorization_url': 'https://paystack.test/checkout', 'reference': 'checkout-ref'}}
+
+        response = self.client.post(self.url, {'interval': 'monthly'}, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(paystack_request.call_args.args[0], 'transaction/initialize')
+        payload = paystack_request.call_args.args[1]
+        self.assertEqual(payload['email'], self.user.email)
+        self.assertEqual(payload['plan'], settings.PAYSTACK_MONTHLY_PLAN_CODE)
+        self.assertEqual(payload['metadata']['type'], 'membership')
+        self.assertEqual(payload['metadata']['user_id'], self.user.pk)
+        self.assertEqual(payload['metadata']['interval'], 'monthly')
+        self.assertIn('reference', payload)
+
+    @patch('billing.views.paystack_request')
+    def test_checkout_rejects_invalid_interval(self, paystack_request):
+        response = self.client.post(self.url, {'interval': 'forever'}, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        paystack_request.assert_not_called()
+
+    @patch('billing.views.paystack_request')
+    def test_yearly_checkout_uses_configured_kobo_price(self, paystack_request):
+        paystack_request.return_value = {'status': True, 'data': {'authorization_url': 'https://paystack.test/yearly', 'reference': 'yearly-checkout-ref'}}
+
+        response = self.client.post(self.url, {'interval': 'yearly'}, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(settings.PRO_YEARLY_KOBO, 4999000)
+        self.assertEqual(paystack_request.call_args.args[1]['amount'], 4999000)
+
+
 class PaystackWebhookTests(APITestCase):
     def setUp(self):
         self.user = User.objects.create_user('billing@test.local', 'password123')
@@ -70,7 +110,18 @@ class PaystackWebhookTests(APITestCase):
         response = self.client.post(self.url, self.body, content_type='application/json', HTTP_X_PAYSTACK_SIGNATURE='invalid')
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
-    def test_webhook_is_idempotent_for_replayed_payload(self):
+    @patch('billing.views.paystack_request')
+    def test_webhook_is_idempotent_for_replayed_payload(self, paystack_request):
+        paystack_request.return_value = {
+            'status': True,
+            'data': {
+                'reference': 'pay_test_123',
+                'status': 'success',
+                'amount': 100000,
+                'fees': 0,
+                'currency': 'NGN',
+            },
+        }
         before = timezone.now()
         response = self.client.post(self.url, self.body, content_type='application/json', HTTP_X_PAYSTACK_SIGNATURE=self.signature)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -81,8 +132,42 @@ class PaystackWebhookTests(APITestCase):
         self.assertEqual(subscription.plan, self.plan)
         self.assertGreaterEqual(subscription.renews_at, before + timedelta(days=30) - timedelta(seconds=2))
         self.assertLessEqual(subscription.renews_at, timezone.now() + timedelta(days=30) + timedelta(seconds=2))
+        paystack_request.assert_called_once()
+        self.assertTrue(WebhookEvent.objects.get(reference='pay_test_123').processed_at)
 
-    def test_yearly_webhook_renews_for_365_days(self):
+    @patch('billing.views.paystack_request')
+    def test_webhook_returns_accepted_while_another_delivery_holds_the_lease(self, paystack_request):
+        event_id = hashlib.sha256('charge.success:pay_test_123'.encode()).hexdigest()
+        WebhookEvent.objects.create(
+            event='charge.success',
+            event_id=event_id,
+            reference='pay_test_123',
+            processing_started_at=timezone.now(),
+        )
+
+        response = self.client.post(
+            self.url,
+            self.body,
+            content_type='application/json',
+            HTTP_X_PAYSTACK_SIGNATURE=self.signature,
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
+        self.assertEqual(response.json()['status'], 'processing')
+        paystack_request.assert_not_called()
+
+    @patch('billing.views.paystack_request')
+    def test_yearly_webhook_renews_for_365_days(self, paystack_request):
+        paystack_request.return_value = {
+            'status': True,
+            'data': {
+                'reference': 'pay_yearly_123',
+                'status': 'success',
+                'amount': 4999900,
+                'fees': 0,
+                'currency': 'NGN',
+            },
+        }
         yearly_plan = Plan.objects.create(name=Plan.PLAN_PRO, amount='49999.00', interval=Plan.INTERVAL_YEARLY)
         payload = {
             'event': 'charge.success',
@@ -102,6 +187,15 @@ class PaystackWebhookTests(APITestCase):
         self.assertEqual(subscription.plan, yearly_plan)
         self.assertGreaterEqual(subscription.renews_at, before + timedelta(days=365) - timedelta(seconds=2))
         self.assertLessEqual(subscription.renews_at, timezone.now() + timedelta(days=365) + timedelta(seconds=2))
+
+    @patch('billing.views.paystack_request', return_value=None)
+    def test_membership_webhook_does_not_trust_unverified_event_when_paystack_is_unavailable(self, paystack_request):
+        response = self.client.post(self.url, self.body, content_type='application/json', HTTP_X_PAYSTACK_SIGNATURE=self.signature)
+
+        self.assertEqual(response.status_code, status.HTTP_502_BAD_GATEWAY)
+        self.assertFalse(Payment.objects.filter(reference='pay_test_123').exists())
+        self.assertIsNone(WebhookEvent.objects.get(reference='pay_test_123').processed_at)
+        paystack_request.assert_called_once()
 
     def test_storefront_payment_creates_snapshot_sale_once(self):
         storefront = StorefrontSettings.objects.create(
@@ -182,3 +276,22 @@ class PaystackWebhookTests(APITestCase):
         item.refresh_from_db()
         self.assertEqual(order.status, StorefrontOrder.STATUS_PENDING_PAYMENT)
         self.assertEqual(item.qty_in_stock, 5)
+
+    def test_non_membership_charge_success_is_ignored(self):
+        payload = {
+            'event': 'charge.success',
+            'data': {
+                'reference': 'invoice-ref-1',
+                'status': 'success',
+                'amount': 5000,
+                'currency': 'NGN',
+                'metadata': {'type': 'invoice', 'business_id': self.business.pk},
+            },
+        }
+        body = json.dumps(payload).encode()
+        signature = hmac.new(settings.PAYSTACK_SECRET_KEY.encode(), body, hashlib.sha512).hexdigest()
+
+        response = self.client.post(self.url, body, content_type='application/json', HTTP_X_PAYSTACK_SIGNATURE=signature)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertFalse(Subscription.objects.filter(paystack_reference='invoice-ref-1').exists())

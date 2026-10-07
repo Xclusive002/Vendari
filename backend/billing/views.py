@@ -1,33 +1,60 @@
 import hashlib
 import hmac
 import json
+import logging
+import uuid
 import urllib.error
 import urllib.parse
 import urllib.request
-import logging
 from datetime import timedelta
 from decimal import Decimal
 
 from django.conf import settings
 from django.core.mail import EmailMultiAlternatives
 from django.core import signing
-from django.db import transaction
+from django.db import IntegrityError, transaction
+from django.db.models import Q
 from django.utils import timezone
+import sentry_sdk
 from rest_framework import status
+from rest_framework.exceptions import Throttled
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from accounts.models import User
 from businesses.models import Business, Membership, StorefrontOrder
 from businesses.email_service import send_storefront_sale_email
 from invoices.models import Invoice, InvoicePayment
+from referrals.models import Commission, Payout
+from referrals.fraud import flag_quick_cancellation
 
-from .models import Plan, Subscription
+from .models import Payment, Plan, Subscription, WebhookEvent, membership_payment_refunded, membership_payment_succeeded
 from .serializers import PaystackInitializeSerializer
 from .utils import has_feature
 from sales.serializers import SaleSerializer
+from vendari_api.rate_limits import rate_limited
 
 logger = logging.getLogger(__name__)
+
+
+class BillingRateLimitedAPIView(APIView):
+    rate_limit_scope = 'billing'
+    read_limit = 60
+    write_limit = 10
+
+    def initial(self, request, *args, **kwargs):
+        super().initial(request, *args, **kwargs)
+        user_id = str(request.user.pk) if request.user.is_authenticated else ''
+        limit = self.write_limit if request.method not in {'GET', 'HEAD', 'OPTIONS'} else self.read_limit
+        if rate_limited(
+            request,
+            self.rate_limit_scope,
+            limit=limit,
+            window=60,
+            identifier=user_id,
+        ):
+            raise Throttled(detail='Too many requests. Please try again in a minute.')
 
 
 def send_subscription_success_email(business, plan):
@@ -86,7 +113,10 @@ def paystack_request(endpoint, payload=None, method='GET'):
         return None
 
 
-class PaystackBanksView(APIView):
+class PaystackBanksView(BillingRateLimitedAPIView):
+    rate_limit_scope = 'billing-bank-list'
+    read_limit = 20
+
     def get(self, request):
         secret_key = settings.PAYSTACK_SECRET_KEY.strip()
         if not secret_key or secret_key.startswith('your_'):
@@ -100,7 +130,10 @@ class PaystackBanksView(APIView):
         return Response(data.get('data', []))
 
 
-class VerifyBankAccountView(APIView):
+class VerifyBankAccountView(BillingRateLimitedAPIView):
+    rate_limit_scope = 'billing-bank-verify'
+    write_limit = 5
+
     def post(self, request, business_id):
         if not Membership.objects.filter(user=request.user, business_id=business_id).exists():
             return Response({'detail': 'You must be a member of this business.'}, status=status.HTTP_403_FORBIDDEN)
@@ -116,7 +149,10 @@ class VerifyBankAccountView(APIView):
         return Response({'account_name': account_name, 'verification_token': token})
 
 
-class CreateSubaccountView(APIView):
+class CreateSubaccountView(BillingRateLimitedAPIView):
+    rate_limit_scope = 'billing-subaccount-create'
+    write_limit = 5
+
     def post(self, request, business_id):
         if not Membership.objects.filter(user=request.user, business_id=business_id).exists():
             return Response({'detail': 'You must be a member of this business.'}, status=status.HTTP_403_FORBIDDEN)
@@ -138,7 +174,10 @@ class CreateSubaccountView(APIView):
         return Response({'account_name': business.bank_account_name, 'subaccount_code': business.paystack_subaccount_code})
 
 
-class InvoicePaymentInitializeView(APIView):
+class InvoicePaymentInitializeView(BillingRateLimitedAPIView):
+    rate_limit_scope = 'billing-invoice-payment'
+    write_limit = 5
+
     def post(self, request, business_id, invoice_id):
         if not Membership.objects.filter(user=request.user, business_id=business_id).exists():
             return Response({'detail': 'Invoice not found.'}, status=status.HTTP_404_NOT_FOUND)
@@ -156,7 +195,42 @@ class InvoicePaymentInitializeView(APIView):
         return Response({'authorization_url': data['data']['authorization_url'], 'reference': data['data'].get('reference')})
 
 
-class PaystackInitializeView(APIView):
+class BillingCheckoutView(BillingRateLimitedAPIView):
+    rate_limit_scope = 'billing-checkout'
+    write_limit = 5
+
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        interval = str(request.data.get('interval', '') or '').strip().lower()
+        if interval not in {Plan.INTERVAL_MONTHLY, Plan.INTERVAL_YEARLY}:
+            return Response({'detail': 'Select a valid membership interval.'}, status=status.HTTP_400_BAD_REQUEST)
+        plan = Plan.get_membership_plan(interval)
+        reference = f'membership_{interval}_{uuid.uuid4().hex}'
+        payload = {
+            'email': request.user.email,
+            'reference': reference,
+            'currency': 'NGN',
+            'plan': plan.paystack_plan_code,
+            'metadata': {'type': 'membership', 'user_id': request.user.pk, 'interval': interval},
+        }
+        if not plan.paystack_plan_code:
+            payload['amount'] = int(plan.amount * 100)
+        data = paystack_request('transaction/initialize', payload, method='POST')
+        if not data:
+            return Response({'error': 'Unable to initialize Paystack transaction.'}, status=status.HTTP_502_BAD_GATEWAY)
+        if not data.get('status') or not data.get('data', {}).get('authorization_url'):
+            return Response({'error': 'Paystack rejected the transaction.'}, status=status.HTTP_502_BAD_GATEWAY)
+        return Response({
+            'authorization_url': data['data']['authorization_url'],
+            'reference': data['data'].get('reference', reference),
+        })
+
+
+class PaystackInitializeView(BillingRateLimitedAPIView):
+    rate_limit_scope = 'billing-paystack-initialize'
+    write_limit = 5
+
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
@@ -187,20 +261,147 @@ class PaystackInitializeView(APIView):
 class PaystackWebhookView(APIView):
     permission_classes = [AllowAny]
 
+    def dispatch(self, request, *args, **kwargs):
+        self._webhook_event_record_id = None
+        try:
+            response = super().dispatch(request, *args, **kwargs)
+        except Exception:
+            if self._webhook_event_record_id:
+                WebhookEvent.objects.filter(
+                    pk=self._webhook_event_record_id,
+                    processed_at__isnull=True,
+                ).update(processing_started_at=None)
+            raise
+        if self._webhook_event_record_id:
+            records = WebhookEvent.objects.filter(
+                pk=self._webhook_event_record_id,
+                processed_at__isnull=True,
+            )
+            if response.status_code < status.HTTP_400_BAD_REQUEST:
+                records.update(processed_at=timezone.now(), processing_started_at=None)
+            else:
+                records.update(processing_started_at=None)
+        return response
+
+    def handle_exception(self, exc):
+        logger.exception('Paystack webhook processing failed')
+        sentry_sdk.capture_exception(exc)
+        return super().handle_exception(exc)
+
+    def _is_membership_event(self, data, metadata):
+        if str(metadata.get('type') or '').lower() == 'membership':
+            return True
+        if str(metadata.get('payment_type') or '').lower() in {'membership', 'subscription'}:
+            return True
+        if metadata.get('business_id') and metadata.get('plan_id'):
+            return True
+        plan_code = str(metadata.get('plan_code') or data.get('plan_code') or data.get('plan') or '').strip()
+        if plan_code:
+            membership_codes = {str(settings.PAYSTACK_MONTHLY_PLAN_CODE).strip(), str(settings.PAYSTACK_YEARLY_PLAN_CODE).strip()}
+            if plan_code in membership_codes and plan_code:
+                return True
+        if metadata.get('plan_id'):
+            plan = Plan.objects.filter(pk=metadata.get('plan_id')).first()
+            if plan and (plan.paystack_plan_code or plan.interval in {Plan.INTERVAL_MONTHLY, Plan.INTERVAL_YEARLY}):
+                return True
+        return False
+
     def post(self, request):
+        secret_key = settings.PAYSTACK_SECRET_KEY.strip()
+        if not secret_key:
+            logger.error('Rejecting Paystack webhook because PAYSTACK_SECRET_KEY is not configured')
+            sentry_sdk.capture_message('Paystack webhook secret is not configured', level='error')
+            return Response({'error': 'Webhook verification is unavailable.'}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
         signature = request.headers.get('X-Paystack-Signature', '')
+        raw_body = request.body
         expected = hmac.new(
-            settings.PAYSTACK_SECRET_KEY.strip().encode(), request.body, hashlib.sha512,
+            secret_key.encode(), raw_body, hashlib.sha512,
         ).hexdigest()
         if not signature or not hmac.compare_digest(signature, expected):
             return Response({'error': 'Invalid signature.'}, status=status.HTTP_401_UNAUTHORIZED)
         try:
-            payload = json.loads(request.body)
+            payload = json.loads(raw_body)
         except json.JSONDecodeError:
             return Response({'error': 'Invalid JSON payload.'}, status=status.HTTP_400_BAD_REQUEST)
-        event = payload.get('event')
+        event = str(payload.get('event') or '')
         data = payload.get('data') or {}
-        if event in ('transfer.success', 'transfer.failed'):
+        reference = str(data.get('reference') or '').strip()
+        provider_event_id = str(data.get('id') or data.get('event_id') or reference)
+        event_id = hashlib.sha256(f'{event}:{provider_event_id}'.encode()).hexdigest() if provider_event_id else ''
+        event_record = None
+        if event_id or reference:
+            try:
+                with transaction.atomic():
+                    event_record, _ = WebhookEvent.objects.get_or_create(
+                        event=event,
+                        event_id=event_id or reference,
+                        defaults={'reference': reference, 'payload': payload},
+                    )
+                    event_record = WebhookEvent.objects.select_for_update().get(pk=event_record.pk)
+            except IntegrityError:
+                event_record = WebhookEvent.objects.filter(event_id=event_id or reference).first()
+                if event_record is None:
+                    raise
+            if event_record.processed_at:
+                return Response({'status': 'already_processed'})
+            lease_cutoff = timezone.now() - timedelta(minutes=5)
+            claimed = WebhookEvent.objects.filter(
+                pk=event_record.pk,
+                processed_at__isnull=True,
+            ).filter(
+                Q(processing_started_at__isnull=True)
+                | Q(processing_started_at__lt=lease_cutoff)
+            ).update(processing_started_at=timezone.now())
+            if not claimed:
+                return Response(
+                    {'status': 'processing'},
+                    status=status.HTTP_202_ACCEPTED,
+                )
+            if event_record.reference != reference:
+                event_record.reference = reference
+                event_record.payload = payload
+                event_record.save(update_fields=['reference', 'payload'])
+            self._webhook_event_record_id = event_record.pk
+        if event in ('transfer.success', 'transfer.failed', 'transfer.reversed'):
+            transfer_reference = str(data.get('reference') or data.get('transfer_code') or '').strip()
+            transfer_code = str(data.get('transfer_code') or '').strip()
+            payout = None
+            if transfer_reference:
+                payout = Payout.objects.filter(reference=transfer_reference).first()
+            if payout is None and transfer_code:
+                payout = Payout.objects.filter(paystack_transfer_code=transfer_code).first()
+            if payout is not None:
+                if event == 'transfer.success':
+                    if payout.status == Payout.STATUS_SUCCESS:
+                        return Response({'status': 'already_processed', 'payout_id': payout.pk})
+                    payout.status = Payout.STATUS_SUCCESS
+                    payout.completed_at = timezone.now()
+                    payout.save(update_fields=['status', 'completed_at'])
+                    for commission in payout.covered_commissions.all():
+                        if commission.status != Commission.STATUS_PAID:
+                            commission.status = Commission.STATUS_PAID
+                            commission.save(update_fields=['status'])
+                    return Response({'status': 'processed', 'payout_status': payout.status})
+                if event == 'transfer.failed':
+                    if payout.status == Payout.STATUS_FAILED:
+                        return Response({'status': 'already_processed', 'payout_id': payout.pk})
+                    payout.status = Payout.STATUS_FAILED
+                    payout.failure_reason = str(data.get('message') or 'Transfer failed')
+                    payout.completed_at = timezone.now()
+                    payout.save(update_fields=['status', 'failure_reason', 'completed_at'])
+                    return Response({'status': 'processed', 'payout_status': payout.status})
+                if event == 'transfer.reversed':
+                    if payout.status == Payout.STATUS_REVERSED:
+                        return Response({'status': 'already_processed', 'payout_id': payout.pk})
+                    payout.status = Payout.STATUS_REVERSED
+                    payout.failure_reason = str(data.get('message') or 'Transfer reversed')
+                    payout.completed_at = timezone.now()
+                    payout.save(update_fields=['status', 'failure_reason', 'completed_at'])
+                    for commission in payout.covered_commissions.all():
+                        if commission.status == Commission.STATUS_PAID:
+                            commission.status = Commission.STATUS_APPROVED
+                            commission.save(update_fields=['status'])
+                    return Response({'status': 'processed', 'payout_status': payout.status})
             subaccount_code = str(data.get('recipient', {}).get('subaccount_code') or data.get('subaccount_code') or '').strip()
             if not subaccount_code:
                 return Response({'status': 'ignored'})
@@ -212,21 +413,55 @@ class PaystackWebhookView(APIView):
             if payout_status == StorefrontOrder.PAYOUT_SETTLED:
                 update_fields['settled_at'] = timezone.now()
             order_id = data.get('metadata', {}).get('storefront_order_id') or data.get('storefront_order_id')
-            reference = data.get('reference') or data.get('transaction_reference')
+            transfer_reference = data.get('reference') or data.get('transaction_reference')
             orders = StorefrontOrder.objects.filter(business__in=businesses, status=StorefrontOrder.STATUS_PAID)
             if order_id:
                 orders = orders.filter(pk=order_id)
-            elif reference:
-                orders = orders.filter(paystack_reference=reference)
+            elif transfer_reference:
+                orders = orders.filter(paystack_reference=transfer_reference)
             else:
                 logger.warning('Ignoring uncorrelated Paystack transfer event=%s subaccount=%s', event, subaccount_code)
                 return Response({'status': 'ignored'})
             orders.update(**update_fields)
             return Response({'status': 'processed', 'payout_status': payout_status})
+        if event == 'refund.processed':
+            metadata = data.get('metadata') or {}
+            refund_reference = str(data.get('reference') or metadata.get('reference') or '').strip()
+            payment = Payment.objects.filter(reference=refund_reference).first() if refund_reference else None
+            if payment:
+                payment.status = 'refunded'
+                payment.save(update_fields=['status', 'updated_at'])
+                membership_payment_refunded.send(sender=Payment, payment=payment)
+            return Response({'status': 'processed'})
+        if event == 'invoice.payment_failed':
+            return Response({'status': 'ignored'})
+        if event == 'subscription.create':
+            return Response({'status': 'processed'})
+        if event == 'subscription.disable':
+            customer = data.get('customer') or {}
+            metadata = data.get('metadata') or {}
+            customer_email = str(customer.get('email') or data.get('email') or '').strip().lower()
+            business_id = metadata.get('business_id')
+            business = Business.objects.filter(pk=business_id).select_related('owner').first() if business_id else None
+            referred_user = business.owner if business else (
+                User.objects.filter(email__iexact=customer_email).first() if customer_email else None
+            )
+            if referred_user:
+                flag_quick_cancellation(referred_user)
+                if business:
+                    Subscription.objects.filter(
+                        business=business,
+                    ).update(status=Subscription.STATUS_CANCELLED)
+                else:
+                    Subscription.objects.filter(
+                        business__owner=referred_user,
+                    ).update(status=Subscription.STATUS_CANCELLED)
+            else:
+                logger.warning('Could not identify user for Paystack subscription cancellation event')
+            return Response({'status': 'processed'})
         if event != 'charge.success':
             return Response({'status': 'ignored'})
-        data = payload.get('data') or {}
-        reference = data.get('reference')
+        reference = str(data.get('reference') or '').strip()
         metadata = data.get('metadata') or {}
         if metadata.get('payment_type') == 'invoice':
             invoice = Invoice.objects.filter(pk=metadata.get('invoice_id'), business_id=metadata.get('business_id')).first()
@@ -270,17 +505,60 @@ class PaystackWebhookView(APIView):
                 order.save(update_fields=('status', 'paystack_reference'))
                 send_storefront_sale_email(order.business, order)
             return Response({'status': 'processed', 'order_id': order.pk})
+        if not self._is_membership_event(data, metadata):
+            return Response({'status': 'ignored'})
+        user_id = metadata.get('user_id') or data.get('customer', {}).get('id')
         business_id = metadata.get('business_id')
         plan_id = metadata.get('plan_id')
-        if not reference or not business_id or not plan_id:
-            return Response({'error': 'Missing payment metadata.'}, status=status.HTTP_400_BAD_REQUEST)
+        if not reference:
+            return Response({'error': 'Missing payment reference.'}, status=status.HTTP_400_BAD_REQUEST)
         with transaction.atomic():
-            if Subscription.objects.filter(paystack_reference=reference).exists():
+            if Payment.objects.filter(reference=reference).exists():
                 return Response({'status': 'already_processed'})
-            business = Business.objects.filter(pk=business_id).first()
-            plan = Plan.objects.filter(pk=plan_id).first()
-            if business is None or plan is None:
-                return Response({'error': 'Invalid payment metadata.'}, status=status.HTTP_400_BAD_REQUEST)
+            if user_id is not None:
+                user = User.objects.filter(pk=user_id).first()
+            else:
+                user = None
+            plan = None
+            if plan_id:
+                plan = Plan.objects.filter(pk=plan_id).first()
+            if plan is None:
+                interval = str(metadata.get('interval') or metadata.get('billing_interval') or '').strip().lower()
+                if interval not in {Plan.INTERVAL_MONTHLY, Plan.INTERVAL_YEARLY}:
+                    interval = Plan.INTERVAL_MONTHLY
+                plan = Plan.get_membership_plan(interval)
+            verify_response = paystack_request(f'transaction/verify/{urllib.parse.quote(reference)}')
+            if verify_response is None:
+                logger.error('Paystack verification unavailable for membership reference=%s', reference)
+                sentry_sdk.capture_message(
+                    'Paystack verification unavailable for membership payment',
+                    level='error',
+                )
+                return Response(
+                    {'error': 'Payment verification is temporarily unavailable.'},
+                    status=status.HTTP_502_BAD_GATEWAY,
+                )
+            if not verify_response.get('status') or str(verify_response.get('data', {}).get('status') or '').lower() not in {'success', 'paid'}:
+                logger.warning('Paystack verification rejected membership reference=%s', reference)
+                return Response({'status': 'ignored'})
+            verified_data = verify_response.get('data') or {}
+            if (
+                str(verified_data.get('reference') or '') != reference
+                or str(verified_data.get('currency') or '').upper() != 'NGN'
+                or int(verified_data.get('amount') or 0) <= 0
+                or int(verified_data.get('amount') or 0) != int(plan.amount * 100)
+            ):
+                logger.error('Paystack verification data mismatch for membership reference=%s', reference)
+                return Response({'error': 'Payment verification did not match the transaction.'}, status=status.HTTP_400_BAD_REQUEST)
+            business = None
+            if business_id:
+                business = Business.objects.filter(pk=business_id).first()
+            if business is None and user is not None:
+                business = user.businesses.order_by('pk').first()
+            if business is None:
+                return Response({'error': 'Invalid membership payment metadata.'}, status=status.HTTP_400_BAD_REQUEST)
+            if user is None:
+                user = business.owner
             renew_days = 365 if plan.interval == plan.INTERVAL_YEARLY else 30
             subscription, _ = Subscription.objects.update_or_create(
                 business=business,
@@ -291,10 +569,24 @@ class PaystackWebhookView(APIView):
                     'renews_at': timezone.now() + timedelta(days=renew_days),
                 },
             )
+            payment = Payment.objects.create(
+                provider='paystack',
+                user=user,
+                business=business,
+                reference=reference,
+                amount=Decimal(str(verify_response.get('data', {}).get('amount', 0))) / Decimal('100'),
+                fee=Decimal(str(verify_response.get('data', {}).get('fees', 0))) / Decimal('100'),
+                currency=str(verify_response.get('data', {}).get('currency') or 'NGN'),
+                interval=plan.interval,
+                status='paid',
+                paid_at=timezone.now(),
+                metadata={'type': 'membership', 'interval': plan.interval, 'user_id': user.pk if user else user_id},
+            )
             business.plan = plan
             business.save(update_fields=('plan', 'updated_at'))
+            membership_payment_succeeded.send(sender=Payment, payment=payment)
             try:
                 send_subscription_success_email(business, plan)
             except Exception:
                 logger.exception('Subscription confirmation email failed for business=%s', business.pk)
-        return Response({'status': 'processed', 'subscription_id': subscription.pk})
+        return Response({'status': 'processed', 'subscription_id': subscription.pk, 'payment_id': payment.pk})

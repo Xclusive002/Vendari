@@ -26,7 +26,7 @@ from inventory.views import InventoryItemViewSet, TopProductsView
 from sales.views import SaleViewSet
 from expenses.views import ExpenseViewSet
 from customers.views import CustomerReminderCronView, CustomerRemindersView, CustomerViewSet
-from billing.views import PaystackInitializeView, PaystackWebhookView, PaystackBanksView, VerifyBankAccountView, CreateSubaccountView, InvoicePaymentInitializeView
+from billing.views import BillingCheckoutView, PaystackInitializeView, PaystackWebhookView, PaystackBanksView, VerifyBankAccountView, CreateSubaccountView, InvoicePaymentInitializeView
 from ai_insights.views import BusinessAskView, BusinessInsightsView, VoiceEntryView
 from invoices.views import InvoiceViewSet, SaleReceiptView, GenerateInvoiceNotesView
 from whatsapp.views import WhatsAppWebhookView
@@ -58,6 +58,7 @@ urlpatterns = [
     path('', health_check, name='health-check'),
     path('admin/', admin.site.urls),
     path('api/auth/', include('accounts.urls')),
+    path('api/referrals/', include('referrals.urls')),
     path('api/concierge-inquiries/', ConciergeInquiryView.as_view()),
     path('api/billing/plans/', BusinessPlansView.as_view()),
     path('api/storefronts/check-slug/', StorefrontSlugCheckView.as_view()),
@@ -70,6 +71,7 @@ urlpatterns = [
     path('api/businesses/<int:business_id>/members/', BusinessMembersView.as_view()),
     path('api/businesses/<int:business_id>/storefront-settings/', StorefrontSettingsView.as_view()),
     path('api/businesses/<int:business_id>/dashboard-summary/', BusinessDashboardSummaryView.as_view()),
+    path('api/billing/checkout/', BillingCheckoutView.as_view()),
     path('api/billing/paystack/initialize/', PaystackInitializeView.as_view()),
     path('api/billing/paystack/webhook/', PaystackWebhookView.as_view()),
     path('api/whatsapp/webhook/', WhatsAppWebhookView.as_view()),

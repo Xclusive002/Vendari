@@ -199,7 +199,7 @@ class RegisterView(APIView):
     def post(self, request):
         if rate_limited(request, 'auth-register', limit=5, window=900):
             return too_many_requests('Too many registration attempts. Please try again later.')
-        serializer = RegisterSerializer(data=request.data)
+        serializer = RegisterSerializer(data=request.data, context={'request': request})
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
 

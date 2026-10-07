@@ -28,6 +28,10 @@ npm run dev
 
 The project is in a transition from the earlier product branding and setup docs toward a more modular architecture. The frontend is active and the Django API backend is being aligned with it as part of the migration work.
 
+## Paystack transfer note
+
+For referral payouts and other API-driven transfers, disable OTP requirements in the Paystack dashboard for the API account, or whitelist the server IP that issues transfer requests. Without this, Paystack can block or delay transfers that require a second-factor confirmation.
+
 ## Documentation
 
 Historical planning and project status notes have been archived in `docs/archive/` to keep the root directory clean while preserving the project record.

@@ -22,8 +22,37 @@ export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [fullName, setFullName] = useState('')
   const [businessName, setBusinessName] = useState('')
+  const [referralCode, setReferralCode] = useState('')
+  const [referrerFirstName, setReferrerFirstName] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    let code = params.get('ref')?.trim().toUpperCase() || ''
+
+    if (!code) {
+      const cookieValue = document.cookie.split('; ').find((row) => row.startsWith('vendari_ref='))?.split('=')[1]
+      if (cookieValue) code = decodeURIComponent(cookieValue)
+    }
+
+    if (!code) return
+
+    const normalizedCode = code.toUpperCase()
+    setReferralCode(normalizedCode)
+    document.cookie = `vendari_ref=${encodeURIComponent(normalizedCode)}; path=/; max-age=${60 * 60 * 24 * 30}; sameSite=Lax`
+
+    const apiBase = process.env.NEXT_PUBLIC_API_URL?.replace(/\/+$/, '')
+    if (!apiBase) return
+
+    fetch(`${apiBase}/referrals/validate/${encodeURIComponent(normalizedCode)}/`, { cache: 'no-store' })
+      .then((response) => response.ok ? response.json() : null)
+      .then((payload) => {
+        if (payload?.valid) setReferrerFirstName(payload.referrer_first_name || '')
+        else setReferrerFirstName('')
+      })
+      .catch(() => setReferrerFirstName(''))
+  }, [])
 
   async function handleRegister(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -33,7 +62,7 @@ export default function RegisterPage() {
     if (!email.trim() || !email.includes('@')) return setError('Enter a valid email address.')
     if (password.length < 8) return setError('Use at least 8 characters for your password.')
     setLoading(true)
-    const result = await register(email.trim(), password, businessName.trim(), fullName.trim())
+    const result = await register(email.trim(), password, businessName.trim(), fullName.trim(), referralCode)
     if (result.success) {
       router.push(`/verify-email?email=${encodeURIComponent(email.trim())}`)
       return
@@ -71,6 +100,12 @@ export default function RegisterPage() {
                 <h1 className="font-display text-3xl font-semibold text-ink">Create your account.</h1>
                 <p className="mt-2 text-sm leading-6 text-text-secondary">Set up a clear home for the work behind your business.</p>
               </>
+            )}
+
+            {referrerFirstName && (
+              <div className="mt-5 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-900">
+                You were invited by {referrerFirstName}. Enjoy a 14-day free trial.
+              </div>
             )}
 
             <button type="button" onClick={handleGoogleSignIn} disabled={loading} className="mt-8 flex w-full items-center justify-center gap-3 rounded-lg border border-border bg-white px-4 py-3 text-sm font-semibold text-ink shadow-sm hover:bg-bg disabled:opacity-60"><GoogleLogo />{loading ? 'Connecting to Google…' : 'Continue with Google'}</button>

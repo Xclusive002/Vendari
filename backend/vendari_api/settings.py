@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
+import ast
 from datetime import timedelta
 from pathlib import Path
 
@@ -25,6 +26,32 @@ env = environ.Env(
     CORS_ALLOWED_ORIGINS=(list, ['http://localhost:3000', 'http://localhost:3002', 'http://127.0.0.1:3000', 'http://127.0.0.1:3002']),
 )
 environ.Env.read_env(BASE_DIR / '.env')
+
+
+def parse_referral_tiers(raw_value):
+    if raw_value is None:
+        return [(1, 5, 20), (6, 20, 25), (21, None, 30)]
+    if isinstance(raw_value, str):
+        value = raw_value.strip()
+        if not value:
+            return [(1, 5, 20), (6, 20, 25), (21, None, 30)]
+        try:
+            parsed = ast.literal_eval(value)
+        except (ValueError, SyntaxError) as exc:
+            raise ImproperlyConfigured('REFERRAL_TIERS must be a list of 3-tuples like [(1, 5, 20), (6, 20, 25)]') from exc
+        if not isinstance(parsed, list):
+            raise ImproperlyConfigured('REFERRAL_TIERS must be a list.')
+        tiers = []
+        for item in parsed:
+            if not isinstance(item, (list, tuple)) or len(item) != 3:
+                raise ImproperlyConfigured('Each referral tier must be a tuple of (min_count, max_count_or_none, percent).')
+            min_count, max_count, percent = item
+            tiers.append((int(min_count), None if max_count is None else int(max_count), int(percent)))
+        if not tiers:
+            raise ImproperlyConfigured('REFERRAL_TIERS cannot be empty.')
+        return tiers
+    raise ImproperlyConfigured('REFERRAL_TIERS must be provided as a string literal list.')
+
 
 AUTH_USER_MODEL = 'accounts.User'
 
@@ -48,6 +75,35 @@ CORS_ALLOWED_ORIGINS = env.list(
 PAYSTACK_SECRET_KEY = env('PAYSTACK_SECRET_KEY', default='')
 PAYSTACK_MONTHLY_PLAN_CODE = env('PAYSTACK_MONTHLY_PLAN_CODE', default='')
 PAYSTACK_YEARLY_PLAN_CODE = env('PAYSTACK_YEARLY_PLAN_CODE', default='')
+
+# These are the canonical, fixed Pro membership prices in kobo.
+# The Paystack plan codes remain environment-driven, but the price values should not drift
+# between environments or be overridden by stale local env files.
+PRO_MONTHLY_KOBO = 499900
+PRO_YEARLY_KOBO = 4999000
+
+REFERRAL_SETTINGS = {
+    'COMMISSION_WINDOW_MONTHS': env.int('COMMISSION_WINDOW_MONTHS', default=12),
+    'HOLD_DAYS': env.int('HOLD_DAYS', default=14),
+    'MIN_PAYOUT_KOBO': env.int('MIN_PAYOUT_KOBO', default=500000),
+    'DAILY_WITHDRAWAL_CAP_KOBO': env.int('DAILY_WITHDRAWAL_CAP_KOBO', default=5000000),
+    'REFERRED_TRIAL_DAYS': env.int('REFERRED_TRIAL_DAYS', default=14),
+    'PRO_MONTHLY_KOBO': PRO_MONTHLY_KOBO,
+    'PRO_YEARLY_KOBO': PRO_YEARLY_KOBO,
+    'TIERS': parse_referral_tiers(env('REFERRAL_TIERS', default='[(1, 5, 20), (6, 20, 25), (21, None, 30)]')),
+    'PAYOUT_FEE_KOBO': env.int('PAYOUT_FEE_KOBO', default=0),
+    'CONCIERGE_COMMISSION_PERCENT': env.int('CONCIERGE_COMMISSION_PERCENT', default=10),
+    'CONCIERGE_HOLD_DAYS': env.int('CONCIERGE_HOLD_DAYS', default=14),
+    'FRAUD_SHARED_SIGNUP_THRESHOLD': env.int('FRAUD_SHARED_SIGNUP_THRESHOLD', default=3),
+    'FRAUD_INACTIVE_TRIAL_THRESHOLD': env.int('FRAUD_INACTIVE_TRIAL_THRESHOLD', default=3),
+    'FRAUD_QUICK_REFUND_DAYS': env.int('FRAUD_QUICK_REFUND_DAYS', default=14),
+    'FRAUD_QUICK_CANCEL_DAYS': env.int('FRAUD_QUICK_CANCEL_DAYS', default=7),
+    'TRIAL_USAGE_CAPS': {
+        'ai_questions': env.int('TRIAL_AI_QUESTIONS_CAP', default=50),
+        'voice_entries': env.int('TRIAL_VOICE_ENTRIES_CAP', default=20),
+        'whatsapp_messages': env.int('TRIAL_WHATSAPP_MESSAGES_CAP', default=100),
+    },
+}
 GEMINI_API_KEY = env('GEMINI_API_KEY', default='')
 GEMINI_MODEL = env('GEMINI_MODEL', default='gemini-2.5-flash')
 WHATSAPP_ACCESS_TOKEN = env('WHATSAPP_ACCESS_TOKEN', default='')
@@ -86,6 +142,7 @@ INSTALLED_APPS = [
     'notifications',
     'invoices',
     'billing',
+    'referrals',
     'ai_insights',
     'whatsapp',
     'broadcasts',
@@ -154,6 +211,8 @@ EMAIL_TIMEOUT = env.int('EMAIL_TIMEOUT', default=10)
 EMAIL_HOST_USER = env('EMAIL_HOST_USER', default='')
 EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD', default='')
 DASHBOARD_URL = env('DASHBOARD_URL', default=(CORS_ALLOWED_ORIGINS[0] if CORS_ALLOWED_ORIGINS else 'http://localhost:3000'))
+FRONTEND_URL = env('FRONTEND_URL', default=DASHBOARD_URL)
+SENTRY_DSN = env('SENTRY_DSN', default='')
 
 SIMPLE_JWT = {
     'ALGORITHM': 'HS256',
@@ -173,6 +232,10 @@ CELERY_BEAT_SCHEDULE = {
     'compute-business-insights-nightly': {
         'task': 'ai_insights.tasks.compute_all_business_insights',
         'schedule': 60 * 60 * 24,
+    },
+    'approve-pending-referral-commissions': {
+        'task': 'referrals.tasks.approve_pending_commissions',
+        'schedule': 60 * 60,
     },
 }
 
@@ -264,6 +327,11 @@ LOGGING = {
         },
     },
     'loggers': {
+        'billing': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
         'accounts': {
             'handlers': ['console'],
             'level': 'INFO',
@@ -277,3 +345,13 @@ LOGGING = {
     },
 }
 
+if SENTRY_DSN:
+    import sentry_sdk
+    from sentry_sdk.integrations.django import DjangoIntegration
+
+    sentry_sdk.init(
+        dsn=SENTRY_DSN,
+        integrations=[DjangoIntegration()],
+        send_default_pii=False,
+        traces_sample_rate=0,
+    )
