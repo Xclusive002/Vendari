@@ -248,6 +248,7 @@ export default function InventoryPage() {
   const [metaCatalogs, setMetaCatalogs] = useState<Array<{ id: string; name: string; product_count?: number }>>([])
   const [metaCatalogId, setMetaCatalogId] = useState('')
   const [metaConfigured, setMetaConfigured] = useState<boolean | null>(null)
+  const [metaDetail, setMetaDetail] = useState('')
   const [metaSyncing, setMetaSyncing] = useState(false)
   const [showOtherImportOptions, setShowOtherImportOptions] = useState(false)
   const [formData, setFormData] = useState({
@@ -282,8 +283,12 @@ export default function InventoryPage() {
       const metaResult = await getMetaCatalogs(businessData.id)
       if (metaResult.success) {
         setMetaConfigured(metaResult.data.configured)
+        setMetaDetail(metaResult.data.detail || '')
         setMetaCatalogs(metaResult.data.catalogs || [])
         setMetaCatalogId(metaResult.data.selected_catalog_id || metaResult.data.catalogs?.[0]?.id || '')
+      } else {
+        setMetaConfigured(true)
+        setMetaDetail(metaResult.error || 'We could not reach the WhatsApp catalog service.')
       }
     } catch (error) {
       console.error('[Inventory] Error:', error)
@@ -697,7 +702,7 @@ export default function InventoryPage() {
                   </div>
                 </div>
                 <div className="rounded-xl border border-white/80 bg-surface p-3">
-                  {metaConfigured === false ? <div><p className="text-sm font-semibold text-ink">Ready when you are</p><p className="mt-1 text-xs leading-5 text-text-secondary">Your WhatsApp connection has not been turned on yet. Ask the Vendari team to connect it for your business.</p><a href="tel:09016615446" className="mt-3 inline-flex text-sm font-semibold text-[#25D366] hover:underline">Talk to Vendari</a></div> : <div className="space-y-2"><label className="block text-xs font-semibold text-text-muted">Your WhatsApp catalog</label><select value={metaCatalogId} onChange={(event) => setMetaCatalogId(event.target.value)} className="dashboard-input w-full text-sm"><option value="">Choose a catalog</option>{metaCatalogs.map((catalog) => <option key={catalog.id} value={catalog.id}>{catalog.name}{catalog.product_count ? ` (${catalog.product_count} products)` : ''}</option>)}</select><Button type="button" onClick={handleMetaSync} disabled={!metaCatalogId || metaSyncing} className="w-full bg-[#25D366] text-white hover:bg-[#1fb958]"><RefreshCw className={`mr-2 h-4 w-4 ${metaSyncing ? 'animate-spin' : ''}`} />{metaSyncing ? 'Bringing products in...' : 'Connect and import products'}</Button></div>}
+                  {metaConfigured === false ? <div><p className="text-sm font-semibold text-ink">Ready when you are</p><p className="mt-1 text-xs leading-5 text-text-secondary">Your WhatsApp connection has not been turned on yet. Ask the Vendari team to connect it for your business.</p><a href="tel:09016615446" className="mt-3 inline-flex text-sm font-semibold text-[#25D366] hover:underline">Talk to Vendari</a></div> : <div className="space-y-2"><label className="block text-xs font-semibold text-text-muted">Your WhatsApp catalog</label>{metaDetail && !metaCatalogs.length && <p className="rounded-lg border border-warning/25 bg-warning/5 px-3 py-2 text-xs leading-5 text-text-secondary">{metaDetail}</p>}{metaCatalogs.length > 0 ? <select value={metaCatalogId} onChange={(event) => setMetaCatalogId(event.target.value)} className="dashboard-input w-full text-sm"><option value="">Choose a catalog</option>{metaCatalogs.map((catalog) => <option key={catalog.id} value={catalog.id}>{catalog.name}{catalog.product_count ? ` (${catalog.product_count} products)` : ''}</option>)}</select> : !metaDetail && <p className="text-xs leading-5 text-text-secondary">No catalog was returned for this WhatsApp Business Account.</p>}<Button type="button" onClick={handleMetaSync} disabled={!metaCatalogId || metaSyncing} className="w-full bg-[#25D366] text-white hover:bg-[#1fb958]"><RefreshCw className={`mr-2 h-4 w-4 ${metaSyncing ? 'animate-spin' : ''}`} />{metaSyncing ? 'Bringing products in...' : 'Connect and import products'}</Button></div>}
                 </div>
               </div>
             </div>

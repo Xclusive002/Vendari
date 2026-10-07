@@ -5,10 +5,8 @@ import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YA
 import { AlertTriangle, ArrowDownRight, ArrowRight, ArrowUpRight, CircleDollarSign, FileText, Lightbulb, Package, Plus, ShoppingCart, Sparkles, Wallet } from 'lucide-react'
 import Link from 'next/link'
 import { getBusiness, getDashboardSummary, getInsights, getInvoices, getStorefrontSettings } from '@/app/actions/business'
-import { getCurrentUser, markWelcomeSeen } from '@/app/actions/auth'
 import { useCountUp } from '@/hooks/use-count-up'
 import { Skeleton } from '@/components/ui/skeleton'
-import { LoadingButton } from '@/components/ui/loading-button'
 import { getSubscription } from '@/app/actions/payment'
 import { getStorefrontUrl } from '@/lib/storefront'
 import { toast } from 'sonner'
@@ -78,7 +76,6 @@ export default function DashboardPage() {
   const [summary, setSummary] = useState<DashboardSummary>({ total_sales: 0, orders: 0, total_expenses: 0, profit: 0, trend: [], products: [], low_stock: [] })
   const [insights, setInsights] = useState<any[]>([])
     const [insightsError, setInsightsError] = useState('')
-  const [showWelcome, setShowWelcome] = useState(false)
   const [loading, setLoading] = useState(true)
   const [mobileTodos, setMobileTodos] = useState<MobileTodoItem[]>([])
   const [subscription, setSubscription] = useState<{ plan: string; status: string; renews_at: string | null; trial_active: boolean; trial_ends_at: string | null } | null>(null)
@@ -140,9 +137,6 @@ export default function DashboardPage() {
         setMobileTodos(mobileItems)
 
         setLoading(false)
-        getCurrentUser().then((currentUser) => {
-          if (currentLoad === loadVersion) setShowWelcome(currentUser?.has_seen_welcome === false)
-        })
         getInsights(currentBusiness.id).then((insightResult) => {
           if (currentLoad !== loadVersion) return
           setInsights(insightResult.data || [])
@@ -197,8 +191,6 @@ export default function DashboardPage() {
 
   return (
     <>
-      {showWelcome && <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/60 px-5 py-8" role="dialog" aria-modal="true" aria-labelledby="welcome-title"><div className="welcome-modal relative w-full max-w-md overflow-hidden rounded-xl border border-border bg-surface p-6 shadow-2xl sm:p-8"><div className="absolute right-0 top-0 h-24 w-24 rounded-bl-full bg-blue/10" /><div className="relative"><p className="text-sm font-semibold text-blue">A clear start</p><h2 id="welcome-title" className="mt-2 font-display text-2xl font-semibold text-ink">Welcome to Vendari, {business?.business_name}.</h2><p className="mt-3 text-sm leading-6 text-text-secondary">Add your first inventory item, then record a sale when you are ready. Vendari will keep the important numbers in view as your business gets moving.</p><LoadingButton type="button" onClick={async () => { await markWelcomeSeen(); setShowWelcome(false) }} className="dashboard-primary mt-6 w-full rounded-lg px-4 py-3 text-sm font-semibold shadow-lg shadow-blue/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue">Let&apos;s get started</LoadingButton></div></div></div>}
-
       <div className="hidden md:block">
         <main className="min-h-screen bg-bg px-5 pb-12 pt-20 sm:px-8 md:pt-8">
           <div className="mx-auto max-w-7xl"><p className="text-sm text-text-muted">{new Intl.DateTimeFormat('en-US', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).format(new Date())}</p><h1 className="mt-1 font-display text-3xl font-semibold text-ink">{getGreeting()}{business?.business_name ? `, ${business.business_name}` : ''}.</h1><p className="mt-2 text-sm text-text-secondary">Here is what is happening across your business today.</p></div>

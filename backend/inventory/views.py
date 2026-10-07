@@ -72,16 +72,37 @@ class InventoryItemViewSet(BusinessScopedViewSet):
         with urllib.request.urlopen(request, timeout=20) as response:
             return json.loads(response.read())
 
+    def _meta_error_detail(self, error):
+        if isinstance(error, urllib.error.HTTPError):
+            try:
+                payload = json.loads(error.read().decode('utf-8'))
+                return str(payload.get('error', {}).get('message') or payload.get('error', {}).get('error_user_msg') or 'Meta returned an error.')
+            except (UnicodeDecodeError, json.JSONDecodeError):
+                return f'Meta returned HTTP {error.code}.'
+        return str(error) or 'Meta catalog access failed.'
+
     @action(detail=False, methods=['get', 'post'], url_path='meta-sync')
     def meta_sync(self, request, business_pk=None):
         if not settings.WHATSAPP_ACCESS_TOKEN or not settings.WHATSAPP_BUSINESS_ACCOUNT_ID:
             return Response({'configured': False, 'detail': 'Meta catalog sync needs WHATSAPP_ACCESS_TOKEN and WHATSAPP_BUSINESS_ACCOUNT_ID configured on the server.'}, status=status.HTTP_200_OK)
 
-        try:
-            catalogs_response = self._meta_request(f'{settings.WHATSAPP_BUSINESS_ACCOUNT_ID}/product_catalogs', {'fields': 'id,name,product_count', 'limit': 100})
-        except (urllib.error.HTTPError, urllib.error.URLError, ValueError):
-            logger.exception('Meta catalog discovery failed for business=%s', business_pk)
-            return Response({'configured': True, 'detail': 'Meta catalog access failed. Check the token and business account permissions.'}, status=status.HTTP_502_BAD_GATEWAY)
+        catalog_error = None
+        catalogs_response = None
+        for catalog_path in (
+            f'{settings.WHATSAPP_BUSINESS_ACCOUNT_ID}/product_catalogs',
+            f'{settings.WHATSAPP_BUSINESS_ACCOUNT_ID}/owned_product_catalogs',
+        ):
+            try:
+                catalogs_response = self._meta_request(catalog_path, {'fields': 'id,name,product_count', 'limit': 100})
+                break
+            except (urllib.error.HTTPError, urllib.error.URLError, ValueError) as error:
+                catalog_error = error
+                logger.warning('Meta catalog discovery failed at %s: %s', catalog_path, self._meta_error_detail(error))
+        if catalogs_response is None:
+            configured_catalog_id = str(getattr(settings, 'WHATSAPP_CATALOG_ID', '') or '').strip()
+            if not configured_catalog_id:
+                return Response({'configured': True, 'detail': f'Meta catalog access failed: {self._meta_error_detail(catalog_error)}'}, status=status.HTTP_502_BAD_GATEWAY)
+            catalogs_response = {'data': [{'id': configured_catalog_id, 'name': 'Configured WhatsApp catalog'}]}
 
         catalogs = catalogs_response.get('data', [])
         if request.method == 'GET':
@@ -90,14 +111,15 @@ class InventoryItemViewSet(BusinessScopedViewSet):
         catalog_id = str(request.data.get('catalog_id') or getattr(settings, 'WHATSAPP_CATALOG_ID', '') or '').strip()
         if not catalog_id:
             return Response({'configured': True, 'catalogs': catalogs, 'detail': 'Choose a Meta catalog before syncing.'}, status=status.HTTP_400_BAD_REQUEST)
-        if not any(str(catalog.get('id')) == catalog_id for catalog in catalogs):
+        configured_catalog_id = str(getattr(settings, 'WHATSAPP_CATALOG_ID', '') or '').strip()
+        if catalogs and not any(str(catalog.get('id')) == catalog_id for catalog in catalogs) and catalog_id != configured_catalog_id:
             return Response({'detail': 'That catalog is not available to this WhatsApp Business Account.'}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
             products_response = self._meta_request(f'{catalog_id}/products', {'fields': 'id,name,description,price,currency,availability,image_url,retailer_id', 'limit': 100})
-        except (urllib.error.HTTPError, urllib.error.URLError, ValueError):
+        except (urllib.error.HTTPError, urllib.error.URLError, ValueError) as error:
             logger.exception('Meta catalog product fetch failed for catalog=%s', catalog_id)
-            return Response({'detail': 'Meta returned an error while reading this catalog.'}, status=status.HTTP_502_BAD_GATEWAY)
+            return Response({'detail': f'Meta returned an error while reading this catalog: {self._meta_error_detail(error)}'}, status=status.HTTP_502_BAD_GATEWAY)
 
         imported = 0
         updated = 0
