@@ -24,6 +24,7 @@ import {
   ChevronRight,
   CircleDollarSign,
   ClipboardList,
+  Gift,
   Gauge,
   LayoutDashboard,
   LockKeyhole,
@@ -526,6 +527,12 @@ export default async function Home() {
             >
               About
             </Link>
+            <a
+              href="#refer-and-earn"
+              className="rounded-md transition-colors hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue"
+            >
+              Refer &amp; Earn
+            </a>
           </div>
           <div className="flex items-center">
             <details className="relative md:hidden">
@@ -541,6 +548,7 @@ export default async function Home() {
                   <a href="#businesses" className="block rounded-lg px-3 py-3 text-sm font-medium text-text-secondary transition hover:bg-bg hover:text-ink">For every business</a>
                   <Link href="/pricing" className="block rounded-lg px-3 py-3 text-sm font-medium text-text-secondary transition hover:bg-bg hover:text-ink">Pricing</Link>
                   <Link href="/about" className="block rounded-lg px-3 py-3 text-sm font-medium text-text-secondary transition hover:bg-bg hover:text-ink">About</Link>
+                  <a href="#refer-and-earn" className="block rounded-lg px-3 py-3 text-sm font-medium text-text-secondary transition hover:bg-bg hover:text-ink">Refer &amp; Earn</a>
                 </nav>
                 <div className="mt-3 grid grid-cols-2 gap-2 border-t border-border pt-3">
                   <Link href="/login" className="inline-flex min-h-11 items-center justify-center rounded-lg border border-border px-3 py-2 text-sm font-semibold text-ink transition hover:bg-bg">Sign in</Link>
@@ -767,6 +775,76 @@ export default async function Home() {
       <ConciergeOverview />
 
       <TestimonialCarousel />
+
+      <ScrollReveal direction="up" delay={0.04}>
+        <section
+          id="refer-and-earn"
+          className="border-y border-border bg-surface px-5 py-20 sm:px-8 sm:py-28"
+        >
+          <div className="mx-auto grid max-w-7xl items-center gap-10 lg:grid-cols-2 lg:gap-16">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-blue">
+                Member referral program
+              </p>
+              <h2 className="mt-4 max-w-xl font-display text-3xl font-semibold leading-tight text-ink sm:text-5xl">
+                Share Vendari. Grow together.
+              </h2>
+              <p className="mt-6 max-w-xl text-base leading-7 text-text-secondary">
+                Invite a friend to run their business with Vendari. They get a
+                14-day free trial with no card needed, and you can earn
+                commission when they become a paying member and their eligible
+                payment clears.
+              </p>
+              <div className="mt-8 flex flex-wrap gap-3">
+                <Link
+                  href="/register"
+                  className="motion-hover inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-brand-gradient px-5 py-3 text-sm font-semibold text-white shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue focus-visible:ring-offset-2"
+                >
+                  Join Vendari <ArrowRight className="h-4 w-4" />
+                </Link>
+                <Link
+                  href="/referral-terms"
+                  className="motion-hover inline-flex min-h-11 items-center justify-center rounded-lg border border-ink px-5 py-3 text-sm font-semibold text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue focus-visible:ring-offset-2"
+                >
+                  Read referral terms
+                </Link>
+              </div>
+              <p className="mt-5 text-sm text-text-secondary">
+                Already a member?{" "}
+                <Link href="/login" className="font-semibold text-blue hover:underline">
+                  Sign in to find your referral link
+                </Link>
+                .
+              </p>
+            </div>
+
+            <div className="rounded-3xl bg-ink p-6 text-white shadow-[var(--shadow-raised)] sm:p-8">
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white/10 text-blue">
+                <Gift className="h-6 w-6" aria-hidden="true" />
+              </div>
+              <h3 className="mt-6 font-display text-2xl font-semibold">
+                How referrals work
+              </h3>
+              <ol className="mt-6 space-y-5">
+                {[
+                  ["01", "Get your personal referral link from the dashboard."],
+                  ["02", "Share it with a friend who wants to run their business with Vendari."],
+                  ["03", "Earn commission on eligible membership payments after they clear."],
+                ].map(([number, copy]) => (
+                  <li key={number} className="flex gap-4">
+                    <span className="font-mono text-sm text-blue">{number}</span>
+                    <p className="text-sm leading-6 text-white/75">{copy}</p>
+                  </li>
+                ))}
+              </ol>
+              <p className="mt-6 border-t border-white/10 pt-5 text-xs leading-5 text-white/55">
+                Referral earnings are subject to eligibility, a 14-day hold,
+                and the referral terms.
+              </p>
+            </div>
+          </div>
+        </section>
+      </ScrollReveal>
 
       <section id="faq" className="border-t border-border bg-bg px-5 py-20 sm:px-8 sm:py-28">
         <div className="mx-auto grid max-w-7xl gap-12 lg:grid-cols-[0.75fr_1.25fr]">
